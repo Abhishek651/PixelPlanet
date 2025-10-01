@@ -1,14 +1,14 @@
 // backend/server.js
 
 // --- 1. IMPORT DEPENDENCIES ---
-require('dotenv').config(); // <-- ADD THIS AT THE VERY TOP
+require('dotenv').config();
 const express = require('express');
 const admin = require('firebase-admin');
 const cors = require('cors');
-const fs = require('fs');       // <-- ADD fs (File System)
-const path = require('path');   // <-- ADD path
+const fs = require('fs');
+const path = require('path');
 
-// --- 2. INITIALIZE FIREBASE ADMIN (CORRECTED & SECURE WAY) ---
+// --- 2. INITIALIZE FIREBASE ADMIN ---
 let serviceAccount;
 
 // PRODUCTION: Use the environment variable if it exists (for Vercel, etc.)
@@ -39,24 +39,34 @@ module.exports = { db, admin };
 
 // --- 3. INITIALIZE EXPRESS APP ---
 const app = express();
-// You correctly load the port from the .env file
 const PORT = process.env.PORT || 5001;
 
-// --- 4. APPLY MIDDLEWARE ---
+// --- 4. APPLY MIDDLEWARE (CORRECTED ORDER) ---
+
+// ** STEP 1: CONFIGURE AND USE CORS MIDDLEWARE FIRST **
+// This ensures preflight OPTIONS requests are handled correctly before anything else.
+const corsOptions = {
+    origin: process.env.CORS_ORIGIN,
+    methods: "GET,POST,PUT,DELETE,PATCH,OPTIONS", // Be explicit about allowed methods
+    allowedHeaders: "Content-Type, Authorization"  // Be explicit about allowed headers
+};
+
+console.log(`CORS will be enabled for origin: ${process.env.CORS_ORIGIN}`);
+
+// Use the cors middleware for all incoming requests
+app.use(cors(corsOptions));
+
+// Explicitly handle preflight requests for all routes
+app.options('*', cors(corsOptions));
+
+// ** STEP 2: USE OTHER MIDDLEWARE LIKE BODY PARSERS **
+// This now runs AFTER the preflight check has been handled.
 app.use(express.json());
 
-// Use the CORS_ORIGIN from your .env file for better security
-const corsOptions = {
-    origin: process.env.CORS_ORIGIN
-};
-app.use(cors(corsOptions)); 
-console.log(`CORS enabled for origin: ${process.env.CORS_ORIGIN}`);
-
-
 // --- 5. IMPORT & USE ROUTES ---
+// This now runs AFTER CORS has been configured and allowed.
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
-
 
 // --- 6. START THE SERVER ---
 app.listen(PORT, () => {
