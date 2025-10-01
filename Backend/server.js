@@ -58,8 +58,6 @@ console.log(`CORS will be enabled for origin: ${process.env.CORS_ORIGIN}`);
 // Use the cors middleware for all incoming requests
 app.use(cors(corsOptions));
 
-// Explicitly handle preflight requests for all routes
-app.options('*', cors(corsOptions));
 
 // ** STEP 2: USE OTHER MIDDLEWARE LIKE BODY PARSERS **
 // This now runs AFTER the preflight check has been handled.
