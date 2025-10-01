@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { db, admin } = require('../server'); // Make sure `admin` is exported from server.js
+const { db, admin } = require('../firebaseConfig');
 const { body, validationResult } = require('express-validator');
 
 // --- HELPER FUNCTION TO GENERATE READABLE CODES ---
