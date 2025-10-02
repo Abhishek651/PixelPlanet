@@ -4,6 +4,8 @@ import { signOut } from 'firebase/auth';
 import { auth } from '../services/firebase';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
+import SideNavbar from '../components/SideNavbar';
+import BottomNavbar from '../components/BottomNavbar';
 
 function InstituteAdminPage() {
     const { currentUser, loading, refreshAuth } = useAuth();
@@ -184,44 +186,50 @@ function InstituteAdminPage() {
 
     // Authenticated HOD, data successfully loaded
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-indigo-100 to-blue-100 p-4">
-            <div className="w-full max-w-4xl p-8 space-y-6 bg-white rounded-xl shadow-lg text-center">
-                <h1 className="text-4xl font-extrabold text-indigo-700 mb-4">{instituteData.instituteName} Admin Dashboard</h1>
-                <p className="text-xl text-gray-700">Welcome, <span className="font-semibold text-indigo-600">{currentUser.email}</span>!</p>
+        <div className="flex h-screen bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark transition-colors duration-300">
+            <SideNavbar />
+            <main className="flex-1 m-6 p-6 lg:p-8 overflow-y-auto bg-white/50 dark:bg-black/20 rounded-2xl shadow-lg">
+                <div className="w-full max-w-4xl mx-auto">
+                    <div className="w-full p-8 space-y-6 text-center">
+                        <h1 className="text-4xl font-extrabold text-indigo-700 mb-4">{instituteData.instituteName} Admin Dashboard</h1>
+                        <p className="text-xl text-gray-700">Welcome, <span className="font-semibold text-indigo-600">{currentUser.email}</span>!</p>
 
-                {error && <p className="text-red-600">{error}</p>}
-                {message && <p className="text-green-600">{message}</p>}
+                        {error && <p className="text-red-600">{error}</p>}
+                        {message && <p className="text-green-600">{message}</p>}
 
-                <div className="mt-8 space-y-6">
-                    <div className="bg-indigo-50 p-6 rounded-lg shadow-inner border border-indigo-200">
-                        <h2 className="text-2xl font-bold text-indigo-600 mb-2">Your Institute ID</h2>
-                        <p className="text-4xl font-mono tracking-wider text-indigo-800 break-words select-all">{instituteData.instituteId}</p>
-                        <p className="text-sm text-gray-500 mt-2">Share this ID with teachers and students so they can join your institute.</p>
-                    </div>
+                        <div className="mt-8 space-y-6">
+                            <div className="bg-indigo-50 p-6 rounded-lg shadow-inner border border-indigo-200">
+                                <h2 className="text-2xl font-bold text-indigo-600 mb-2">Your Institute ID</h2>
+                                <p className="text-4xl font-mono tracking-wider text-indigo-800 break-words select-all">{instituteData.instituteId}</p>
+                                <p className="text-sm text-gray-500 mt-2">Share this ID with teachers and students so they can join your institute.</p>
+                            </div>
 
-                    <div className="bg-blue-50 p-6 rounded-lg shadow-inner border border-blue-200">
-                        <h2 className="text-2xl font-bold text-blue-600 mb-2">Teacher Registration Code</h2>
-                        <p className="text-4xl font-mono tracking-wider text-blue-800 break-words select-all">{instituteData.teacherRegistrationCode}</p>
-                        <p className="text-sm text-gray-500 mt-2">Teachers will use this code when they select "I am a Teacher" and join your institute.</p>
-                        <button onClick={() => handleRegenerateCode('teacher')} className="mt-4 bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition">
-                            Regenerate Teacher Code
-                        </button>
-                    </div>
+                            <div className="bg-blue-50 p-6 rounded-lg shadow-inner border border-blue-200">
+                                <h2 className="text-2xl font-bold text-blue-600 mb-2">Teacher Registration Code</h2>
+                                <p className="text-4xl font-mono tracking-wider text-blue-800 break-words select-all">{instituteData.teacherRegistrationCode}</p>
+                                <p className="text-sm text-gray-500 mt-2">Teachers will use this code when they select "I am a Teacher" and join your institute.</p>
+                                <button onClick={() => handleRegenerateCode('teacher')} className="mt-4 bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition">
+                                    Regenerate Teacher Code
+                                </button>
+                            </div>
 
-                    <div className="bg-purple-50 p-6 rounded-lg shadow-inner border border-purple-200">
-                        <h2 className="text-2xl font-bold text-purple-600 mb-2">Student Registration Code</h2>
-                        <p className="text-4xl font-mono tracking-wider text-purple-800 break-words select-all">{instituteData.studentRegistrationCode}</p>
-                        <p className="text-sm text-gray-500 mt-2">Students will use this code when they select "I am a Student" and join your institute.</p>
-                        <button onClick={() => handleRegenerateCode('student')} className="mt-4 bg-purple-500 text-white py-2 px-4 rounded-md hover:bg-purple-600 transition">
-                            Regenerate Student Code
+                            <div className="bg-purple-50 p-6 rounded-lg shadow-inner border border-purple-200">
+                                <h2 className="text-2xl font-bold text-purple-600 mb-2">Student Registration Code</h2>
+                                <p className="text-4xl font-mono tracking-wider text-purple-800 break-words select-all">{instituteData.studentRegistrationCode}</p>
+                                <p className="text-sm text-gray-500 mt-2">Students will use this code when they select "I am a Student" and join your institute.</p>
+                                <button onClick={() => handleRegenerateCode('student')} className="mt-4 bg-purple-500 text-white py-2 px-4 rounded-md hover:bg-purple-600 transition">
+                                    Regenerate Student Code
+                                </button>
+                            </div>
+                        </div>
+
+                        <button onClick={handleLogout} className="w-full mt-8 py-3 font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 transition duration-300 transform hover:scale-105">
+                            Logout
                         </button>
                     </div>
                 </div>
-
-                <button onClick={handleLogout} className="w-full mt-8 py-3 font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 transition duration-300 transform hover:scale-105">
-                    Logout
-                </button>
-            </div>
+            </main>
+            <BottomNavbar />
         </div>
     );
 }

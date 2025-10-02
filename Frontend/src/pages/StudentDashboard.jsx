@@ -25,10 +25,10 @@ const StudentDashboard = () => {
     }
 
     return (
-        <div className="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark transition-colors duration-300 p-4 min-h-screen">
-            <div className="flex h-full max-h-[1024px] w-full max-w-7xl mx-auto bg-transparent rounded-xl overflow-hidden">
-                <SideNavbar /> {/* Side Navbar for large screens */}
-                <main className="flex-1 p-6 lg:p-8 overflow-y-auto bg-white/50 dark:bg-black/20 rounded-lg">
+        <div className="flex h-screen bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark transition-colors duration-300">
+            <SideNavbar />
+            <main className="flex-1 m-6 p-6 lg:p-8 overflow-y-auto bg-white/50 dark:bg-black/20 rounded-2xl shadow-lg">
+                <div className="w-full max-w-7xl mx-auto">
                     <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8 h-full">
                         {/* Left column for Profile and Leaderboard */}
                         <div className="xl:col-span-2 flex flex-col gap-6 lg:gap-8">
@@ -41,9 +41,9 @@ const StudentDashboard = () => {
                             <GamifiedActions />
                         </div>
                     </div>
-                </main>
-            </div>
-            <BottomNavbar /> {/* Bottom Navbar for mobile screens */}
+                </div>
+            </main>
+            <BottomNavbar />
         </div>
     );
 };

@@ -39,8 +39,15 @@ const SideNavbar = () => {
             { icon: 'public', path: '/teacher/impact-map', label: 'Impact Map' },
             { icon: 'settings', path: '/teacher/settings', label: 'Settings' },
         ];
+    } else {
+        // Default items for guests
+        navItems = [
+            { icon: 'home', path: '/', label: 'Home' },
+            { icon: 'videogame_asset', path: '/games', label: 'Games' },
+            { icon: 'leaderboard', path: '/leaderboard', label: 'Leaderboard' },
+            { icon: 'info', path: '/about', label: 'About' },
+        ];
     }
-    // Add more roles if needed, e.g., 'hod'
 
     return (
         <nav className="hidden lg:flex flex-col items-center justify-between p-4 transition-all duration-300 w-20 m-6 rounded-2xl shadow-lg bg-white/50 dark:bg-black/20">

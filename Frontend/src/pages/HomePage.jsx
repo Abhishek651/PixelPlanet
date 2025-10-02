@@ -1,87 +1,93 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+// frontend/src/pages/HomePage.jsx
+import React, { useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-// import { signOut } from 'firebase/auth'; // Logout is now primarily on dashboards
-// import { auth } from '../services/firebase';
+
+// Import all the components
+import SideNavbar from '../components/SideNavbar';
+import BottomNavbar from '../components/BottomNavbar';
+import HeroSection from '../components/HeroSection';
+import FeaturesSection from '../components/FeaturesSection';
+import StatsSection from '../components/StatsSection';
+import AuthSidebar from '../components/AuthSidebar';
 import InstituteCodeModal from '../components/InstituteCodeModal';
+import GamesSection from '../components/GamesSection';
+import GlobalLeaderboardSection from '../components/GlobalLeaderboardSection';
 
 function HomePage() {
-    const { currentUser, loading, userRole } = useAuth();
+    const { currentUser, loading } = useAuth();
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const navigate = useNavigate();
 
-    // Effect to redirect logged-in users to their dashboard
-    useEffect(() => {
-        if (!loading && currentUser && userRole) {
-            const path = getDashboardPath(userRole);
-            if (path !== '/') { // Avoid infinite loop if getDashboardPath returns '/'
-                navigate(path, { replace: true });
-            }
-        }
-    }, [currentUser, loading, userRole, navigate]);
-
-    // Helper function to determine dashboard path based on role
-    const getDashboardPath = (role) => {
-        switch (role) {
-            case 'hod':
-                return '/dashboard/institute-admin';
-            case 'teacher':
-                return '/dashboard/teacher';
-            case 'student':
-                return '/dashboard/student';
-            default:
-                return '/'; // Fallback to home if no role or unknown role
-        }
-    };
-
-    // If loading, show a simple loading message
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-green-50 text-center p-4">
-                <p className="text-xl text-gray-600 animate-pulse">Loading user status...</p>
+            <div className="flex items-center justify-center min-h-screen bg-background-light dark:bg-background-dark">
+                <p className="text-xl text-gray-600 animate-pulse">Initializing PixelPlanet...</p>
             </div>
         );
     }
 
-    // If currentUser exists and has a role, the useEffect above will redirect them.
-    // So, if we reach here, it means currentUser is null (user is not logged in).
+    // If a user is already logged in, the MainRedirect in App.jsx should handle this.
+    // This is an extra safeguard.
+    if (currentUser) {
+        return <Navigate to="/" replace />; // This will trigger MainRedirect again to send them to their dashboard
+    }
+
+    // Pass the function to open the modal to the AuthSidebar
+    const AuthSidebarWithModal = () => (
+        <aside className="hidden xl:flex flex-col w-80 p-6 space-y-6">
+            <div className="glassmorphism p-6 rounded-2xl shadow-soft-lg text-center flex-grow flex flex-col justify-center">
+                <h3 className="text-2xl font-bold font-display text-text-light dark:text-text-dark">Ready to Start?</h3>
+                <p className="mt-2 mb-6 text-text-secondary-light dark:text-text-secondary-dark">Join a community of eco-warriors and make a difference.</p>
+                <div className="space-y-4">
+                    <a href="/register/institute" className="w-full block py-3 px-6 bg-primary text-white font-semibold rounded-full hover:bg-primary-light transition shadow-soft">
+                        Register Institute
+                    </a>
+                    <button 
+                        onClick={() => setIsModalOpen(true)}
+                        className="w-full py-3 px-6 bg-surface-light dark:bg-surface-dark border border-primary/20 text-primary font-semibold rounded-full hover:bg-primary/10 transition"
+                    >
+                        Join with Code
+                    </button>
+                </div>
+                <div className="mt-8 text-sm">
+                    <span className="text-text-secondary-light dark:text-text-secondary-dark">Already have an account? </span>
+                    <a href="/login" className="font-semibold text-primary hover:underline">
+                        Log In
+                    </a>
+                </div>
+            </div>
+        </aside>
+    );
+
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-green-50 text-center p-4">
-            <h1 className="text-5xl font-bold text-green-800 mb-4">Welcome to PixelPlanet!</h1>
-            <p className="text-xl text-green-600 mb-12">
-                The gamified platform for environmental education. Choose your path to get started.
-            </p>
+        <div className="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark transition-colors duration-300 font-body">
+            <div className="flex h-screen w-full max-w-screen-2xl mx-auto overflow-hidden">
+                {/* Side Navbar - for Desktop */}
+                <SideNavbar />
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl">
-                {/* Go Global - Student Login */}
-                <Link to="/login?role=student&mode=global" className="p-8 bg-white rounded-lg shadow-md hover:shadow-xl transition flex flex-col items-center justify-center">
-                    <h2 className="text-2xl font-bold text-blue-600">Go Global</h2>
-                    <p className="mt-2 text-gray-600">Compete as an individual student on the global leaderboard.</p>
-                </Link>
+                {/* Main Scrolling Content */}
+                <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 space-y-8 md:space-y-12">
+                    <HeroSection />
+                    <FeaturesSection />
+                    <StatsSection />
+                    <GamesSection />
+                    <GlobalLeaderboardSection />
+                    
+                    {/* Footer or extra content can go here */}
+                    <footer className="text-center py-8 text-text-secondary-light dark:text-text-secondary-dark text-sm">
+                        &copy; {new Date().getFullYear()} PixelPlanet. All Rights Reserved.
+                    </footer>
+                </main>
 
-                {/* Join Institute - Now opens the modal */}
-                <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="p-8 bg-white rounded-lg shadow-md hover:shadow-xl transition flex flex-col items-center justify-center text-left w-full"
-                >
-                    <h2 className="text-2xl font-bold text-purple-600">Join Institute</h2>
-                    <p className="mt-2 text-gray-600">Are you a teacher or student with an Institute ID?</p>
-                </button>
-
-                {/* Register Institute - HOD registration */}
-                <Link to="/register/institute" className="p-8 bg-white rounded-lg shadow-md hover:shadow-xl transition flex flex-col items-center justify-center">
-                    <h2 className="text-2xl font-bold text-red-600">Register Institute</h2>
-                    <p className="mt-2 text-gray-600">Administrators, get your school or college started here.</p>
-                </Link>
-
-                {/* Explicit Login (for general login, if not covered by above paths) */}
-                <Link to="/login" className="col-span-full p-4 mt-4 bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 transition">
-                    Already have an account? Login here!
-                </Link>
+                {/* Auth Sidebar - for large desktops */}
+                <AuthSidebarWithModal />
             </div>
 
-            {/* Render the modal */}
-            <InstituteCodeModal
+            {/* Bottom Navbar - for Mobile */}
+            <BottomNavbar />
+
+            {/* The modal, controlled by state */}
+            <InstituteCodeModal 
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
             />

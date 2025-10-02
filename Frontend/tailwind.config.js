@@ -4,35 +4,44 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
-  darkMode: "class", // Enable dark mode support
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
-        primary: "#22c55e", // green-500
-        "background-light": "#f0fdf4", // green-50
-        "background-dark": "#052e16", // green-950
-        "surface-light": "rgba(220, 252, 231, 0.6)", // green-100 with opacity
-        "surface-dark": "rgba(22, 101, 52, 0.6)", // green-800 with opacity
-        "text-light": "#1f2937", // gray-800
-        "text-dark": "#e5e7eb", // gray-200
-        "profile-start": "#4ade80", // green-400
-        "profile-end": "#22c55e", // green-500
-        "profile-dark-start": "#16a34a", // green-600
-        "profile-dark-end": "#15803d", // green-700
+        // New Green-Themed Palette
+        'nyanza': '#d8f3dc',
+        'celadon': '#b7e4c7',
+        'mint-light': '#95d5b2',
+        'mint': '#74c69d',
+        'mint-dark': '#52b788',
+        'sea-green': '#40916c',
+        'dartmouth-green': '#2d6a4f',
+        'brunswick-green': '#1b4332',
+        'dark-green': '#081c15',
+        // Aliases for easier use
+        'primary': '#40916c', // sea-green
+        'primary-light': '#52b788', // mint-dark
+        'background-light': '#f7fdf8', // A very light nyanza
+        'background-dark': '#081c15', // dark-green
+        'surface-light': 'rgba(216, 243, 220, 0.6)', // nyanza with opacity
+        'surface-dark': 'rgba(27, 67, 50, 0.6)', // brunswick-green with opacity
+        'text-light': '#081c15', // dark-green for high contrast on light bg
+        'text-dark': '#d8f3dc', // nyanza for high contrast on dark bg
+        'text-secondary-light': '#2d6a4f', // dartmouth-green
+        'text-secondary-dark': '#95d5b2', // mint-light
       },
       fontFamily: {
         display: ["Montserrat", "sans-serif"],
         body: ["Poppins", "sans-serif"],
       },
       borderRadius: {
-        DEFAULT: "1.5rem",
-        lg: "2rem",
-        xl: "3rem",
-        full: "9999px"
+        'xl': '1.5rem',
+        '2xl': '2rem',
+        '3xl': '3rem',
       },
       boxShadow: {
-        'soft': '0 10px 15px -3px rgba(0, 0, 0, 0.03), 0 4px 6px -4px rgba(0, 0, 0, 0.03)',
-        'soft-lg': '0 25px 50px -12px rgba(0, 0, 0, 0.05)',
+        'soft': '0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -4px rgba(0, 0, 0, 0.04)',
+        'soft-lg': '0 25px 50px -12px rgba(0, 0, 0, 0.08)',
       },
       backdropBlur: {
         'xl': '24px',
