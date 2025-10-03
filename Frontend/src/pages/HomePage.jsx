@@ -7,7 +7,6 @@ import { useAuth } from '../context/AuthContext';
 import SideNavbar from '../components/SideNavbar';
 import BottomNavbar from '../components/BottomNavbar';
 import HeroSection from '../components/HeroSection';
-import FeaturesSection from '../components/FeaturesSection';
 import StatsSection from '../components/StatsSection';
 import AuthSidebar from '../components/AuthSidebar';
 import InstituteCodeModal from '../components/InstituteCodeModal';
@@ -68,7 +67,6 @@ function HomePage() {
                 {/* Main Scrolling Content */}
                 <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 space-y-8 md:space-y-12">
                     <HeroSection />
-                    <FeaturesSection />
                     <StatsSection />
                     <GamesSection />
                     <GlobalLeaderboardSection />

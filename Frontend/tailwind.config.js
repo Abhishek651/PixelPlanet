@@ -8,7 +8,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        // New Green-Themed Palette
+        // Your existing palette (mostly greens)
         'nyanza': '#d8f3dc',
         'celadon': '#b7e4c7',
         'mint-light': '#95d5b2',
@@ -18,17 +18,20 @@ export default {
         'dartmouth-green': '#2d6a4f',
         'brunswick-green': '#1b4332',
         'dark-green': '#081c15',
-        // Aliases for easier use
-        'primary': '#40916c', // sea-green
-        'primary-light': '#52b788', // mint-dark
-        'background-light': '#f7fdf8', // A very light nyanza
-        'background-dark': '#081c15', // dark-green
-        'surface-light': 'rgba(216, 243, 220, 0.6)', // nyanza with opacity
-        'surface-dark': 'rgba(27, 67, 50, 0.6)', // brunswick-green with opacity
-        'text-light': '#081c15', // dark-green for high contrast on light bg
-        'text-dark': '#d8f3dc', // nyanza for high contrast on dark bg
-        'text-secondary-light': '#2d6a4f', // dartmouth-green
-        'text-secondary-dark': '#95d5b2', // mint-light
+
+        // Adjusted Primary, Background, and Text for Login/Signup
+        'primary': '#4CAF50', // A strong, vibrant green matching the image
+        'primary-light': '#8BC34A', // Lighter green for hover/active states
+        'background-light': '#FFFFFF', // Pure white for the main card background
+        'background-dark': '#081c15', // Keep dark green for dark mode background
+        'surface-light': 'rgba(255, 255, 255, 0.9)', // White with subtle glassmorphism
+        'surface-dark': 'rgba(27, 67, 50, 0.6)', // Keep dark green surface for dark mode
+        'text-light': '#212121', // Darker gray for text on light backgrounds
+        'text-dark': '#E0E0E0', // Lighter gray for text on dark backgrounds
+        'text-secondary-light': '#757575', // Gray for secondary text
+        'text-secondary-dark': '#BDBDBD', // Lighter gray for secondary text
+        'border-light': '#E0E0E0', // Light gray for borders
+        'border-dark': '#424242', // Darker gray for borders
       },
       fontFamily: {
         display: ["Montserrat", "sans-serif"],
@@ -38,10 +41,14 @@ export default {
         'xl': '1.5rem',
         '2xl': '2rem',
         '3xl': '3rem',
+        '4xl': '4rem', // For the very rounded card top
+        '5xl': '5rem',
       },
       boxShadow: {
-        'soft': '0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -4px rgba(0, 0, 0, 0.04)',
-        'soft-lg': '0 25px 50px -12px rgba(0, 0, 0, 0.08)',
+        'soft': '0 4px 6px rgba(0, 0, 0, 0.05)',
+        'soft-md': '0 8px 12px rgba(0, 0, 0, 0.08)',
+        'soft-lg': '0 15px 30px rgba(0, 0, 0, 0.1)',
+        'soft-xl': '0 25px 50px rgba(0, 0, 0, 0.15)',
       },
       backdropBlur: {
         'xl': '24px',

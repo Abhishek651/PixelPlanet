@@ -37,7 +37,15 @@ const SideNavbar = () => {
             { icon: 'task_alt', path: '/teacher/quests', label: 'Quests Overview' },
             { icon: 'assessment', path: '/teacher/reports', label: 'Reports' },
             { icon: 'public', path: '/teacher/impact-map', label: 'Impact Map' },
-            { icon: 'settings', path: '/teacher/settings', label: 'Settings' },
+            { icon: 'person', path: '/profile', label: 'Profile' },
+        ];
+    } else if (userRole === 'hod') {
+        navItems = [
+            { icon: 'dashboard', path: '/dashboard/institute-admin', label: 'Admin' },
+            { icon: 'group', path: '/hod/teachers', label: 'Teachers' },
+            { icon: 'school', path: '/hod/students', label: 'Students' },
+            { icon: 'analytics', path: '/hod/analytics', label: 'Analytics' },
+            { icon: 'person', path: '/profile', label: 'Profile' },
         ];
     } else {
         // Default items for guests

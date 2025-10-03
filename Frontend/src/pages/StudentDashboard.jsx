@@ -1,6 +1,5 @@
 import React from 'react';
-import SideNavbar from '../components/SideNavbar';
-import BottomNavbar from '../components/BottomNavbar';
+import DashboardLayout from '../components/DashboardLayout';
 import ProfileCard from '../components/ProfileCard';
 import Leaderboard from '../components/Leaderboard';
 import ChallengesList from '../components/ChallengesList';
@@ -25,26 +24,20 @@ const StudentDashboard = () => {
     }
 
     return (
-        <div className="flex h-screen bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark transition-colors duration-300">
-            <SideNavbar />
-            <main className="flex-1 m-6 p-6 lg:p-8 overflow-y-auto bg-white/50 dark:bg-black/20 rounded-2xl shadow-lg">
-                <div className="w-full max-w-7xl mx-auto">
-                    <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8 h-full">
-                        {/* Left column for Profile and Leaderboard */}
-                        <div className="xl:col-span-2 flex flex-col gap-6 lg:gap-8">
-                            <ProfileCard />
-                            <Leaderboard />
-                        </div>
-                        {/* Right column for Challenges and Gamified Actions */}
-                        <div className="flex flex-col gap-6 lg:gap-8">
-                            <ChallengesList />
-                            <GamifiedActions />
-                        </div>
-                    </div>
+        <DashboardLayout>
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8 h-full">
+                {/* Left column for Profile and Leaderboard */}
+                <div className="xl:col-span-2 flex flex-col gap-6 lg:gap-8">
+                    <ProfileCard />
+                    <Leaderboard />
                 </div>
-            </main>
-            <BottomNavbar />
-        </div>
+                {/* Right column for Challenges and Gamified Actions */}
+                <div className="flex flex-col gap-6 lg:gap-8">
+                    <ChallengesList />
+                    <GamifiedActions />
+                </div>
+            </div>
+        </DashboardLayout>
     );
 };
 

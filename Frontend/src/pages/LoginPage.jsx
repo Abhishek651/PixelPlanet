@@ -1,73 +1,90 @@
-// frontend/src/pages/LoginPage.jsx
+
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from '../services/firebase';
+import { Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
+import AuthLayout from '../components/AuthLayout';
 
-function LoginPage() {
-    const [formData, setFormData] = useState({ email: '', password: '' });
+const LoginPage = () => {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const { login } = useAuth();
     const navigate = useNavigate();
-
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
-
-        const { email, password } = formData;
-
+        setLoading(true);
         try {
-            // --- LOGIN LOGIC ---
-            await signInWithEmailAndPassword(auth, email, password);
-            // App.jsx's ProtectedRoute/MainRedirect will handle role-based redirection from here.
+            await login(email, password);
             navigate('/');
         } catch (err) {
-            console.error("Frontend caught error during authentication:", err);
-            if (err.code && err.code.startsWith('auth/')) {
-                switch (err.code) {
-                    case 'auth/invalid-credential':
-                    case 'auth/user-not-found':
-                    case 'auth/wrong-password':
-                        setError('Invalid email or password. Please try again.');
-                        break;
-                    default:
-                        setError('An unexpected authentication error occurred.');
-                }
-            } else {
-                setError(err.response?.data?.message || err.message || 'An unknown error occurred.');
-            }
+            setError('Failed to log in. Please check your credentials.');
         }
+        setLoading(false);
+    };
+
+    const inputVariants = {
+        initial: { opacity: 0, y: 20 },
+        animate: { opacity: 1, y: 0 },
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100">
-            <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
-                <h2 className="text-2xl font-bold text-center">User Login</h2>
-
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <input type="email" name="email" placeholder="Email" value={formData.email} onChange={handleChange} required className="w-full px-3 py-2 border rounded" />
-                    <input type="password" name="password" placeholder="Password" value={formData.password} onChange={handleChange} required className="w-full px-3 py-2 border rounded" />
-
-                    {error && <p className="text-sm text-red-600 text-center">{error}</p>}
-
-                    <button type="submit" className="w-full py-2 font-semibold text-white bg-green-600 rounded-md hover:bg-green-700">
-                        Login
+        <AuthLayout
+            imageSrc="https://images.unsplash.com/photo-1501854140801-50d01698950b?q=80&w=2400&auto=format&fit=crop"
+            heading="Welcome Back"
+            subheading="Enter your credentials to access your account."
+        >
+            <form onSubmit={handleSubmit} className="space-y-6">
+                {error && (
+                    <motion.p
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="p-3 text-center text-red-800 bg-red-100 rounded-lg"
+                    >
+                        {error}
+                    </motion.p>
+                )}
+                <motion.div variants={inputVariants} transition={{ delay: 0.1 }}>
+                    <input
+                        type="email"
+                        placeholder="Email Address"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full p-4 bg-gray-100 dark:bg-gray-800 border border-border-light dark:border-border-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+                        required
+                    />
+                </motion.div>
+                <motion.div variants={inputVariants} transition={{ delay: 0.2 }}>
+                    <input
+                        type="password"
+                        placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full p-4 bg-gray-100 dark:bg-gray-800 border border-border-light dark:border-border-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+                        required
+                    />
+                </motion.div>
+                <motion.div variants={inputVariants} transition={{ delay: 0.3 }}>
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full p-4 font-bold text-white bg-primary rounded-xl hover:bg-primary-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
+                    >
+                        {loading ? 'Logging in...' : 'Log In'}
                     </button>
-                </form>
-
-                <div className="text-sm text-center text-gray-600 pt-4">
-                    <p className="mb-2">Need to create an account?</p>
-                    <div className="flex flex-col space-y-2">
-                         <Link to="/register-institute" className="font-semibold text-green-600 hover:underline">Register a new Institute</Link>
-                         <Link to="/join-institute" className="font-semibold text-green-600 hover:underline">Join an existing Institute</Link>
-                    </div>
-                </div>
-            </div>
-        </div>
+                </motion.div>
+                <p className="text-center text-text-secondary-light dark:text-text-secondary-dark">
+                    Don't have an account?{' '}
+                    <Link to="/register/institute" className="font-medium text-primary hover:underline">
+                        Register here
+                    </Link>
+                </p>
+            </form>
+        </AuthLayout>
     );
-}
+};
 
 export default LoginPage;

@@ -1,6 +1,6 @@
 // frontend/src/context/AuthContext.jsx
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react'; // Added useCallback
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../services/firebase';
 
 const AuthContext = createContext();
@@ -13,6 +13,10 @@ export const AuthProvider = ({ children }) => {
     const [currentUser, setCurrentUser] = useState(null);
     const [userRole, setUserRole] = useState(null);
     const [loading, setLoading] = useState(true);
+
+    const login = (email, password) => {
+        return signInWithEmailAndPassword(auth, email, password);
+    };
 
     // Added refreshAuth function for clarity and proper dependency handling
     const refreshAuth = useCallback(async () => {
@@ -63,6 +67,7 @@ export const AuthProvider = ({ children }) => {
         currentUser,
         userRole,
         loading,
+        login,
         refreshAuth // Make refreshAuth available via context
     };
 

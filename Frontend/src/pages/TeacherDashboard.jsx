@@ -1,6 +1,6 @@
 // frontend/src/pages/TeacherDashboard.jsx
 import React from 'react';
-import SideNavbar from '../components/SideNavbar'; // <--- UPDATED IMPORT
+import DashboardLayout from '../components/DashboardLayout';
 import TeacherHeader from '../components/TeacherHeader';
 import ClassOverview from '../components/ClassOverview';
 import ClassProgressChart from '../components/ClassProgressChart';
@@ -26,29 +26,24 @@ const TeacherDashboard = () => {
     }
 
     return (
-        <div className="flex h-screen bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark transition-colors duration-300">
-            <SideNavbar />
-            <main className="flex-1 p-6 lg:p-8 overflow-y-auto">
-                <div className="w-full max-w-7xl mx-auto">
-                    <TeacherHeader />
+        <DashboardLayout>
+            <TeacherHeader />
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
-                        <div className="md:col-span-2 flex flex-col gap-6 lg:gap-8">
-                            <ClassOverview />
-                            <ClassProgressChart />
-                        </div>
-                        <div className="flex flex-col gap-6 lg:gap-8">
-                            <AverageEcoPoints />
-                            <StudentPerformanceOverview />
-                        </div>
-                    </div>
-
-                    <div className="mt-6 lg:mt-8">
-                        <StudentPerformanceList />
-                    </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+                <div className="md:col-span-2 flex flex-col gap-6 lg:gap-8">
+                    <ClassOverview />
+                    <ClassProgressChart />
                 </div>
-            </main>
-        </div>
+                <div className="flex flex-col gap-6 lg:gap-8">
+                    <AverageEcoPoints />
+                    <StudentPerformanceOverview />
+                </div>
+            </div>
+
+            <div className="mt-6 lg:mt-8">
+                <StudentPerformanceList />
+            </div>
+        </DashboardLayout>
     );
 };
 
