@@ -4,7 +4,6 @@ import App from './App.jsx'
 import './index.css'
 import { AuthProvider } from './context/AuthContext.jsx'
 import { ChallengeProvider } from './context/ChallengeContext.jsx'
-import { SettingsProvider } from './context/SettingsContext.jsx'
 
 
 // Finds the <div id="root"></div> that lives in index.html and turns it into a reactive root
@@ -14,11 +13,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 
      {/* context provider that likely holds authentication state (user, login(), logout(), etc.) and makes it available to every component inside app */}
     <AuthProvider>
-      <SettingsProvider>
-        <ChallengeProvider>
-          <App />
-        </ChallengeProvider>
-      </SettingsProvider>
+      <ChallengeProvider>
+        <App />
+      </ChallengeProvider>
     {/* Your actual application component (router, layout, pages…). It receives the context values via useContext(AuthContext) or the AuthProvider’s consumer API.	Keeps your UI code clean and focused on presentation/logic */}
     </AuthProvider>
   </React.StrictMode>,

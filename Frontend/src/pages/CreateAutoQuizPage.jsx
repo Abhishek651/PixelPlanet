@@ -1,14 +1,13 @@
-import React, { useState, useEffect } from 'react';
+// frontend/src/pages/CreateAutoQuizPage.jsx
+import React, { useState } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
-import { ArrowLeft, Loader } from 'lucide-react';
+import { ArrowLeft, Loader, Plus, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useChallenges } from '../context/ChallengeContext';
-import { useSettings }_from '../context/SettingsContext';
 
 const CreateAutoQuizPage = () => {
     const navigate = useNavigate();
     const { addChallenge } = useChallenges();
-    const { settings } = useSettings();
     const [title, setTitle] = useState('');
     const [topic, setTopic] = useState('');
     const [numQuestions, setNumQuestions] = useState(5);
@@ -17,15 +16,9 @@ const CreateAutoQuizPage = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [openRouterApiKey, setOpenRouterApiKey] = useState('');
 
-    useEffect(() => {
-        if (settings && settings.openRouterApiKey) {
-            setOpenRouterApiKey(settings.openRouterApiKey);
-        }
-    }, [settings]);
-
     const handleGenerateQuiz = async () => {
         if (!openRouterApiKey) {
-            alert('OpenRouter API key is not set. Please ask the admin to set it in the site settings.');
+            alert('Please enter your OpenRouter API key.');
             return;
         }
 
@@ -104,6 +97,18 @@ Provide the output in the following JSON format:
                     </div>
                     <div className="p-6 space-y-8">
                         <div>
+                            <label htmlFor="apiKey" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">OpenRouter API Key</label>
+                            <input
+                                type="text"
+                                id="apiKey"
+                                value={openRouterApiKey}
+                                onChange={(e) => setOpenRouterApiKey(e.target.value)}
+                                className="mt-1 block w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
+                                placeholder="Enter your OpenRouter API key"
+                                required
+                            />
+                        </div>
+                        <div>
                             <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Quiz Title</label>
                             <input
                                 type="text"
@@ -159,7 +164,7 @@ Provide the output in the following JSON format:
                             <button
                                 type="button"
                                 onClick={handleGenerateQuiz}
-                                disabled={isLoading || !openRouterApiKey}
+                                disabled={isLoading}
                                 className="inline-flex items-center justify-center py-2.5 px-6 border border-transparent shadow-md text-sm font-semibold rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-400 transition-all"
                             >
                                 {isLoading ? (
