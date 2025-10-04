@@ -7,6 +7,7 @@ import ClassProgressChart from '../components/ClassProgressChart';
 import AverageEcoPoints from '../components/AverageEcoPoints';
 import StudentPerformanceOverview from '../components/StudentPerformanceOverview';
 import StudentPerformanceList from '../components/StudentPerformanceList';
+import ChallengesList from '../components/ChallengesList';
 import { useAuth } from '../context/AuthContext';
 import { Navigate } from 'react-router-dom';
 
@@ -42,6 +43,10 @@ const TeacherDashboard = () => {
 
             <div className="mt-6 lg:mt-8">
                 <StudentPerformanceList />
+            </div>
+
+            <div className="mt-6 lg:mt-8">
+                <ChallengesList />
             </div>
         </DashboardLayout>
     );

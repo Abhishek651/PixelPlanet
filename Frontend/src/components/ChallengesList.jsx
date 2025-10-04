@@ -1,11 +1,27 @@
 // frontend/src/components/ChallengesList.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronDown, Edit, Eye, ClipboardCheck, Film, FileText } from 'lucide-react';
-import { useChallenges } from '../context/ChallengeContext';
+import { db } from '../services/firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { useAuth } from '../context/AuthContext';
 
 const ChallengesList = () => {
     const [expandedChallenge, setExpandedChallenge] = useState(null);
-    const { challenges } = useChallenges(); // Use context
+    const { currentUser } = useAuth();
+    const [challenges, setChallenges] = useState([]);
+
+    useEffect(() => {
+        const fetchChallenges = async () => {
+            if (currentUser) {
+                const q = query(collection(db, 'quizzes'));
+                const querySnapshot = await getDocs(q);
+                const challengesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                setChallenges(challengesData);
+            }
+        };
+
+        fetchChallenges();
+    }, [currentUser]);
 
     const toggleChallenge = (id) => {
         setExpandedChallenge(expandedChallenge === id ? null : id);

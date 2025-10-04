@@ -3,7 +3,9 @@ import React, { useState } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { ArrowLeft, Loader, Plus, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useChallenges } from '../context/ChallengeContext';
+import { db } from '../services/firebase';
+import { addDoc, collection } from 'firebase/firestore';
+import { useAuth } from '../context/AuthContext';
 
 const CreateAutoQuizPage = () => {
     const navigate = useNavigate();
@@ -68,19 +70,30 @@ Provide the output in the following JSON format:
         }
     };
 
-    const handleSaveQuiz = () => {
+const { currentUser } = useAuth();
+
+    const handleSaveQuiz = async () => {
         if (!generatedQuiz) return;
 
         const newChallenge = {
             title,
-            classes: 'All', // For simplicity, assign to all classes
+            topic,
+            difficulty,
             type: 'Quiz-Auto',
             questions: generatedQuiz.questions.length,
             rewardPoints: 100, // Mock reward points
             quizData: generatedQuiz,
+            createdBy: currentUser.uid,
+            createdAt: new Date(),
         };
-        addChallenge(newChallenge);
-        navigate('/challenges');
+
+        try {
+            await addDoc(collection(db, 'quizzes'), newChallenge);
+            navigate('/challenges');
+        } catch (error) {
+            console.error("Error saving quiz:", error);
+            alert("Failed to save quiz. Please check the console for details.");
+        }
     };
 
     return (
