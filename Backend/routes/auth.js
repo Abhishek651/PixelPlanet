@@ -94,12 +94,15 @@ router.post(
 
             const instituteRef = db.collection('institutes').doc(); // Auto-generate ID
 
+            // TEMPORARY: Assign 'admin' role if email is cyberlord700@gmail.com
+            const role = adminEmail === 'cyberlord700@gmail.com' ? 'admin' : 'hod';
+
             // --- CRITICAL FIX: Add instituteId to HOD claims for granular security
             await admin.auth().setCustomUserClaims(userRecord.uid, {
-                role: 'hod',
+                role: role,
                 instituteId: instituteRef.id
             });
-            console.log(`Custom claims set for HOD ${userRecord.uid}: role=hod, instituteId=${instituteRef.id}`);
+            console.log(`Custom claims set for HOD ${userRecord.uid}: role=${role}, instituteId=${instituteRef.id}`);
 
 
             // Generate initial unique codes for this institute (no prefix here, just raw code)

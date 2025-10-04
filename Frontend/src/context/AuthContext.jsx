@@ -1,7 +1,8 @@
 // frontend/src/context/AuthContext.jsx
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react'; // Added useCallback
 import { onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../services/firebase';
+import { auth, db } from '../services/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 const AuthContext = createContext();
 
@@ -12,10 +13,22 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
     const [currentUser, setCurrentUser] = useState(null);
     const [userRole, setUserRole] = useState(null);
+    const [instituteId, setInstituteId] = useState(null);
     const [loading, setLoading] = useState(true);
 
     const login = (email, password) => {
         return signInWithEmailAndPassword(auth, email, password);
+    };
+
+    const fetchUserData = async (user) => {
+        if (user) {
+            const userDocRef = doc(db, 'users', user.uid);
+            const userDoc = await getDoc(userDocRef);
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                setInstituteId(userData.instituteId);
+            }
+        }
     };
 
     // Added refreshAuth function for clarity and proper dependency handling
@@ -26,15 +39,18 @@ export const AuthProvider = ({ children }) => {
                 const tokenResult = await auth.currentUser.getIdTokenResult(true); // Force refresh
                 setCurrentUser(auth.currentUser);
                 setUserRole(tokenResult.claims.role || null); // Use null instead of 'global' if no role
+                await fetchUserData(auth.currentUser);
                 console.log("AuthContext: Claims refreshed - Role:", tokenResult.claims.role);
             } catch (error) {
                 console.error("AuthContext: Error refreshing auth token/claims:", error);
                 setCurrentUser(null);
                 setUserRole(null);
+                setInstituteId(null);
             }
         } else {
             setCurrentUser(null);
             setUserRole(null);
+            setInstituteId(null);
         }
         setLoading(false);
     }, []); // No dependencies for useCallback, as auth.currentUser is always current
@@ -48,6 +64,7 @@ export const AuthProvider = ({ children }) => {
                     // Get ID token result to access custom claims (force refresh on state change too)
                     const tokenResult = await user.getIdTokenResult(true); // Pass `true` to force refresh
                     setUserRole(tokenResult.claims.role || null); // Use null for no role
+                    await fetchUserData(user);
                     console.log("AuthContext: User logged in. Role:", tokenResult.claims.role);
                 } catch (error) {
                     console.error("AuthContext: Error getting ID token result during onAuthStateChanged:", error);
@@ -55,6 +72,7 @@ export const AuthProvider = ({ children }) => {
                 }
             } else {
                 setUserRole(null); // Clear role if no user
+                setInstituteId(null);
                 console.log("AuthContext: User logged out.");
             }
             setLoading(false); // Auth state determined
@@ -66,6 +84,7 @@ export const AuthProvider = ({ children }) => {
     const value = {
         currentUser,
         userRole,
+        instituteId,
         loading,
         login,
         refreshAuth // Make refreshAuth available via context

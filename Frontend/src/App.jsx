@@ -8,8 +8,15 @@ import RegisterInstitutePage from './pages/RegisterInstitutePage';
 import InstituteAdminPage from './pages/InstituteAdminPage';
 import JoinInstitutePage from './pages/JoinInstitutePage';
 import TeacherDashboard from './pages/TeacherDashboard';
-import StudentDashboard from './pages/StudentDashboard'; 
+import StudentDashboard from './pages/StudentDashboard';
 import ProfilePage from './pages/ProfilePage';
+import ChallengePage from './pages/ChallengePage';
+import CreatePhysicalChallengePage from './pages/CreatePhysicalChallengePage';
+import CreateAutoQuizPage from './pages/CreateAutoQuizPage';
+import CreateManualQuizPage from './pages/CreateManualQuizPage';
+import CreateVideoChallengePage from './pages/CreateVideoChallengePage';
+import SubmissionsPage from './pages/SubmissionsPage';
+import MainAdminDashboard from './pages/MainAdminDashboard';
 
 function ProtectedRoute({ children, allowedRoles }) {
   const { currentUser, userRole, loading } = useAuth();
@@ -33,6 +40,7 @@ function MainRedirect() {
 
   if (currentUser && userRole) {
     switch (userRole) {
+      case 'admin': return <Navigate to="/dashboard/admin" replace />;
       case 'hod': return <Navigate to="/dashboard/institute-admin" replace />;
       case 'teacher': return <Navigate to="/dashboard/teacher" replace />;
       case 'student': return <Navigate to="/dashboard/student" replace />;
@@ -62,12 +70,40 @@ function App() {
           element={<ProtectedRoute><p>Generic Dashboard - Role-based redirect expected</p></ProtectedRoute>}
         />
         <Route
+          path="/dashboard/admin"
+          element={<ProtectedRoute allowedRoles={['admin']}><MainAdminDashboard /></ProtectedRoute>}
+        />
+        <Route
           path="/dashboard/institute-admin"
           element={<ProtectedRoute allowedRoles={['hod']}><InstituteAdminPage /></ProtectedRoute>}
         />
         <Route
           path="/dashboard/teacher"
           element={<ProtectedRoute allowedRoles={['teacher']}><TeacherDashboard /></ProtectedRoute>} // <-- use real component
+        />
+        <Route
+          path="/create-physical-challenge"
+          element={<ProtectedRoute allowedRoles={['teacher']}><CreatePhysicalChallengePage /></ProtectedRoute>}
+        />
+        <Route
+          path="/create-auto-quiz"
+          element={<ProtectedRoute allowedRoles={['teacher']}><CreateAutoQuizPage /></ProtectedRoute>}
+        />
+        <Route
+          path="/create-manual-quiz"
+          element={<ProtectedRoute allowedRoles={['teacher']}><CreateManualQuizPage /></ProtectedRoute>}
+        />
+        <Route
+          path="/create-video-challenge"
+          element={<ProtectedRoute allowedRoles={['teacher']}><CreateVideoChallengePage /></ProtectedRoute>}
+        />
+        <Route
+          path="/challenges"
+          element={
+            <ProtectedRoute allowedRoles={['student', 'teacher']}>
+              <ChallengePage />
+            </ProtectedRoute>
+          }
         />
         <Route
           
@@ -78,6 +114,11 @@ function App() {
     </ProtectedRoute>
   }
         />
+        <Route
+          path="/challenges/:challengeId/submissions"
+          element={<ProtectedRoute allowedRoles={['teacher']}><SubmissionsPage /></ProtectedRoute>}
+        />
+
         <Route // <--- NEW PROFILE ROUTE
           path="/profile"
           element={

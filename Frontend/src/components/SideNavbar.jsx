@@ -33,6 +33,7 @@ const SideNavbar = () => {
     } else if (userRole === 'teacher') {
         navItems = [
             { icon: 'dashboard', path: '/dashboard/teacher', label: 'Dashboard Home' },
+            { icon: 'shield', path: '/challenges', label: 'Challenges' },
             { icon: 'book', path: '/teacher/curriculum', label: 'Curriculum' },
             { icon: 'task_alt', path: '/teacher/quests', label: 'Quests Overview' },
             { icon: 'assessment', path: '/teacher/reports', label: 'Reports' },

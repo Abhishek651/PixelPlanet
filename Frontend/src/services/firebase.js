@@ -25,5 +25,5 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
 // Example for other services:
-// import { getFirestore } from "firebase/firestore";
-// export const db = getFirestore(app);
+import { getFirestore } from "firebase/firestore";
+export const db = getFirestore(app);
