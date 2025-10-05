@@ -48,6 +48,12 @@ const SideNavbar = () => {
             { icon: 'analytics', path: '/hod/analytics', label: 'Analytics' },
             { icon: 'person', path: '/profile', label: 'Profile' },
         ];
+    } else if (userRole === 'admin') {
+        navItems = [
+            { icon: 'dashboard', path: '/dashboard/main-admin', label: 'Dashboard' },
+            { icon: 'settings', path: '/admin/settings', label: 'Site Settings' },
+            { icon: 'person', path: '/profile', label: 'Profile' },
+        ];
     } else {
         // Default items for guests
         navItems = [

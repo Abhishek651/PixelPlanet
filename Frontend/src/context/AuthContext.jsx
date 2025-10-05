@@ -22,11 +22,15 @@ export const AuthProvider = ({ children }) => {
 
     const fetchUserData = async (user) => {
         if (user) {
+            console.log("AuthContext: fetchUserData for user:", user.uid);
             const userDocRef = doc(db, 'users', user.uid);
             const userDoc = await getDoc(userDocRef);
             if (userDoc.exists()) {
                 const userData = userDoc.data();
+                console.log("AuthContext: Fetched user data:", userData);
                 setInstituteId(userData.instituteId);
+            } else {
+                console.log("AuthContext: User document not found for user:", user.uid);
             }
         }
     };
@@ -37,6 +41,7 @@ export const AuthProvider = ({ children }) => {
         if (auth.currentUser) { // Use auth.currentUser directly for refresh
             try {
                 const tokenResult = await auth.currentUser.getIdTokenResult(true); // Force refresh
+                console.log("AuthContext: refreshed tokenResult:", tokenResult);
                 setCurrentUser(auth.currentUser);
                 setUserRole(tokenResult.claims.role || null); // Use null instead of 'global' if no role
                 await fetchUserData(auth.currentUser);
@@ -58,11 +63,13 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             console.log("AuthContext: onAuthStateChanged triggered. User:", user ? user.uid : "null");
+            console.log("AuthContext: onAuthStateChanged user object:", user);
             setCurrentUser(user); // Set currentUser regardless
             if (user) {
                 try {
                     // Get ID token result to access custom claims (force refresh on state change too)
                     const tokenResult = await user.getIdTokenResult(true); // Pass `true` to force refresh
+                    console.log("AuthContext: tokenResult:", tokenResult);
                     setUserRole(tokenResult.claims.role || null); // Use null for no role
                     await fetchUserData(user);
                     console.log("AuthContext: User logged in. Role:", tokenResult.claims.role);

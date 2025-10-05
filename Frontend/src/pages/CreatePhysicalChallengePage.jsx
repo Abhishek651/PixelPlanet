@@ -3,11 +3,13 @@ import React, { useState } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useChallenges } from '../context/ChallengeContext';
+import { db } from '../services/firebase';
+import { addDoc, collection, doc, getDoc } from 'firebase/firestore';
+import { useAuth } from '../context/AuthContext';
 
 const CreatePhysicalChallengePage = () => {
     const navigate = useNavigate();
-    const { addChallenge } = useChallenges();
+    const { currentUser } = useAuth();
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [selectedClasses, setSelectedClasses] = useState([]);
@@ -25,18 +27,36 @@ const CreatePhysicalChallengePage = () => {
         setSelectedClasses(values);
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        console.log('CreatePhysicalChallengePage: handleSubmit called.');
+
+        if (!currentUser) {
+            alert('You must be logged in to create a challenge.');
+            return;
+        }
+
         const newChallenge = {
             title,
             description,
-            classes: selectedClasses.join(', '),
+            classes: selectedClasses,
             expiryDate,
-            rewardPoints,
+            rewardPoints: Number(rewardPoints),
             type: 'Physical',
+            createdBy: currentUser.uid,
+            createdAt: new Date(),
+            status: 'Active',
+            completion: 0,
         };
-        addChallenge(newChallenge);
-        navigate('/challenges');
+        console.log('CreatePhysicalChallengePage: Creating new physical challenge:', newChallenge);
+        try {
+            const docRef = await addDoc(collection(db, 'quizzes'), newChallenge);
+            console.log('CreatePhysicalChallengePage: Challenge pushed to Firebase with ID:', docRef.id);
+            navigate('/challenges');
+        } catch (error) {
+            console.error("Error creating physical challenge:", error);
+            alert("Failed to create challenge. Please check the console for details.");
+        }
     };
 
     return (

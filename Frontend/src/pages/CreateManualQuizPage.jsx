@@ -3,11 +3,13 @@ import React, { useState } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useChallenges } from '../context/ChallengeContext';
+import { db } from '../services/firebase';
+import { addDoc, collection, doc, getDoc } from 'firebase/firestore';
+import { useAuth } from '../context/AuthContext';
 
 const CreateManualQuizPage = () => {
     const navigate = useNavigate();
-    const { addChallenge } = useChallenges();
+    const { currentUser } = useAuth();
     const [title, setTitle] = useState('');
     const [selectedClasses, setSelectedClasses] = useState([]);
     const [questions, setQuestions] = useState([{ text: '', options: ['', ''], correctAnswer: 0 }]);
@@ -22,7 +24,7 @@ const CreateManualQuizPage = () => {
         const values = Array.from(e.target.selectedOptions, option => option.value);
         setSelectedClasses(values);
     };
-
+    
     const handleQuestionChange = (index, text) => {
         const newQuestions = [...questions];
         newQuestions[index].text = text;
@@ -62,17 +64,36 @@ const CreateManualQuizPage = () => {
         setQuestions(newQuestions);
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        console.log('CreateManualQuizPage: handleSubmit called.');
+
+        if (!currentUser) {
+            alert('You must be logged in to create a quiz.');
+            return;
+        }
+
         const newChallenge = {
             title,
-            classes: selectedClasses.join(', '),
+            classes: selectedClasses,
             type: 'Quiz-Manual',
             questions: questions.length,
             rewardPoints: 100, // Mock reward points
+            quizData: { questions },
+            createdBy: currentUser.uid,
+            createdAt: new Date(),
+            status: 'Active',
+            completion: 0,
         };
-        addChallenge(newChallenge);
-        navigate('/challenges');
+        console.log('CreateManualQuizPage: Creating new manual quiz challenge:', newChallenge);
+        try {
+            const docRef = await addDoc(collection(db, 'quizzes'), newChallenge);
+            console.log('CreateManualQuizPage: Quiz pushed to Firebase with ID:', docRef.id);
+            navigate('/challenges');
+        } catch (error) {
+            console.error("Error creating manual quiz:", error);
+            alert("Failed to create quiz. Please check the console for details.");
+        }
     };
 
     return (

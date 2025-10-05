@@ -27,7 +27,9 @@ app.use(express.json());
 
 // --- 5. IMPORT & USE ROUTES ---
 const authRoutes = require('./routes/auth');
+const quizRoutes = require('./routes/quiz'); // Import quiz routes
 app.use('/api/auth', authRoutes);
+app.use('/api/quiz', quizRoutes); // Use quiz routes
 
 // --- 6. EXPORT THE APP FOR VERCEL ---
 module.exports = app;

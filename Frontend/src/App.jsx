@@ -17,6 +17,8 @@ import CreateManualQuizPage from './pages/CreateManualQuizPage';
 import CreateVideoChallengePage from './pages/CreateVideoChallengePage';
 import SubmissionsPage from './pages/SubmissionsPage';
 import MainAdminDashboard from './pages/MainAdminDashboard';
+import SiteSettings from './components/SiteSettings';
+import DashboardLayout from './components/DashboardLayout';
 
 function ProtectedRoute({ children, allowedRoles }) {
   const { currentUser, userRole, loading } = useAuth();
@@ -71,15 +73,19 @@ function App() {
         />
         <Route
           path="/dashboard/admin"
-          element={<ProtectedRoute allowedRoles={['admin']}><MainAdminDashboard /></ProtectedRoute>}
+          element={<ProtectedRoute allowedRoles={['admin']}><DashboardLayout><MainAdminDashboard /></DashboardLayout></ProtectedRoute>}
+        />
+        <Route
+          path="/admin/settings"
+          element={<ProtectedRoute allowedRoles={['admin']}><DashboardLayout><SiteSettings /></DashboardLayout></ProtectedRoute>}
         />
         <Route
           path="/dashboard/institute-admin"
-          element={<ProtectedRoute allowedRoles={['hod']}><InstituteAdminPage /></ProtectedRoute>}
+          element={<ProtectedRoute allowedRoles={['hod']}><DashboardLayout><InstituteAdminPage /></DashboardLayout></ProtectedRoute>}
         />
         <Route
           path="/dashboard/teacher"
-          element={<ProtectedRoute allowedRoles={['teacher']}><TeacherDashboard /></ProtectedRoute>} // <-- use real component
+          element={<ProtectedRoute allowedRoles={['teacher']}><TeacherDashboard /></ProtectedRoute>}
         />
         <Route
           path="/create-physical-challenge"

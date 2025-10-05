@@ -1,58 +1,51 @@
 // frontend/src/pages/CreateAutoQuizPage.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { ArrowLeft, Loader, Plus, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../services/firebase';
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, doc, getDoc, getDocs } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 
 const CreateAutoQuizPage = () => {
     const navigate = useNavigate();
-    const { addChallenge } = useChallenges();
+    const { currentUser } = useAuth();
     const [title, setTitle] = useState('');
     const [topic, setTopic] = useState('');
+    const [description, setDescription] = useState('');
+    const [targetClass, setTargetClass] = useState('');
+    const [classes, setClasses] = useState([]);
     const [numQuestions, setNumQuestions] = useState(5);
     const [difficulty, setDifficulty] = useState('Medium');
     const [generatedQuiz, setGeneratedQuiz] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
-    const [openRouterApiKey, setOpenRouterApiKey] = useState('');
+
+    useEffect(() => {
+        const fetchClasses = async () => {
+            const classesCollection = collection(db, 'classes');
+            const classesSnapshot = await getDocs(classesCollection);
+            const classesList = classesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setClasses(classesList);
+        };
+
+        fetchClasses();
+    }, []);
 
     const handleGenerateQuiz = async () => {
-        if (!openRouterApiKey) {
-            alert('Please enter your OpenRouter API key.');
-            return;
-        }
-
         setIsLoading(true);
         setGeneratedQuiz(null);
 
-        const prompt = `Create a quiz with ${numQuestions} questions about ${topic} with ${difficulty} difficulty.
-Each question should have 4 multiple-choice options, and one correct answer.
-Provide the output in the following JSON format:
-{
-  "questions": [
-    {
-      "question": "...",
-      "options": ["...", "...", "...", "..."],
-      "answer": "..."
-    }
-  ]
-}`;
-
         try {
-            const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-                method: "POST",
+            const response = await fetch('/api/quiz/generate', {
+                method: 'POST',
                 headers: {
-                    "Authorization": `Bearer ${openRouterApiKey}`,
-                    "Content-Type": "application/json"
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    "model": "openai/gpt-3.5-turbo",
-                    "messages": [
-                        { "role": "user", "content": prompt }
-                    ]
-                })
+                    title: topic,
+                    numQuestions,
+                    difficulty,
+                }),
             });
 
             if (!response.ok) {
@@ -60,8 +53,7 @@ Provide the output in the following JSON format:
             }
 
             const data = await response.json();
-            const quizData = JSON.parse(data.choices[0].message.content);
-            setGeneratedQuiz(quizData);
+            setGeneratedQuiz(data);
         } catch (error) {
             console.error("Error generating quiz:", error);
             alert("Failed to generate quiz. Please check the console for details.");
@@ -70,14 +62,13 @@ Provide the output in the following JSON format:
         }
     };
 
-const { currentUser } = useAuth();
-
     const handleSaveQuiz = async () => {
         if (!generatedQuiz) return;
 
         const newChallenge = {
             title,
             topic,
+            description,
             difficulty,
             type: 'Quiz-Auto',
             questions: generatedQuiz.questions.length,
@@ -85,7 +76,12 @@ const { currentUser } = useAuth();
             quizData: generatedQuiz,
             createdBy: currentUser.uid,
             createdAt: new Date(),
+            classes: targetClass || null,
+            status: 'Active',
+            completion: 0,
         };
+
+        console.log('Saving challenge:', newChallenge);
 
         try {
             await addDoc(collection(db, 'quizzes'), newChallenge);
@@ -110,18 +106,6 @@ const { currentUser } = useAuth();
                     </div>
                     <div className="p-6 space-y-8">
                         <div>
-                            <label htmlFor="apiKey" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">OpenRouter API Key</label>
-                            <input
-                                type="text"
-                                id="apiKey"
-                                value={openRouterApiKey}
-                                onChange={(e) => setOpenRouterApiKey(e.target.value)}
-                                className="mt-1 block w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
-                                placeholder="Enter your OpenRouter API key"
-                                required
-                            />
-                        </div>
-                        <div>
                             <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Quiz Title</label>
                             <input
                                 type="text"
@@ -130,6 +114,17 @@ const { currentUser } = useAuth();
                                 onChange={(e) => setTitle(e.target.value)}
                                 className="mt-1 block w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
                                 required
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                            <textarea
+                                id="description"
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                                className="mt-1 block w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
+                                placeholder="A brief description of the quiz."
+                                rows="3"
                             />
                         </div>
                         <div>
@@ -171,6 +166,20 @@ const { currentUser } = useAuth();
                                     <option>Hard</option>
                                 </select>
                             </div>
+                            <div>
+                                <label htmlFor="targetClass" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Target Class</label>
+                                <select
+                                    id="targetClass"
+                                    value={targetClass}
+                                    onChange={(e) => setTargetClass(e.target.value)}
+                                    className="mt-1 block w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
+                                >
+                                    <option value="">All Classes</option>
+                                    {classes.map(c => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
 
                         <div className="flex justify-center">
@@ -178,7 +187,7 @@ const { currentUser } = useAuth();
                                 type="button"
                                 onClick={handleGenerateQuiz}
                                 disabled={isLoading}
-                                className="inline-flex items-center justify-center py-2.5 px-6 border border-transparent shadow-md text-sm font-semibold rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-400 transition-all"
+                                className="inline-flex items-center justify-center py-2.5 px-6 border border-transparent shadow-md text-sm font-semibold rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 dark:disabled:bg-gray-600 transition-all"
                             >
                                 {isLoading ? (
                                     <>

@@ -1,67 +1,131 @@
 const express = require('express');
 const router = express.Router();
 const fetch = require('node-fetch');
+const { db } = require('../firebaseConfig');
+
+const getApiSettings = async () => {
+    const settingsDoc = await db.collection('settings').doc('site').get();
+    if (!settingsDoc.exists) {
+        throw new Error('Site settings not found in Firestore.');
+    }
+    const settings = settingsDoc.data();
+    return {
+        defaultProvider: settings.defaultApiProvider || 'openrouter',
+        keys: {
+            openrouter: settings.openRouterApiKey,
+            gemini: settings.geminiApiKey,
+            openai: settings.openaiApiKey,
+        },
+    };
+};
+
+const getProviderConfig = (provider, apiKey, prompt) => {
+    switch (provider) {
+        case 'openrouter':
+            return {
+                url: 'https://openrouter.ai/api/v1/chat/completions',
+                options: {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ model: 'openai/gpt-3.5-turbo', messages: [{ role: 'user', content: prompt }] }),
+                },
+            };
+        case 'gemini':
+            return {
+                url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
+                options: {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+                },
+            };
+        case 'openai':
+            return {
+                url: 'https://api.openai.com/v1/chat/completions',
+                options: {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ model: 'gpt-3.5-turbo', messages: [{ role: 'user', content: prompt }] }),
+                },
+            };
+        default:
+            return null;
+    }
+};
+
+const parseProviderResponse = async (provider, response) => {
+    const data = await response.json();
+    let content;
+    switch (provider) {
+        case 'openrouter':
+        case 'openai':
+            content = data.choices[0].message.content;
+            break;
+        case 'gemini':
+            content = data.candidates[0].content.parts[0].text;
+            break;
+        default:
+            throw new Error('Unknown provider response format');
+    }
+    return JSON.parse(content.replace(/```json/g, '').replace(/```/g, '').trim());
+};
 
 router.post('/generate', async (req, res) => {
-    const { title, numQuestions, difficulty } = req.body;
+    const { title, numQuestions, difficulty, description, targetClass } = req.body;
 
     if (!title || !numQuestions || !difficulty) {
         return res.status(400).json({ error: 'Missing required fields: title, numQuestions, difficulty' });
     }
 
     const prompt = `
-        Generate a multiple-choice quiz about "${title}".
-        The quiz should have ${numQuestions} questions.
-        The difficulty level should be ${difficulty}.
+        Generate a multiple-choice quiz based on the following details:
+        - Topic: "${title}"
+        - Description: "${description || 'Not provided'}"
+        - Number of Questions: ${numQuestions}
+        - Difficulty: ${difficulty}
+        - Target Audience: ${targetClass || 'General'}
 
         For each question, provide:
-        - The question text.
-        - An array of 4 options.
-        - The correct answer.
+        - The question text ("question").
+        - An array of 4 options ("options").
+        - The correct answer ("answer").
 
-        Return the output as a valid JSON object with a single key "questions" which is an array of question objects.
-        Each question object should have the following properties: "question", "options", "correctAnswer".
-
-        Example format:
-        {
-            "questions": [
-                {
-                    "question": "What is the capital of France?",
-                    "options": ["Berlin", "Madrid", "Paris", "Rome"],
-                    "correctAnswer": "Paris"
-                }
-            ]
-        }
+        Return the output as a single valid JSON object with a "questions" key, which is an array of question objects.
+        Example: { "questions": [{ "question": "...", "options": ["...", "...", "...", "..."], "answer": "..." }] }
     `;
 
     try {
-        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                "model": "openai/gpt-3.5-turbo",
-                "messages": [
-                    { "role": "user", "content": prompt }
-                ]
-            })
-        });
+        const { defaultProvider, keys } = await getApiSettings();
+        const providers = [defaultProvider, 'openrouter', 'gemini', 'openai'].filter((v, i, a) => a.indexOf(v) === i);
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('OpenRouter API error:', errorText);
-            return res.status(response.status).json({ error: 'Failed to generate quiz from OpenRouter API.', details: errorText });
+        for (const provider of providers) {
+            const apiKey = keys[provider];
+            if (!apiKey) continue;
+
+            console.log(`Attempting to generate quiz with ${provider}...`);
+            const config = getProviderConfig(provider, apiKey, prompt);
+            if (!config) continue;
+
+            try {
+                const response = await fetch(config.url, config.options);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.warn(`API call to ${provider} failed with status ${response.status}:`, errorText);
+                    continue; // Try next provider
+                }
+                const quizContent = await parseProviderResponse(provider, response);
+                return res.json(quizContent);
+            } catch (e) {
+                console.warn(`Error during fetch or parsing for ${provider}:`, e.message);
+                continue; // Try next provider
+            }
         }
 
-        const data = await response.json();
-        const quizContent = JSON.parse(data.choices[0].message.content);
-        res.json(quizContent);
+        res.status(502).json({ error: 'All API providers failed to generate the quiz.' });
 
     } catch (error) {
-        console.error('Error calling OpenRouter API:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        console.error('Failed to fetch API settings or an unexpected error occurred:', error);
+        res.status(500).json({ error: 'Internal server error while generating quiz.' });
     }
 });
 
