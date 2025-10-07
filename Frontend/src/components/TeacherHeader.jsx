@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Plus } from 'lucide-react';
 import ChallengeTypeModal from './ChallengeTypeModal';
 
-const TeacherHeader = ({ currentClass = "5 B / saada - EcoWarriors" }) => {
+const TeacherHeader = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     return (

@@ -1,8 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import AuthLayout from '../components/AuthLayout';
 
 const JoinInstitutePage = () => {
@@ -22,7 +22,7 @@ const JoinInstitutePage = () => {
         try {
             await signup(email, password, { instituteId, role, fullName });
             navigate('/');
-        } catch (err) {
+        } catch (_err) { // eslint-disable-line no-unused-vars
             setError('Failed to create an account. The link may be invalid or expired.');
         }
         setLoading(false);

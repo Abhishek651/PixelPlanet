@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../context/useAuth';
 import AuthLayout from '../components/AuthLayout';
 import { motion } from 'framer-motion';
 
@@ -10,7 +10,7 @@ const LoginPage = () => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const { login } = useAuth();
-    const navigate = useNavigate();
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();

@@ -1,16 +1,38 @@
 // frontend/src/components/ChallengesList.jsx
 import React, { useState } from 'react';
-import { ChevronDown, Edit, Eye, ClipboardCheck, Film, FileText, Loader } from 'lucide-react';
-import { useChallenges } from '../hooks/useChallenges';
-import { useAuth } from '../context/AuthContext';
+import { ChevronDown, Edit, Eye, ClipboardCheck, Film, FileText, Loader, Trash2 } from 'lucide-react';
+import { useChallenges } from '../context/useChallenges';
+import { useAuth } from '../context/useAuth';
+
+import { useNavigate } from 'react-router-dom';
+
+import { doc, deleteDoc } from 'firebase/firestore';
+import { db } from '../services/firebase';
 
 const ChallengesList = () => {
-    const { challenges, isLoading } = useChallenges();
+    const { challenges, isLoading, setChallenges } = useChallenges();
     const { userRole } = useAuth();
     const [expandedChallenge, setExpandedChallenge] = useState(null);
+    const navigate = useNavigate();
 
     const toggleChallenge = (id) => {
         setExpandedChallenge(expandedChallenge === id ? null : id);
+    };
+
+    const handleStartChallenge = (challengeId) => {
+        navigate(`/quiz/${challengeId}`);
+    };
+
+    const handleDeleteChallenge = async (challengeId) => {
+        if (window.confirm('Are you sure you want to delete this challenge?')) {
+            try {
+                await deleteDoc(doc(db, 'quizzes', challengeId));
+                setChallenges(challenges.filter(c => c.id !== challengeId));
+            } catch (error) {
+                console.error("Error deleting challenge:", error);
+                alert("Failed to delete challenge. Please check the console for details.");
+            }
+        }
     };
 
     const getIcon = (type) => {
@@ -73,6 +95,12 @@ const ChallengesList = () => {
                             </div>
                             {expandedChallenge === challenge.id && (
                                 <div className="p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800/60 rounded-b-lg">
+                                    {(challenge.generationMethod === 'paragraph' || challenge.generateParagraph) && challenge.paragraph && (
+                                        <div className="mb-6">
+                                            <h4 className="font-semibold text-gray-800 dark:text-white mb-2">Read the paragraph below and then start the quiz.</h4>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{challenge.paragraph}</p>
+                                        </div>
+                                    )}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                         <div>
                                             <h4 className="font-semibold text-gray-800 dark:text-white mb-2">Assigned Classes</h4>
@@ -94,9 +122,13 @@ const ChallengesList = () => {
                                                     <Eye size={16} />
                                                     <span>View Submissions</span>
                                                 </button>
+                                                <button onClick={() => handleDeleteChallenge(challenge.id)} className="flex items-center space-x-2 px-4 py-2 rounded-lg text-white bg-red-600 hover:bg-red-700 font-semibold shadow-sm hover:shadow-md transition-all">
+                                                    <Trash2 size={16} />
+                                                    <span>Delete</span>
+                                                </button>
                                             </>
                                         ) : (
-                                            <button className="flex items-center space-x-2 px-4 py-2 rounded-lg text-white bg-green-600 hover:bg-green-700 font-semibold shadow-sm hover:shadow-md transition-all">
+                                            <button onClick={() => handleStartChallenge(challenge.id)} className="flex items-center space-x-2 px-4 py-2 rounded-lg text-white bg-green-600 hover:bg-green-700 font-semibold shadow-sm hover:shadow-md transition-all">
                                                 <span>Start Challenge</span>
                                             </button>
                                         )}

@@ -4,8 +4,8 @@ import DashboardLayout from '../components/DashboardLayout';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../services/firebase';
-import { addDoc, collection, doc, getDoc } from 'firebase/firestore';
-import { useAuth } from '../context/AuthContext';
+import { addDoc, collection } from 'firebase/firestore';
+import { useAuth } from '../context/useAuth';
 
 const CreatePhysicalChallengePage = () => {
     const navigate = useNavigate();

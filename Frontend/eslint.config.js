@@ -7,6 +7,26 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 export default defineConfig([
   globalIgnores(['dist']),
   {
+    files: ['src/assets/Games/generateImages.js'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      }
+    }
+  },
+  {
+    files: ['src/assets/Games/**/*.js'],
+    languageOptions: {
+      globals: {
+        Phaser: 'readonly',
+        TOTAL_ITEMS_TO_SORT: 'readonly'
+      }
+    },
+    rules: {
+      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]|^_' }],
+    }
+  },
+  {
     files: ['**/*.{js,jsx}'],
     extends: [
       js.configs.recommended,
@@ -23,7 +43,7 @@ export default defineConfig([
       },
     },
     rules: {
-      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]|motion' }],
     },
   },
 ])

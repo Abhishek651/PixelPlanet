@@ -5,11 +5,13 @@ import { ArrowLeft, Loader, Plus, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../services/firebase';
 import { addDoc, collection, doc, getDoc, getDocs } from 'firebase/firestore';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
+import { useChallenges } from '../context/useChallenges';
 
 const CreateAutoQuizPage = () => {
     const navigate = useNavigate();
     const { currentUser } = useAuth();
+    const { refreshChallenges } = useChallenges();
     const [title, setTitle] = useState('');
     const [topic, setTopic] = useState('');
     const [description, setDescription] = useState('');
@@ -19,6 +21,10 @@ const CreateAutoQuizPage = () => {
     const [difficulty, setDifficulty] = useState('Medium');
     const [generatedQuiz, setGeneratedQuiz] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [generationMethod, setGenerationMethod] = useState('topic');
+    const [paragraph, setParagraph] = useState('');
+    const [generateParagraph, setGenerateParagraph] = useState(false);
+
 
     useEffect(() => {
         const fetchClasses = async () => {
@@ -45,6 +51,9 @@ const CreateAutoQuizPage = () => {
                     title: topic,
                     numQuestions,
                     difficulty,
+                    generationMethod,
+                    paragraph,
+                    generateParagraph,
                 }),
             });
 
@@ -54,6 +63,9 @@ const CreateAutoQuizPage = () => {
 
             const data = await response.json();
             setGeneratedQuiz(data);
+            if (data.paragraph) {
+                setParagraph(data.paragraph);
+            }
         } catch (error) {
             console.error("Error generating quiz:", error);
             alert("Failed to generate quiz. Please check the console for details.");
@@ -64,6 +76,15 @@ const CreateAutoQuizPage = () => {
 
     const handleSaveQuiz = async () => {
         if (!generatedQuiz) return;
+
+        const userDocRef = doc(db, 'users', currentUser.uid);
+        const userDoc = await getDoc(userDocRef);
+        const userInstitute = userDoc.exists() ? userDoc.data().instituteId : null;
+
+        if (!userInstitute) {
+            alert("Could not determine your institute. Please ensure your profile is set up correctly.");
+            return;
+        }
 
         const newChallenge = {
             title,
@@ -77,14 +98,19 @@ const CreateAutoQuizPage = () => {
             createdBy: currentUser.uid,
             createdAt: new Date(),
             classes: targetClass || null,
+            instituteId: userInstitute,
             status: 'Active',
             completion: 0,
+            generationMethod,
+            paragraph,
+            generateParagraph,
         };
 
         console.log('Saving challenge:', newChallenge);
 
         try {
             await addDoc(collection(db, 'quizzes'), newChallenge);
+            refreshChallenges();
             navigate('/challenges');
         } catch (error) {
             console.error("Error saving quiz:", error);
@@ -128,17 +154,70 @@ const CreateAutoQuizPage = () => {
                             />
                         </div>
                         <div>
-                            <label htmlFor="topic" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Topic</label>
-                            <input
-                                type="text"
-                                id="topic"
-                                value={topic}
-                                onChange={(e) => setTopic(e.target.value)}
-                                className="mt-1 block w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
-                                placeholder="e.g., Photosynthesis, World War II"
-                                required
-                            />
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Generation Method</label>
+                            <div className="flex items-center space-x-4">
+                                <label className="flex items-center">
+                                    <input
+                                        type="radio"
+                                        value="topic"
+                                        checked={generationMethod === 'topic'}
+                                        onChange={() => setGenerationMethod('topic')}
+                                        className="form-radio h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
+                                    />
+                                    <span className="ml-2 text-gray-700 dark:text-gray-300">From Topic</span>
+                                </label>
+                                <label className="flex items-center">
+                                    <input
+                                        type="radio"
+                                        value="paragraph"
+                                        checked={generationMethod === 'paragraph'}
+                                        onChange={() => setGenerationMethod('paragraph')}
+                                        className="form-radio h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
+                                    />
+                                    <span className="ml-2 text-gray-700 dark:text-gray-300">From Paragraph</span>
+                                </label>
+                            </div>
                         </div>
+
+                        {generationMethod === 'topic' ? (
+                            <div>
+                                <label htmlFor="topic" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Topic</label>
+                                <input
+                                    type="text"
+                                    id="topic"
+                                    value={topic}
+                                    onChange={(e) => setTopic(e.target.value)}
+                                    className="mt-1 block w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
+                                    placeholder="e.g., Photosynthesis, World War II"
+                                    required
+                                />
+                                <div className="flex items-center mt-4">
+                                    <input
+                                        id="generate-paragraph"
+                                        type="checkbox"
+                                        checked={generateParagraph}
+                                        onChange={(e) => setGenerateParagraph(e.target.checked)}
+                                        className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                    />
+                                    <label htmlFor="generate-paragraph" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">
+                                        Generate paragraph for students
+                                    </label>
+                                </div>
+                            </div>
+                        ) : (
+                            <div>
+                                <label htmlFor="paragraph" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Paragraph</label>
+                                <textarea
+                                    id="paragraph"
+                                    value={paragraph}
+                                    onChange={(e) => setParagraph(e.target.value)}
+                                    className="mt-1 block w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
+                                    placeholder="Enter the paragraph to generate questions from."
+                                    rows="6"
+                                    required
+                                />
+                            </div>
+                        )}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label htmlFor="numQuestions" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Number of Questions</label>

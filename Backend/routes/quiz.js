@@ -71,28 +71,53 @@ const parseProviderResponse = async (provider, response) => {
 };
 
 router.post('/generate', async (req, res) => {
-    const { title, numQuestions, difficulty, description, targetClass } = req.body;
+    const { title, numQuestions, difficulty, description, targetClass, generationMethod, paragraph } = req.body;
 
-    if (!title || !numQuestions || !difficulty) {
-        return res.status(400).json({ error: 'Missing required fields: title, numQuestions, difficulty' });
+    if (!numQuestions || !difficulty) {
+        return res.status(400).json({ error: 'Missing required fields: numQuestions, difficulty' });
     }
 
-    const prompt = `
-        Generate a multiple-choice quiz based on the following details:
-        - Topic: "${title}"
-        - Description: "${description || 'Not provided'}"
-        - Number of Questions: ${numQuestions}
-        - Difficulty: ${difficulty}
-        - Target Audience: ${targetClass || 'General'}
+    let prompt;
+    if (generationMethod === 'paragraph') {
+        if (!paragraph) {
+            return res.status(400).json({ error: 'Missing required field: paragraph' });
+        }
+        prompt = `
+            Generate a multiple-choice quiz based on the following paragraph:
+            "${paragraph}"
 
-        For each question, provide:
-        - The question text ("question").
-        - An array of 4 options ("options").
-        - The correct answer ("answer").
+            - Number of Questions: ${numQuestions}
+            - Difficulty: ${difficulty}
 
-        Return the output as a single valid JSON object with a "questions" key, which is an array of question objects.
-        Example: { "questions": [{ "question": "...", "options": ["...", "...", "...", "..."], "answer": "..." }] }
-    `;
+            For each question, provide:
+            - The question text ("question").
+            - An array of 4 options ("options").
+            - The correct answer ("answer").
+
+            Return the output as a single valid JSON object with a "questions" key, which is an array of question objects.
+            Example: { "questions": [{ "question": "...", "options": ["...", "...", "...", "..."], "answer": "..." }] }
+        `;
+    } else {
+        if (!title) {
+            return res.status(400).json({ error: 'Missing required field: title' });
+        }
+        prompt = `
+            Generate a multiple-choice quiz based on the following details:
+            - Topic: "${title}"
+            - Description: "${description || 'Not provided'}"
+            - Number of Questions: ${numQuestions}
+            - Difficulty: ${difficulty}
+            - Target Audience: ${targetClass || 'General'}
+
+            For each question, provide:
+            - The question text ("question").
+            - An array of 4 options ("options").
+            - The correct answer ("answer").
+
+            Return the output as a single valid JSON object with a "questions" key, which is an array of question objects.
+            Example: { "questions": [{ "question": "...", "options": ["...", "...", "...", "..."], "answer": "..." }] }
+        `;
+    }
 
     try {
         const { defaultProvider, keys } = await getApiSettings();

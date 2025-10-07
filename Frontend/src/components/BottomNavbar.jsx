@@ -1,21 +1,13 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { signOut } from 'firebase/auth';
-import { auth } from '../services/firebase';
+import { useAuth } from '../context/useAuth';
+
+
 
 const BottomNavbar = () => {
-    const { currentUser, userRole } = useAuth();
+    const { userRole } = useAuth();
     const location = useLocation();
 
-    const handleLogout = async () => {
-        try {
-            await signOut(auth);
-        } catch (error) {
-            console.error("Error signing out:", error);
-            alert("Failed to log out.");
-        }
-    };
 
     // Define navItems based on userRole
     let navItems = [];
@@ -24,15 +16,14 @@ const BottomNavbar = () => {
             { icon: 'public', path: '/dashboard/student', label: 'Home' },
             { icon: 'shield', path: '/challenges', label: 'Challenges' },
             { icon: 'trending_up', path: '/leaderboard', label: 'Leaders' },
-            { icon: 'category', path: '/games', label: 'Games' },
+            { icon: 'videogame_asset', path: '/games', label: 'Games' },
             { icon: 'person', path: '/profile', label: 'Profile' },
         ];
     } else if (userRole === 'teacher') {
         navItems = [
             { icon: 'dashboard', path: '/dashboard/teacher', label: 'Dashboard' },
-            { icon: 'book', path: '/teacher/curriculum', label: 'Curriculum' },
-            { icon: 'task_alt', path: '/teacher/quests', label: 'Quests' },
-            { icon: 'assessment', path: '/teacher/reports', label: 'Reports' },
+            { icon: 'shield', path: '/challenges', label: 'Challenges' },
+            { icon: 'videogame_asset', path: '/games', label: 'Games' },
             { icon: 'person', path: '/profile', label: 'Profile' },
         ];
     } else if (userRole === 'hod') {
@@ -41,6 +32,7 @@ const BottomNavbar = () => {
             { icon: 'group', path: '/hod/teachers', label: 'Teachers' },
             { icon: 'school', path: '/hod/students', label: 'Students' },
             { icon: 'analytics', path: '/hod/analytics', label: 'Analytics' },
+            { icon: 'videogame_asset', path: '/games', label: 'Games' },
             { icon: 'person', path: '/profile', label: 'Profile' },
         ];
     } else {
@@ -63,20 +55,11 @@ const BottomNavbar = () => {
                         location.pathname === item.path ? 'text-primary' : 'text-text-light/70 dark:text-text-dark/70'
                     }`}
                 >
-                    <span className="material-symbols-outlined">{item.icon}</span>
+                    <span className="material-icons">{item.icon}</span>
                     <span className="text-xs">{item.label}</span>
                 </Link>
             ))}
-            {currentUser && (
-                 <button
-                    onClick={handleLogout}
-                    className="p-2 flex flex-col items-center text-red-500 hover:text-red-700"
-                    title="Logout"
-                >
-                    <span className="material-symbols-outlined">logout</span>
-                    <span className="text-xs">Logout</span>
-                </button>
-            )}
+
         </div>
     );
 };

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Auto-Generate Assets</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 40px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+        }
+        .container {
+            background: rgba(255,255,255,0.1);
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        button {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            font-size: 20px;
+            cursor: pointer;
+            border-radius: 10px;
+            margin: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #229954;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+        }
+        #status {
+            margin-top: 30px;
+            font-size: 18px;
+            min-height: 100px;
+        }
+        .preview {
+            display: inline-block;
+            margin: 10px;
+            text-align: center;
+        }
+        canvas {
+            border: 3px solid white;
+            border-radius: 10px;
+            margin: 5px;
+        }
+        .success {
+            color: #2ecc71;
+            font-weight: bold;
+        }
+        .info {
+            color: #3498db;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Eco-Shredder Asset Auto-Generator</h1>
+        <p>This tool will automatically generate all game assets as PNG images.</p>
+        
+        <button onclick="generateAndDownloadAll()">🚀 Generate All Assets (Auto-Download)</button>
+        
+        <div id="status"></div>
+        <div id="previews"></div>
+    </div>
+
+    <script>
+        const bins = [
+            { name: 'bin_compost', color: '#27ae60', emoji: '♻️', label: 'COMPOST' },
+            { name: 'bin_containers', color: '#3498db', emoji: '🗑️', label: 'CONTAINERS' },
+            { name: 'bin_paper', color: '#f39c12', emoji: '📄', label: 'PAPER' },
+            { name: 'bin_landfill', color: '#7f8c8d', emoji: '🚮', label: 'LANDFILL' }
+        ];
+
+        const items = [
+            { name: 'item_plastic_bottle', color: '#3498db', emoji: '🍾' },
+            { name: 'item_banana_peel', color: '#f1c40f', emoji: '🍌' },
+            { name: 'item_soda_can', color: '#e74c3c', emoji: '🥫' },
+            { name: 'item_pizza_box', color: '#e67e22', emoji: '🍕' },
+            { name: 'item_office_paper', color: '#ecf0f1', emoji: '📃' },
+            { name: 'item_broken_glass', color: '#95a5a6', emoji: '🔨' },
+            { name: 'item_coffee_cup', color: '#8e44ad', emoji: '☕' }
+        ];
+
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : { r: 0, g: 0, b: 0 };
+        }
+
+        function drawBin(canvas, config) {
+            const ctx = canvas.getContext('2d');
+            const width = 120;
+            const height = 120;
+            
+            canvas.width = width;
+            canvas.height = height;
+            ctx.clearRect(0, 0, width, height);
+
+            const rgb = hexToRgb(config.color);
+
+            // Bin body
+            ctx.fillStyle = config.color;
+            ctx.beginPath();
+            roundRect(ctx, 10, 20, width - 20, height - 30, 8);
+            ctx.fill();
+
+            // Depth shade
+            ctx.fillStyle = `rgb(${rgb.r * 0.7}, ${rgb.g * 0.7}, ${rgb.b * 0.7})`;
+            ctx.fillRect(15, 25, width - 30, 15);
+
+            // Lid
+            ctx.fillStyle = `rgb(${rgb.r * 0.8}, ${rgb.g * 0.8}, ${rgb.b * 0.8})`;
+            ctx.beginPath();
+            roundRect(ctx, 5, 10, width - 10, 15, 5);
+            ctx.fill();
+
+            // Border
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            roundRect(ctx, 10, 20, width - 20, height - 30, 8);
+            ctx.stroke();
+
+            // Handle
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(width / 2 - 15, 12, 30, 8);
+
+            // Emoji
+            ctx.font = '40px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(config.emoji, width / 2, height / 2 + 5);
+
+            // Label
+            ctx.font = 'bold 10px Arial';
+            ctx.fillStyle = 'white';
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 2;
+            ctx.strokeText(config.label, width / 2, height - 10);
+            ctx.fillText(config.label, width / 2, height - 10);
+        }
+
+        function drawItem(canvas, config) {
+            const ctx = canvas.getContext('2d');
+            const size = 70;
+            
+            canvas.width = size;
+            canvas.height = size;
+            ctx.clearRect(0, 0, size, size);
+
+            const rgb = hexToRgb(config.color);
+
+            // Main body
+            ctx.fillStyle = config.color;
+            ctx.beginPath();
+            roundRect(ctx, 5, 5, size - 10, size - 10, 10);
+            ctx.fill();
+
+            // Highlight
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.beginPath();
+            roundRect(ctx, 8, 8, size - 40, size - 40, 8);
+            ctx.fill();
+
+            // Shadow
+            ctx.fillStyle = `rgb(${rgb.r * 0.7}, ${rgb.g * 0.7}, ${rgb.b * 0.7})`;
+            ctx.beginPath();
+            roundRect(ctx, 10, size - 20, size - 20, 10, 5);
+            ctx.fill();
+
+            // Border
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            roundRect(ctx, 5, 5, size - 10, size - 10, 10);
+            ctx.stroke();
+
+            // Emoji
+            ctx.font = '32px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(config.emoji, size / 2, size / 2);
+        }
+
+        function roundRect(ctx, x, y, width, height, radius) {
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+        }
+
+        async function generateAndDownloadAll() {
+            const status = document.getElementById('status');
+            const previews = document.getElementById('previews');
+            previews.innerHTML = '';
+            
+            status.innerHTML = '<p class="info">🎨 Generating assets...</p>';
+            
+            let count = 0;
+            const total = bins.length + items.length;
+
+            // Generate bins
+            for (const config of bins) {
+                const canvas = document.createElement('canvas');
+                drawBin(canvas, config);
+                
+                const preview = document.createElement('div');
+                preview.className = 'preview';
+                preview.appendChild(canvas.cloneNode(true));
+                preview.innerHTML += `<br><small>${config.name}</small>`;
+                previews.appendChild(preview);
+                
+                await downloadCanvas(canvas, config.name);
+                count++;
+                status.innerHTML = `<p class="info">📥 Downloaded ${count}/${total} assets...</p>`;
+                await sleep(300);
+            }
+            
+            // Generate items
+            for (const config of items) {
+                const canvas = document.createElement('canvas');
+                drawItem(canvas, config);
+                
+                const preview = document.createElement('div');
+                preview.className = 'preview';
+                preview.appendChild(canvas.cloneNode(true));
+                preview.innerHTML += `<br><small>${config.name}</small>`;
+                previews.appendChild(preview);
+                
+                await downloadCanvas(canvas, config.name);
+                count++;
+                status.innerHTML = `<p class="info">📥 Downloaded ${count}/${total} assets...</p>`;
+                await sleep(300);
+            }
+            
+            status.innerHTML = `
+                <p class="success">✅ All ${total} assets generated successfully!</p>
+                <p>📁 Save all PNG files to the <strong>assets</strong> folder in your game directory.</p>
+                <p>🎮 Refresh your game to see the real images!</p>
+            `;
+        }
+
+        function downloadCanvas(canvas, filename) {
+            return new Promise((resolve) => {
+                canvas.toBlob(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename + '.png';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    resolve();
+                });
+            });
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+    </script>
+</body>
+</html>

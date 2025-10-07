@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Save Game Assets</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 40px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+        }
+        .container {
+            background: rgba(255,255,255,0.1);
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        button {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            font-size: 20px;
+            cursor: pointer;
+            border-radius: 10px;
+            margin: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #229954;
+            transform: translateY(-2px);
+        }
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .preview-item {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+        }
+        canvas {
+            border: 2px solid white;
+            border-radius: 5px;
+            display: block;
+            margin: 10px auto;
+        }
+        .success { color: #2ecc71; font-weight: bold; }
+        .info { color: #3498db; margin: 20px 0; }
+        .instructions {
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        .instructions ol {
+            margin-left: 20px;
+        }
+        .instructions li {
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Save Game Assets to Folder</h1>
+        
+        <div class="instructions">
+            <h3>📋 Instructions:</h3>
+            <ol>
+                <li>Click the button below to download all 11 PNG files</li>
+                <li>Your browser will download them (check your Downloads folder)</li>
+                <li>Move ALL 11 PNG files to: <code>D:\Hackathon2\Games\assets\</code></li>
+                <li>Refresh your game to see the real images!</li>
+            </ol>
+        </div>
+        
+        <button onclick="downloadAll()">📥 Download All 11 Assets (One by One)</button>
+        
+        <div id="status" class="info"></div>
+        <div id="previews" class="preview-grid"></div>
+    </div>
+
+    <script>
+        const bins = [
+            { name: 'bin_compost', color: '#27ae60', emoji: '♻️', label: 'COMPOST' },
+            { name: 'bin_containers', color: '#3498db', emoji: '🗑️', label: 'CONTAINERS' },
+            { name: 'bin_paper', color: '#f39c12', emoji: '📄', label: 'PAPER' },
+            { name: 'bin_landfill', color: '#7f8c8d', emoji: '🚮', label: 'LANDFILL' }
+        ];
+
+        const items = [
+            { name: 'item_plastic_bottle', color: '#3498db', emoji: '🍾' },
+            { name: 'item_banana_peel', color: '#f1c40f', emoji: '🍌' },
+            { name: 'item_soda_can', color: '#e74c3c', emoji: '🥫' },
+            { name: 'item_pizza_box', color: '#e67e22', emoji: '🍕' },
+            { name: 'item_office_paper', color: '#ecf0f1', emoji: '📃' },
+            { name: 'item_broken_glass', color: '#95a5a6', emoji: '🔨' },
+            { name: 'item_coffee_cup', color: '#8e44ad', emoji: '☕' }
+        ];
+
+        const allAssets = [...bins, ...items];
+
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : { r: 0, g: 0, b: 0 };
+        }
+
+        function roundRect(ctx, x, y, width, height, radius) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+        }
+
+        function drawBin(canvas, config) {
+            const ctx = canvas.getContext('2d');
+            const width = 120, height = 120;
+            canvas.width = width;
+            canvas.height = height;
+            ctx.clearRect(0, 0, width, height);
+
+            const rgb = hexToRgb(config.color);
+
+            ctx.fillStyle = config.color;
+            roundRect(ctx, 10, 20, width - 20, height - 30, 8);
+            ctx.fill();
+
+            ctx.fillStyle = `rgb(${rgb.r * 0.7}, ${rgb.g * 0.7}, ${rgb.b * 0.7})`;
+            ctx.fillRect(15, 25, width - 30, 15);
+
+            ctx.fillStyle = `rgb(${rgb.r * 0.8}, ${rgb.g * 0.8}, ${rgb.b * 0.8})`;
+            roundRect(ctx, 5, 10, width - 10, 15, 5);
+            ctx.fill();
+
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.lineWidth = 3;
+            roundRect(ctx, 10, 20, width - 20, height - 30, 8);
+            ctx.stroke();
+
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(width / 2 - 15, 12, 30, 8);
+
+            ctx.font = '40px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(config.emoji, width / 2, height / 2 + 5);
+
+            ctx.font = 'bold 10px Arial';
+            ctx.fillStyle = 'white';
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 2;
+            ctx.strokeText(config.label, width / 2, height - 10);
+            ctx.fillText(config.label, width / 2, height - 10);
+        }
+
+        function drawItem(canvas, config) {
+            const ctx = canvas.getContext('2d');
+            const size = 70;
+            canvas.width = size;
+            canvas.height = size;
+            ctx.clearRect(0, 0, size, size);
+
+            const rgb = hexToRgb(config.color);
+
+            ctx.fillStyle = config.color;
+            roundRect(ctx, 5, 5, size - 10, size - 10, 10);
+            ctx.fill();
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            roundRect(ctx, 8, 8, size - 40, size - 40, 8);
+            ctx.fill();
+
+            ctx.fillStyle = `rgb(${rgb.r * 0.7}, ${rgb.g * 0.7}, ${rgb.b * 0.7})`;
+            roundRect(ctx, 10, size - 20, size - 20, 10, 5);
+            ctx.fill();
+
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.lineWidth = 3;
+            roundRect(ctx, 5, 5, size - 10, size - 10, 10);
+            ctx.stroke();
+
+            ctx.font = '32px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(config.emoji, size / 2, size / 2);
+        }
+
+        // Generate previews on load
+        window.onload = function() {
+            const previews = document.getElementById('previews');
+            
+            allAssets.forEach(config => {
+                const div = document.createElement('div');
+                div.className = 'preview-item';
+                
+                const canvas = document.createElement('canvas');
+                if (config.label) {
+                    drawBin(canvas, config);
+                } else {
+                    drawItem(canvas, config);
+                }
+                
+                const name = document.createElement('div');
+                name.textContent = config.name;
+                name.style.fontSize = '12px';
+                name.style.marginTop = '10px';
+                
+                div.appendChild(canvas);
+                div.appendChild(name);
+                previews.appendChild(div);
+            });
+        };
+
+        async function downloadAll() {
+            const status = document.getElementById('status');
+            status.innerHTML = '<p>📥 Starting downloads...</p>';
+            
+            for (let i = 0; i < allAssets.length; i++) {
+                const config = allAssets[i];
+                const canvas = document.createElement('canvas');
+                
+                if (config.label) {
+                    drawBin(canvas, config);
+                } else {
+                    drawItem(canvas, config);
+                }
+                
+                await downloadCanvas(canvas, config.name);
+                status.innerHTML = `<p>📥 Downloaded ${i + 1}/${allAssets.length}: ${config.name}.png</p>`;
+                await sleep(500);
+            }
+            
+            status.innerHTML = `
+                <p class="success">✅ All ${allAssets.length} files downloaded!</p>
+                <p>📁 Check your Downloads folder</p>
+                <p>📂 Move all PNG files to: <strong>D:\\Hackathon2\\Games\\assets\\</strong></p>
+                <p>🔄 Then refresh your game!</p>
+            `;
+        }
+
+        function downloadCanvas(canvas, filename) {
+            return new Promise((resolve) => {
+                canvas.toBlob(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename + '.png';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    resolve();
+                });
+            });
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+    </script>
+</body>
+</html>

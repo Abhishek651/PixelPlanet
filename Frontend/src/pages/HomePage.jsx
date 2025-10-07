@@ -1,7 +1,7 @@
 // frontend/src/pages/HomePage.jsx
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 
 // Import all the components
 import SideNavbar from '../components/SideNavbar';

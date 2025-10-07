@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Eco-Quiz (Phaser)</title>
+    <style>
+        body { margin: 0; padding: 0; background-color: #111; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        #game-container { width: 800px; height: 600px; margin: 0 auto; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+</head>
+<body>
+    <div id="game-container"></div>
+    
+    <!-- Game Scenes -->
+    <script src="MenuScene.js?v=3"></script>
+    <script src="assets/QuizScene.js?v=3"></script>
+    
+    <!-- Main Game Initialization -->
+    <script>
+        const config = {
+            type: Phaser.AUTO,
+            width: 800,
+            height: 600,
+            parent: 'game-container',
+            physics: {
+                default: 'arcade',
+                arcade: {
+                    gravity: { y: 0 },
+                    debug: false
+                }
+            },
+            scene: [MenuScene, QuizScene] // MenuScene will be started first
+        };
+
+        // Create the game instance
+        const game = new Phaser.Game(config);
+    </script>
+</body>
+</html>

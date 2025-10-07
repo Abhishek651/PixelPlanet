@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import AuthLayout from '../components/AuthLayout';
 
 const RegisterInstitutePage = () => {
@@ -25,7 +25,7 @@ const RegisterInstitutePage = () => {
         try {
             await signup(email, password, { instituteName, role: 'hod' });
             navigate('/');
-        } catch (err) {
+        } catch (_err) { // eslint-disable-line no-unused-vars
             setError('Failed to create an account. Please try again.');
         }
         setLoading(false);

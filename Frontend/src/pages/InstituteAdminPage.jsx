@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../services/firebase';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import axios from 'axios';
 import DashboardLayout from '../components/DashboardLayout';
 
@@ -77,7 +77,7 @@ function InstituteAdminPage() {
              fetchInstituteDetails();
         }
 
-    }, [currentUser, loading, navigate, location.state, refreshAuth]);
+    }, [currentUser, loading, navigate, location.state, location.pathname, refreshAuth]);
 
 
     const handleLogout = async () => {

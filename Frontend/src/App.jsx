@@ -1,7 +1,7 @@
 // frontend/src/App.jsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from './context/AuthContext'; // remove AuthProvider import here
+import { useAuth } from './context/useAuth'; // remove AuthProvider import here
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
 import RegisterInstitutePage from './pages/RegisterInstitutePage';
@@ -18,6 +18,10 @@ import CreateVideoChallengePage from './pages/CreateVideoChallengePage';
 import SubmissionsPage from './pages/SubmissionsPage';
 import MainAdminDashboard from './pages/MainAdminDashboard';
 import SiteSettings from './components/SiteSettings';
+import QuizPage from './pages/QuizPage';
+import GamesPage from './pages/GamesPage';
+import WasteSegregatorGame from './pages/WasteSegregatorGame';
+import QuizGame from './pages/QuizGame';
 import DashboardLayout from './components/DashboardLayout';
 
 function ProtectedRoute({ children, allowedRoles }) {
@@ -125,11 +129,43 @@ function App() {
           element={<ProtectedRoute allowedRoles={['teacher']}><SubmissionsPage /></ProtectedRoute>}
         />
 
+        <Route
+          path="/quiz/:challengeId"
+          element={<ProtectedRoute allowedRoles={['student']}><QuizPage /></ProtectedRoute>}
+        />
+
         <Route // <--- NEW PROFILE ROUTE
           path="/profile"
           element={
             <ProtectedRoute allowedRoles={['student', 'teacher', 'hod']}> {/* All logged-in users can access */}
               <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/games"
+          element={
+            <ProtectedRoute allowedRoles={['student', 'teacher', 'hod']}> 
+              <DashboardLayout><GamesPage /></DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/games/waste-segregator"
+          element={
+            <ProtectedRoute allowedRoles={['student', 'teacher', 'hod']}>
+              <WasteSegregatorGame />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/games/quiz"
+          element={
+            <ProtectedRoute allowedRoles={['student', 'teacher', 'hod']}>
+              <QuizGame />
             </ProtectedRoute>
           }
         />

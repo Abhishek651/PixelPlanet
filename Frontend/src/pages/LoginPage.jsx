@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import AuthLayout from '../components/AuthLayout';
 
 const LoginPage = () => {
@@ -20,7 +20,7 @@ const LoginPage = () => {
         try {
             await login(email, password);
             navigate('/');
-        } catch (err) {
+        } catch (_err) { // eslint-disable-line no-unused-vars
             setError('Failed to log in. Please check your credentials.');
         }
         setLoading(false);

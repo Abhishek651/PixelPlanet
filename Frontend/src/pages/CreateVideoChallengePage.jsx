@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { db, storage } from '../services/firebase';
 import { addDoc, collection } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 
 const CreateVideoChallengePage = () => {
     const navigate = useNavigate();
@@ -149,7 +149,7 @@ const CreateVideoChallengePage = () => {
                 videoId = urlObj.searchParams.get('v');
             }
             return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
-        } catch (error) {
+        } catch (_error) { // eslint-disable-line no-unused-vars
             return '';
         }
     };
