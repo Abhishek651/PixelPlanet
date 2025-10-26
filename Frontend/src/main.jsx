@@ -6,6 +6,19 @@ import { AuthProvider } from './context/AuthContext.jsx'
 import { SettingsProvider } from './context/SettingsContext.jsx'
 import { ChallengeProvider } from './context/ChallengeContext.jsx'
 import ErrorBoundary from './components/ErrorBoundary';
+import Preloader from './components/Preloader.jsx';
+
+const preloaderRoot = ReactDOM.createRoot(document.getElementById('preloader-root'));
+preloaderRoot.render(
+  <React.StrictMode>
+    <Preloader />
+  </React.StrictMode>
+);
+
+setTimeout(() => {
+  preloaderRoot.unmount();
+  document.getElementById('preloader-root').remove();
+}, 5000);
 
 
 // Finds the <div id="root"></div> that lives in index.html and turns it into a reactive root

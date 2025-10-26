@@ -1,0 +1,62 @@
+/* Basic styling for the page */
+#preloader {
+    background-color: #f0f8ff; /* A light sky-blue background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100vw;
+    margin: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 9999;
+}
+
+/* SVG container styles */
+#preloader svg {
+    display: block;
+    width: 258px;
+    height: 258px;
+}
+
+/* Style for the tree shape */
+.tree {
+    fill: url(#realisticTreeGradient);
+}
+
+/* --- ANIMATION CODE --- */
+
+/* This is the class that needs to be animated */
+.circle-mask {
+    transform-origin: 50% 90%;
+    animation: scale 5s infinite ease-out;
+}
+
+/* This is the keyframe definition for the animation */
+@keyframes scale {
+    0%, 100% {
+        transform: scale(0.0);
+    }
+    7%, 90% {
+        transform: scale(0.4);
+    }
+    50% {
+        transform: scale(1);
+    }
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    #preloader svg {
+        width: 200px;
+        height: 200px;
+    }
+}
+
+@media (max-width: 480px) {
+    #preloader svg {
+        width: 150px;
+        height: 150px;
+    }
+}

@@ -38,9 +38,14 @@ const Games = () => {
                 <button className="px-4 py-2 text-sm font-semibold rounded-full bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300">Adventure</button>
             </div>
             <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Featured games</h2>
-            <Link to='/games/waste-segregator'>
-                <div className="relative rounded-2xl overflow-hidden shadow-lg mb-8 lg:h-96">
-                    <img alt={featuredGame.title} className="w-full h-full object-cover" src={featuredGame.thumbnail} />
+            <Link to={featuredGame.path} className="block">
+                <div className="relative rounded-2xl overflow-hidden shadow-lg mb-8 h-48 md:h-64 lg:h-96">
+                    <img 
+                        alt={featuredGame.title} 
+                        className="w-full h-full object-cover" 
+                        src={featuredGame.thumbnail}
+                        loading="lazy"
+                    />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
                     <button className="absolute top-4 right-4 p-2 rounded-full bg-white/30 text-white backdrop-blur-sm">
                         <span className="material-icons">favorite_border</span>
@@ -57,21 +62,24 @@ const Games = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {otherGames.map(game => {
-                    let path = game.path;
-                    if (game.id === 1) { // This case will not happen as it is the featured game
-                        path = '/games/waste-segregator';
-                    } else if (game.id === 2) {
-                        path = '/games/quiz';
-                    }
-
                     return (
                         <div key={game.id} className="flex items-center p-3 bg-white dark:bg-gray-800 rounded-2xl shadow-sm">
-                            <img alt={game.title} className="w-16 h-16 rounded-xl object-cover mr-4" src={game.thumbnail} />
-                            <div className="flex-1">
-                                <h4 className="font-semibold text-gray-800 dark:text-white">{game.title}</h4>
-                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{game.description}</p>
+                            <img 
+                                alt={game.title} 
+                                className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl object-cover mr-3 sm:mr-4 flex-shrink-0" 
+                                src={game.thumbnailSquare || game.thumbnail}
+                                loading="lazy"
+                            />
+                            <div className="flex-1 min-w-0">
+                                <h4 className="font-semibold text-gray-800 dark:text-white truncate">{game.title}</h4>
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{game.description}</p>
                             </div>
-                            <Link to={path} className="px-5 py-2 text-sm font-semibold rounded-full bg-primary/20 dark:bg-primary/30 text-primary dark:text-blue-300">Play</Link>
+                            <Link 
+                                to={game.path} 
+                                className="px-3 py-2 sm:px-5 text-sm font-semibold rounded-full bg-primary/20 dark:bg-primary/30 text-primary dark:text-blue-300 flex-shrink-0"
+                            >
+                                Play
+                            </Link>
                         </div>
                     );
                 })}

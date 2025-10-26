@@ -143,32 +143,32 @@ function App() {
           }
         />
 
-        <Route
-          path="/games"
-          element={
-            <ProtectedRoute allowedRoles={['student', 'teacher', 'hod']}> 
-              <DashboardLayout><GamesPage /></DashboardLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/games/waste-segregator"
-          element={
-            <ProtectedRoute allowedRoles={['student', 'teacher', 'hod']}>
-              <WasteSegregatorGame />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/games/quiz"
-          element={
-            <ProtectedRoute allowedRoles={['student', 'teacher', 'hod']}>
-              <QuizGame />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/games">
+          <Route
+            index
+            element={
+              <ProtectedRoute allowedRoles={['student', 'teacher', 'hod']}> 
+                <DashboardLayout><GamesPage /></DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="waste-segregator"
+            element={
+              <ProtectedRoute allowedRoles={['student', 'teacher', 'hod']}>
+                <DashboardLayout><WasteSegregatorGame /></DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="quiz"
+            element={
+              <ProtectedRoute allowedRoles={['student', 'teacher', 'hod']}>
+                <DashboardLayout><QuizGame /></DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+        </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

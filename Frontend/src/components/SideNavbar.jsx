@@ -36,11 +36,6 @@ const SideNavbar = () => {
             { icon: 'dashboard', path: '/dashboard/teacher', label: 'Dashboard Home' },
             { icon: 'shield', path: '/challenges', label: 'Challenges' },
             { icon: 'book', path: '/teacher/curriculum', label: 'Curriculum' },
-            { icon: 'task_alt', path: '/teacher/quests', label: 'Quests Overview' },
-            { icon: 'assessment', path: '/teacher/reports', label: 'Reports' },
-            { icon: 'public', path: '/teacher/impact-map', label: 'Impact Map' },
-            { icon: 'videogame_asset', path: '/games', label: 'Games' },
-            { icon: 'person', path: '/profile', label: 'Profile' },
         ];
     } else if (userRole === 'hod') {
         navItems = [
