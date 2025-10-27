@@ -1,8 +1,29 @@
 
-import React from 'react';
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../services/firebase';
+import EcoPointsDisplay from './EcoPointsDisplay';
 
 const ProfileHeader = ({ user, role }) => {
+    const [ecoPoints, setEcoPoints] = useState(0);
+
+    useEffect(() => {
+        const fetchEcoPoints = async () => {
+            if (user.uid) {
+                try {
+                    const userDoc = await getDoc(doc(db, 'users', user.uid));
+                    if (userDoc.exists()) {
+                        setEcoPoints(userDoc.data().ecoPoints || 0);
+                    }
+                } catch (error) {
+                    console.error('Error fetching eco points:', error);
+                }
+            }
+        };
+
+        fetchEcoPoints();
+    }, [user.uid]);
     const getRoleBadgeColor = () => {
         switch (role) {
             case 'student':
@@ -35,6 +56,17 @@ const ProfileHeader = ({ user, role }) => {
                     <span className={`mt-2 inline-block px-3 py-1 text-sm font-semibold text-white rounded-full ${getRoleBadgeColor()}`}>
                         {role.charAt(0).toUpperCase() + role.slice(1)}
                     </span>
+                )}
+                {role === 'student' && (
+                    <div className="mt-2">
+                        <EcoPointsDisplay 
+                            points={ecoPoints} 
+                            size="small" 
+                            showLabel={false} 
+                            animate={false}
+                            className="inline-block ml-2"
+                        />
+                    </div>
                 )}
             </div>
         </motion.div>

@@ -1,5 +1,5 @@
 // frontend/src/pages/TeacherDashboard.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import TeacherHeader from '../components/TeacherHeader';
 import ClassOverview from '../components/ClassOverview';
@@ -8,11 +8,14 @@ import AverageEcoPoints from '../components/AverageEcoPoints';
 import StudentPerformanceOverview from '../components/StudentPerformanceOverview';
 import StudentPerformanceList from '../components/StudentPerformanceList';
 import ChallengesList from '../components/ChallengesList';
+import ChallengeCreatorFAB from '../components/ChallengeCreatorFAB';
+import EcoBot from '../components/EcoBot';
 import { useAuth } from '../context/useAuth';
 import { Navigate } from 'react-router-dom';
 
 const TeacherDashboard = () => {
     const { currentUser, loading } = useAuth();
+    const [showEcoBot, setShowEcoBot] = useState(false);
 
     if (loading) {
         return (
@@ -38,6 +41,12 @@ const TeacherDashboard = () => {
                 <div className="flex flex-col gap-6 lg:gap-8">
                     <AverageEcoPoints />
                     <StudentPerformanceOverview />
+                    <button 
+                        onClick={() => setShowEcoBot(true)}
+                        className="bg-green-500 text-white p-4 rounded-lg hover:bg-green-600 transition-colors"
+                    >
+                        🌱 Ask EcoBot
+                    </button>
                 </div>
             </div>
 
@@ -48,6 +57,9 @@ const TeacherDashboard = () => {
             <div className="mt-6 lg:mt-8">
                 <ChallengesList />
             </div>
+
+            <ChallengeCreatorFAB />
+            <EcoBot isOpen={showEcoBot} onClose={() => setShowEcoBot(false)} />
         </DashboardLayout>
     );
 };

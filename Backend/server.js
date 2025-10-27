@@ -27,9 +27,20 @@ app.use(express.json());
 
 // --- 5. IMPORT & USE ROUTES ---
 const authRoutes = require('./routes/auth');
-const quizRoutes = require('./routes/quiz'); // Import quiz routes
+const quizRoutes = require('./routes/quiz');
+const challengeRoutes = require('./routes/challenges');
+const analyticsRoutes = require('./routes/analytics');
+const announcementRoutes = require('./routes/announcements');
+const ecobotRoutes = require('./routes/ecobot');
+const leaderboardRoutes = require('./routes/leaderboard');
+
 app.use('/api/auth', authRoutes);
-app.use('/api/quiz', quizRoutes); // Use quiz routes
+app.use('/api/quiz', quizRoutes);
+app.use('/api/challenges', challengeRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/announcements', announcementRoutes);
+app.use('/api/ecobot', ecobotRoutes);
+app.use('/api/leaderboard', leaderboardRoutes);
 
 // --- 6. EXPORT THE APP FOR VERCEL ---
 module.exports = app;

@@ -64,7 +64,7 @@ const SideNavbar = () => {
 
     return (
         <nav 
-            className={`hidden lg:flex flex-col items-center justify-between p-4 transition-all duration-300 m-6 rounded-2xl shadow-lg bg-white/50 dark:bg-black/20 ${isExpanded ? 'w-56' : 'w-20'}`}
+            className={`flex flex-col items-center justify-between p-4 transition-all duration-300 m-6 rounded-2xl shadow-lg bg-white dark:bg-gray-800 border ${isExpanded ? 'w-56' : 'w-20'}`}
             onMouseEnter={() => setIsExpanded(true)}
             onMouseLeave={() => setIsExpanded(false)}
         >
@@ -76,10 +76,10 @@ const SideNavbar = () => {
                     <Link
                         key={item.path}
                         to={item.path}
-                        className={`flex items-center justify-start p-3 rounded-full nav-item w-full ${location.pathname.startsWith(item.path) ? 'nav-item-active' : ''}`}
+                        className={`flex items-center justify-start p-3 rounded-lg w-full transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 ${location.pathname.startsWith(item.path) ? 'bg-primary text-white' : 'text-gray-600 dark:text-gray-300'}`}
                         title={item.label}
                     >
-                        <span className="material-icons">{item.icon}</span>
+                        <span className="material-symbols-outlined">{item.icon}</span>
                         {isExpanded && <span className="ml-4">{item.label}</span>}
                     </Link>
                 ))}
@@ -87,10 +87,10 @@ const SideNavbar = () => {
             {currentUser && (
                 <button
                     onClick={handleLogout}
-                    className="flex items-center justify-start p-3 rounded-full nav-item w-full"
+                    className="flex items-center justify-start p-3 rounded-lg w-full transition-colors hover:bg-red-100 text-red-600"
                     title="Logout"
                 >
-                    <span className="material-icons">logout</span>
+                    <span className="material-symbols-outlined">logout</span>
                     {isExpanded && <span className="ml-4">Logout</span>}
                 </button>
             )}

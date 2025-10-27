@@ -10,7 +10,7 @@ import { doc, deleteDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
 
 const ChallengesList = () => {
-    const { challenges, isLoading, setChallenges } = useChallenges();
+    const { challenges, isLoading, error, setChallenges, clearError } = useChallenges();
     const { userRole } = useAuth();
     const [expandedChallenge, setExpandedChallenge] = useState(null);
     const navigate = useNavigate();
@@ -19,33 +19,38 @@ const ChallengesList = () => {
         setExpandedChallenge(expandedChallenge === id ? null : id);
     };
 
-    const handleStartChallenge = (challengeId) => {
-        navigate(`/quiz/${challengeId}`);
+    const handleStartChallenge = (challenge) => {
+        if (challenge.type.toLowerCase() === 'quiz_auto' || challenge.type.toLowerCase() === 'quiz_manual') {
+            navigate(`/quiz/${challenge.id}`);
+        } else {
+            // For physical or video challenges, navigate to a different route or show instructions
+            navigate(`/challenge/${challenge.id}`);
+        }
     };
 
     const handleDeleteChallenge = async (challengeId) => {
-        if (window.confirm('Are you sure you want to delete this challenge?')) {
-            try {
-                await deleteDoc(doc(db, 'quizzes', challengeId));
-                setChallenges(challenges.filter(c => c.id !== challengeId));
-            } catch (error) {
-                console.error("Error deleting challenge:", error);
-                alert("Failed to delete challenge. Please check the console for details.");
-            }
+        if (!window.confirm('Are you sure you want to delete this challenge?')) return;
+        
+        try {
+            await deleteDoc(doc(db, 'challenges', challengeId));
+            setChallenges(challenges.filter(c => c.id !== challengeId));
+        } catch (error) {
+            console.error("Error deleting challenge:", error.message || error);
+            alert("Failed to delete challenge. Please try again.");
         }
     };
 
     const getIcon = (type) => {
-        switch (type) {
-            case 'Physical':
+        switch (type.toLowerCase()) {
+            case 'physical':
                 return <ClipboardCheck className="w-5 h-5 text-green-600 dark:text-green-400" />;
-            case 'Video':
+            case 'video':
                 return <Film className="w-5 h-5 text-purple-600 dark:text-purple-400" />;
-            case 'Quiz-Auto':
-            case 'Quiz-Manual':
+            case 'quiz_auto':
+            case 'quiz_manual':
                 return <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />;
             default:
-                return null;
+                return <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />;
         }
     };
 
@@ -55,6 +60,17 @@ const ChallengesList = () => {
         return (
             <div className="flex justify-center items-center p-10">
                 <Loader className="animate-spin w-8 h-8 text-blue-500" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mt-6">
+                <p className="text-red-800 dark:text-red-200">{error}</p>
+                <button onClick={clearError} className="mt-2 text-red-600 hover:text-red-800 underline">
+                    Dismiss
+                </button>
             </div>
         );
     }
@@ -77,17 +93,17 @@ const ChallengesList = () => {
                                             {getIcon(challenge.type)}
                                         </div>
                                         <div>
-                                            <h3 className="font-bold text-gray-900 dark:text-white">{challenge.title}</h3>
+                                            <h3 className="font-bold text-gray-900 dark:text-white">{challenge.title || 'Untitled Challenge'}</h3>
                                             <p className="text-sm text-gray-600 dark:text-gray-400">{challenge.type} Challenge</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center space-x-4">
                                         <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                                            challenge.status === 'Active' 
+                                            challenge.isActive 
                                                 ? 'bg-green-200 text-green-800 dark:bg-green-900 dark:text-green-200' 
                                                 : 'bg-red-200 text-red-800 dark:bg-red-900 dark:text-red-200'
                                         }`}>
-                                            {challenge.status}
+                                            {challenge.isActive ? 'Active' : 'Inactive'}
                                         </span>
                                         <ChevronDown className={`w-6 h-6 text-gray-500 dark:text-gray-400 transform transition-transform ${expandedChallenge === challenge.id ? 'rotate-180' : ''}`} />
                                     </div>
@@ -128,7 +144,7 @@ const ChallengesList = () => {
                                                 </button>
                                             </>
                                         ) : (
-                                            <button onClick={() => handleStartChallenge(challenge.id)} className="flex items-center space-x-2 px-4 py-2 rounded-lg text-white bg-green-600 hover:bg-green-700 font-semibold shadow-sm hover:shadow-md transition-all">
+                                            <button onClick={() => handleStartChallenge(challenge)} className="flex items-center space-x-2 px-4 py-2 rounded-lg text-white bg-green-600 hover:bg-green-700 font-semibold shadow-sm hover:shadow-md transition-all">
                                                 <span>Start Challenge</span>
                                             </button>
                                         )}

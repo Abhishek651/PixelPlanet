@@ -23,6 +23,10 @@ import GamesPage from './pages/GamesPage';
 import WasteSegregatorGame from './pages/WasteSegregatorGame';
 import QuizGame from './pages/QuizGame';
 import DashboardLayout from './components/DashboardLayout';
+import MobileDashboardPage from './pages/MobileDashboardPage';
+import WebDashboardPage from './pages/WebDashboardPage';
+import StorePage from './pages/StorePage';
+import GreenFeedPage from './pages/GreenFeedPage';
 
 function ProtectedRoute({ children, allowedRoles }) {
   const { currentUser, userRole, loading } = useAuth();
@@ -116,13 +120,44 @@ function App() {
           }
         />
         <Route
-          
           path="/dashboard/student"
-  element={
-    <ProtectedRoute allowedRoles={['student']}>
-      <StudentDashboard />
-    </ProtectedRoute>
-  }
+          element={
+            <ProtectedRoute allowedRoles={['student']}>
+              <StudentDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/mobile"
+          element={
+            <ProtectedRoute allowedRoles={['student', 'teacher', 'hod']}>
+              <MobileDashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/web"
+          element={
+            <ProtectedRoute allowedRoles={['student', 'teacher', 'hod']}>
+              <WebDashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/store"
+          element={
+            <ProtectedRoute allowedRoles={['student', 'teacher', 'hod']}>
+              <StorePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/green-feed"
+          element={
+            <ProtectedRoute allowedRoles={['student', 'teacher', 'hod']}>
+              <GreenFeedPage />
+            </ProtectedRoute>
+          }
         />
         <Route
           path="/challenges/:challengeId/submissions"

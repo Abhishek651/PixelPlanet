@@ -11,6 +11,7 @@ export const ChallengeProvider = ({ children }) => {
     const { currentUser, userRole } = useAuth();
     const [challenges, setChallenges] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     const fetchChallenges = useCallback(async () => {
         if (!currentUser) {
@@ -45,10 +46,10 @@ export const ChallengeProvider = ({ children }) => {
 
             if (userRole === 'student') {
                 console.log('[ChallengeProvider] User is a student. Fetching challenges for institute:', userInstitute);
-                q = query(collection(db, 'quizzes'), where('instituteId', '==', userInstitute));
+                q = query(collection(db, 'challenges'), where('instituteId', '==', userInstitute));
             } else if (userRole === 'teacher' || userRole === 'hod' || userRole === 'admin') {
                 console.log(`[ChallengeProvider] User is a ${userRole}. Fetching created challenges...`);
-                q = query(collection(db, 'quizzes'), where('createdBy', '==', currentUser.uid));
+                q = query(collection(db, 'challenges'), where('createdBy', '==', currentUser.uid));
             } else {
                 console.log(`[ChallengeProvider] Unknown user role: ${userRole}`);
             }
@@ -80,7 +81,8 @@ export const ChallengeProvider = ({ children }) => {
                 setChallenges([]);
             }
         } catch (error) {
-            console.error("[ChallengeProvider] Error fetching challenges:", error);
+            console.error("[ChallengeProvider] Error fetching challenges:", error.message || error);
+            setError('Failed to load challenges. Please try again.');
             setChallenges([]);
         } finally {
             setIsLoading(false);
@@ -94,8 +96,10 @@ export const ChallengeProvider = ({ children }) => {
     const value = {
         challenges,
         isLoading,
+        error,
         setChallenges,
         refreshChallenges: fetchChallenges,
+        clearError: () => setError(null),
     };
 
     return (

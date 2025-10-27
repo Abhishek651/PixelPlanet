@@ -6,9 +6,12 @@ const { db } = require('../firebaseConfig');
 const getApiSettings = async () => {
     const settingsDoc = await db.collection('settings').doc('site').get();
     if (!settingsDoc.exists) {
-        throw new Error('Site settings not found in Firestore.');
+        throw new Error('API settings not configured by admin.');
     }
     const settings = settingsDoc.data();
+    if (!settings.openRouterApiKey && !settings.geminiApiKey && !settings.openaiApiKey) {
+        throw new Error('No API keys configured by admin.');
+    }
     return {
         defaultProvider: settings.defaultApiProvider || 'openrouter',
         keys: {
@@ -146,7 +149,7 @@ router.post('/generate', async (req, res) => {
             }
         }
 
-        res.status(502).json({ error: 'All API providers failed to generate the quiz.' });
+        res.status(503).json({ error: 'Quiz generation unavailable. Please contact admin to configure API settings.' });
 
     } catch (error) {
         console.error('Failed to fetch API settings or an unexpected error occurred:', error);

@@ -32,6 +32,18 @@ export default {
         'text-secondary-dark': '#BDBDBD', // Lighter gray for secondary text
         'border-light': '#E0E0E0', // Light gray for borders
         'border-dark': '#424242', // Darker gray for borders
+        
+        // Dark theme colors for challenges page
+        'dark-background': '#1A2C29',
+        'dark-surface': '#253D3A',
+        'dark-text-primary': '#E0E0E0',
+        'dark-text-secondary': '#A0A0A0',
+        'dark-border': '#3D5552',
+        'dark-accent-green': '#4CAF50',
+        'dark-gradient-start': '#1A2C29',
+        'dark-gradient-end': '#0F1C1A',
+        'gold-crown': '#FFD700',
+        'gold-shadow': '#B8860B',
       },
       fontFamily: {
         display: ["Montserrat", "sans-serif"],
@@ -49,6 +61,8 @@ export default {
         'soft-md': '0 8px 12px rgba(0, 0, 0, 0.08)',
         'soft-lg': '0 15px 30px rgba(0, 0, 0, 0.1)',
         'soft-xl': '0 25px 50px rgba(0, 0, 0, 0.15)',
+        'dark-soft': '0 4px 8px rgba(0, 0, 0, 0.2)',
+        'dark-deep': '0 8px 16px rgba(0, 0, 0, 0.4)',
       },
       backdropBlur: {
         'xl': '24px',
