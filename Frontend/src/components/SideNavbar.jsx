@@ -64,7 +64,7 @@ const SideNavbar = () => {
 
     return (
         <nav 
-            className={`flex flex-col items-center justify-between p-4 transition-all duration-300 m-6 rounded-2xl shadow-lg bg-white dark:bg-gray-800 border ${isExpanded ? 'w-56' : 'w-20'}`}
+            className={`hidden lg:flex flex-col items-center justify-between p-4 transition-all duration-300 m-6 rounded-2xl shadow-lg bg-white dark:bg-gray-800 border ${isExpanded ? 'w-56' : 'w-20'}`}
             onMouseEnter={() => setIsExpanded(true)}
             onMouseLeave={() => setIsExpanded(false)}
         >
