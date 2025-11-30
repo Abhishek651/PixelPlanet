@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Trophy, Medal, Award } from 'lucide-react';
 import { useAuth } from '../context/useAuth';
+import { apiRequest } from '../services/api';
 
 const DashboardLeaderboard = () => {
     const { currentUser } = useAuth();
@@ -19,15 +20,9 @@ const DashboardLeaderboard = () => {
         
         try {
             const token = await currentUser.getIdToken();
-            const response = await fetch('http://localhost:5000/api/leaderboard/institute?limit=5', {
+            const data = await apiRequest('/api/leaderboard/institute?limit=5', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-            }
-            
-            const data = await response.json();
             setLeaderboard(data.leaderboard || []);
         } catch (error) {
             console.error('Error fetching leaderboard:', error);

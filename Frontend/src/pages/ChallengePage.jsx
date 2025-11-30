@@ -9,6 +9,7 @@ import ChallengesList from '../components/ChallengesList';
 import ChallengeCreatorFAB from '../components/ChallengeCreatorFAB';
 import ChallengeTypeModal from '../components/ChallengeTypeModal';
 import LoginPromptModal from '../components/LoginPromptModal';
+import { leaderboardAPI } from '../services/api';
 
 const ChallengePage = () => {
     const { currentUser, userRole } = useAuth();
@@ -37,15 +38,7 @@ const ChallengePage = () => {
         
         try {
             const token = await currentUser.getIdToken();
-            const response = await fetch('http://localhost:5000/api/leaderboard/institute', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-            }
-            
-            const data = await response.json();
+            const data = await leaderboardAPI.getInstitute(token);
             setLeaderboard(data.leaderboard || []);
         } catch (error) {
             console.error('Error fetching leaderboard:', error);
