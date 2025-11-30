@@ -12,6 +12,7 @@ import TeacherDashboard from './pages/TeacherDashboard';
 import StudentDashboard from './pages/StudentDashboard';
 import ProfilePage from './pages/ProfilePage';
 import ChallengePage from './pages/ChallengePage';
+import CreateChallengePage from './pages/CreateChallengePage';
 import CreatePhysicalChallengePage from './pages/CreatePhysicalChallengePage';
 import CreateAutoQuizPage from './pages/CreateAutoQuizPage';
 import CreateManualQuizPage from './pages/CreateManualQuizPage';
@@ -98,6 +99,10 @@ function App() {
         <Route
           path="/dashboard/teacher"
           element={<ProtectedRoute allowedRoles={['teacher']}><TeacherDashboard /></ProtectedRoute>}
+        />
+        <Route
+          path="/create-challenge"
+          element={<ProtectedRoute allowedRoles={['teacher']}><CreateChallengePage /></ProtectedRoute>}
         />
         <Route
           path="/create-physical-challenge"

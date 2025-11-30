@@ -42,7 +42,10 @@ export const AuthProvider = ({ children }) => {
                 // User document doesn't exist, create it via backend
                 try {
                     const token = await user.getIdToken();
-                    const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/sync-user`, {
+                    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+                    console.log("AuthContext: Calling sync-user at:", `${apiUrl}/api/auth/sync-user`);
+                    
+                    const response = await fetch(`${apiUrl}/api/auth/sync-user`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -54,15 +57,23 @@ export const AuthProvider = ({ children }) => {
                         })
                     });
                     
+                    console.log("AuthContext: sync-user response status:", response.status);
+                    
                     if (response.ok) {
                         const data = await response.json();
                         console.log("AuthContext: User document created:", data);
                         setInstituteId(data.user.instituteId);
                         // Refresh token to get updated custom claims
                         await user.getIdToken(true);
+                    } else {
+                        const errorData = await response.json().catch(() => ({}));
+                        console.error("AuthContext: sync-user failed:", response.status, errorData);
+                        throw new Error(`Sync user failed: ${response.status}`);
                     }
                 } catch (error) {
                     console.error("AuthContext: Error creating user document:", error);
+                    // Show user-friendly error
+                    alert("Failed to complete signup. Please try logging in again or contact support.");
                 }
             }
         }

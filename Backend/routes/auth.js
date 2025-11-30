@@ -362,7 +362,7 @@ router.post('/sync-user', async (req, res) => {
         // Check if user document already exists
         const userDoc = await db.collection('users').doc(uid).get();
         
-        if (userDoc.exists()) {
+        if (userDoc.exists) {  // Note: Admin SDK uses .exists (property), not .exists() (function)
             console.log('[sync-user] User document already exists');
             // User document exists, just return it
             return res.json({ 

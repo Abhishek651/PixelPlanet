@@ -35,6 +35,7 @@ const SideNavbar = () => {
         navItems = [
             { icon: 'dashboard', path: '/dashboard/teacher', label: 'Dashboard' },
             { icon: 'shield', path: '/challenges', label: 'Challenges' },
+            { icon: 'add_circle', path: '/create-challenge', label: 'Create Challenge' },
             { icon: 'dynamic_feed', path: '/green-feed', label: 'Feed' },
             { icon: 'videogame_asset', path: '/games', label: 'Games' },
             { icon: 'menu', path: '/menu', label: 'Menu' },
