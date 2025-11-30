@@ -3,6 +3,15 @@
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
+// Debug: Log the API URL being used (remove in production)
+console.log('🔧 API_URL configured as:', API_URL);
+
+// Validate API_URL format
+if (!API_URL.startsWith('http://') && !API_URL.startsWith('https://')) {
+    console.error('❌ VITE_API_URL must start with http:// or https://');
+    console.error('Current value:', API_URL);
+}
+
 /**
  * Make a request to the backend API
  * @param {string} endpoint - API endpoint (e.g., '/api/ecobot/chat')
