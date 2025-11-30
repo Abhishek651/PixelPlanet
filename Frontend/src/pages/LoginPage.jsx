@@ -7,20 +7,50 @@ import { ChevronRight } from 'lucide-react';
 const LoginPage = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [rememberMe, setRememberMe] = useState(false);
     const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showForgotPassword, setShowForgotPassword] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+        setSuccess('');
         setLoading(true);
         try {
             await login(email, password);
+            if (rememberMe) {
+                localStorage.setItem('rememberMe', 'true');
+            } else {
+                localStorage.removeItem('rememberMe');
+            }
             navigate('/');
         } catch (_err) {
             setError('Failed to log in. Please check your credentials.');
+        }
+        setLoading(false);
+    };
+
+    const handleForgotPassword = async (e) => {
+        e.preventDefault();
+        if (!email) {
+            setError('Please enter your email address');
+            return;
+        }
+        setError('');
+        setSuccess('');
+        setLoading(true);
+        try {
+            const { sendPasswordResetEmail } = await import('firebase/auth');
+            const { auth } = await import('../services/firebase');
+            await sendPasswordResetEmail(auth, email);
+            setSuccess('Password reset email sent! Check your inbox.');
+            setTimeout(() => setShowForgotPassword(false), 3000);
+        } catch (_err) {
+            setError('Failed to send reset email. Please check your email address.');
         }
         setLoading(false);
     };
@@ -73,7 +103,7 @@ const LoginPage = () => {
                             Sign in to continue your eco-journey
                         </p>
 
-                        <form onSubmit={handleSubmit} className="space-y-6 flex-1 flex flex-col">
+                        <form onSubmit={showForgotPassword ? handleForgotPassword : handleSubmit} className="space-y-6 flex-1 flex flex-col">
                             {error && (
                                 <motion.div
                                     initial={{ opacity: 0, y: -10 }}
@@ -81,6 +111,15 @@ const LoginPage = () => {
                                     className="p-3 bg-red-500 bg-opacity-20 border border-red-300 rounded-lg text-white text-sm"
                                 >
                                     {error}
+                                </motion.div>
+                            )}
+                            {success && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="p-3 bg-green-500 bg-opacity-20 border border-green-300 rounded-lg text-white text-sm"
+                                >
+                                    {success}
                                 </motion.div>
                             )}
 
@@ -104,23 +143,70 @@ const LoginPage = () => {
                                     />
                                 </motion.div>
 
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.5 }}
-                                >
-                                    <label className="block text-white text-opacity-90 text-sm font-medium mb-2 uppercase tracking-wide">
-                                        Password
-                                    </label>
-                                    <input
-                                        type="password"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        className="w-full px-4 py-3 rounded-2xl border border-white border-opacity-20 bg-white bg-opacity-5 text-white text-lg outline-none transition-shadow duration-150 placeholder-white/60 focus:shadow-lg focus:shadow-white/10 focus:border-opacity-50 focus:outline-none"
-                                        placeholder="••••••••"
-                                        required
-                                    />
-                                </motion.div>
+                                {!showForgotPassword && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.5 }}
+                                    >
+                                        <label className="block text-white text-opacity-90 text-sm font-medium mb-2 uppercase tracking-wide">
+                                            Password
+                                        </label>
+                                        <input
+                                            type="password"
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            className="w-full px-4 py-3 rounded-2xl border border-white border-opacity-20 bg-white bg-opacity-5 text-white text-lg outline-none transition-shadow duration-150 placeholder-white/60 focus:shadow-lg focus:shadow-white/10 focus:border-opacity-50 focus:outline-none"
+                                            placeholder="••••••••"
+                                            required
+                                        />
+                                    </motion.div>
+                                )}
+
+                                {!showForgotPassword && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.6 }}
+                                        className="flex items-center justify-between"
+                                    >
+                                        <label className="flex items-center cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={rememberMe}
+                                                onChange={(e) => setRememberMe(e.target.checked)}
+                                                className="w-4 h-4 rounded border-white border-opacity-30 bg-white bg-opacity-10 text-teal-600 focus:ring-2 focus:ring-white focus:ring-opacity-30"
+                                            />
+                                            <span className="ml-2 text-white text-opacity-80 text-sm">Remember me</span>
+                                        </label>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowForgotPassword(true)}
+                                            className="text-white text-opacity-80 text-sm hover:text-opacity-100 underline transition-all"
+                                        >
+                                            Forgot password?
+                                        </button>
+                                    </motion.div>
+                                )}
+
+                                {showForgotPassword && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="text-center"
+                                    >
+                                        <p className="text-white text-opacity-90 text-sm mb-4">
+                                            Enter your email address and we'll send you a link to reset your password.
+                                        </p>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowForgotPassword(false)}
+                                            className="text-white text-opacity-80 text-sm hover:text-opacity-100 underline transition-all"
+                                        >
+                                            Back to login
+                                        </button>
+                                    </motion.div>
+                                )}
                             </div>
 
                             {/* Submit Button */}
@@ -130,11 +216,13 @@ const LoginPage = () => {
                                     disabled={loading}
                                     initial={{ opacity: 0, scale: 0.8 }}
                                     animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ delay: 0.6 }}
+                                    transition={{ delay: 0.7 }}
                                     className="w-16 h-16 rounded-full bg-white hover:bg-opacity-90 flex items-center justify-center transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {loading ? (
                                         <div className="w-6 h-6 border-3 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+                                    ) : showForgotPassword ? (
+                                        <span className="material-symbols-outlined text-teal-600 text-3xl">send</span>
                                     ) : (
                                         <ChevronRight className="w-8 h-8 text-teal-600" />
                                     )}

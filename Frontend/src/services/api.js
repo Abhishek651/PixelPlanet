@@ -1,32 +1,82 @@
-import axios from 'axios';
+// API Configuration
+// This file centralizes all API calls to the backend
 
-const api = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL || '',
-    headers: {
-        'Content-Type': 'application/json',
-    },
-});
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-// Add a request interceptor to include the auth token if available
-api.interceptors.request.use(
-    async (config) => {
-        // You might need to import auth from firebase service here if you want to get the token
-        // Or rely on the fact that firebase auth state is handled elsewhere.
-        // However, for protected routes, we usually need to send the token.
+/**
+ * Make a request to the backend API
+ * @param {string} endpoint - API endpoint (e.g., '/api/ecobot/chat')
+ * @param {object} options - Fetch options (method, headers, body, etc.)
+ * @returns {Promise} - Response data
+ */
+export const apiRequest = async (endpoint, options = {}) => {
+    const url = `${API_URL}${endpoint}`;
+    
+    const defaultOptions = {
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers,
+        },
+    };
 
-        // Dynamic import to avoid circular dependencies if any, or just import auth
-        const { auth } = await import('./firebase');
-
-        if (auth.currentUser) {
-            const token = await auth.currentUser.getIdToken();
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
+    const response = await fetch(url, { ...defaultOptions, ...options });
+    
+    if (!response.ok) {
+        throw new Error(`API Error: ${response.status} ${response.statusText}`);
     }
-);
+    
+    return response.json();
+};
 
-export default api;
+/**
+ * EcoBot API
+ */
+export const ecoBotAPI = {
+    sendMessage: async (message) => {
+        return apiRequest('/api/ecobot/chat', {
+            method: 'POST',
+            body: JSON.stringify({ message }),
+        });
+    },
+};
+
+/**
+ * Leaderboard API
+ */
+export const leaderboardAPI = {
+    getInstitute: async (token) => {
+        return apiRequest('/api/leaderboard/institute', {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+    },
+    getGlobal: async (token) => {
+        return apiRequest('/api/leaderboard/global', {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+    },
+};
+
+/**
+ * Admin API
+ */
+export const adminAPI = {
+    updateSettings: async (token, settings) => {
+        return apiRequest('/api/admin/settings', {
+            method: 'PUT',
+            headers: { Authorization: `Bearer ${token}` },
+            body: JSON.stringify(settings),
+        });
+    },
+    getSettings: async (token) => {
+        return apiRequest('/api/admin/settings', {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+    },
+};
+
+export default {
+    apiRequest,
+    ecoBotAPI,
+    leaderboardAPI,
+    adminAPI,
+};

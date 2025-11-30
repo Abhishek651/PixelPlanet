@@ -13,8 +13,8 @@ const SideNavbar = () => {
     const handleLogout = async () => {
         try {
             await signOut(auth);
-            // No need to navigate here, AuthContext's onAuthStateChanged will trigger
-            // a redirect via ProtectedRoute if the user is on a protected route.
+            localStorage.removeItem('rememberMe');
+            window.location.href = '/'; // Redirect to landing page
         } catch (error) {
             console.error("Error signing out:", error);
             alert("Failed to log out.");

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ecoBotAPI } from '../services/api';
 
 const EcoBot = ({ isOpen, onClose }) => {
     const [messages, setMessages] = useState([
@@ -16,25 +17,17 @@ const EcoBot = ({ isOpen, onClose }) => {
         setIsLoading(true);
 
         try {
-            const response = await fetch('/api/ecobot/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: inputMessage })
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                setMessages(prev => [...prev, {
-                    id: Date.now() + 1,
-                    type: 'bot',
-                    content: data.response,
-                    timestamp: new Date()
-                }]);
-            }
+            const data = await ecoBotAPI.sendMessage(inputMessage);
+            setMessages(prev => [...prev, {
+                id: Date.now() + 1,
+                type: 'bot',
+                content: data.response,
+                timestamp: new Date()
+            }]);
         } catch (error) {
-            const errorMsg = error.response?.status === 503 
-                ? "EcoBot is not configured. Please contact your administrator to set up API keys."
-                : "Sorry, I'm having trouble right now. Try turning off lights to save energy!";
+            const errorMsg = error.message?.includes('503')
+                ? "EcoBot is not configured. Please contact your administrator to set up API keys in the admin panel."
+                : "Sorry, I'm having trouble connecting right now. The EcoBot service may be unavailable.";
             setMessages(prev => [...prev, {
                 id: Date.now() + 1,
                 type: 'bot',

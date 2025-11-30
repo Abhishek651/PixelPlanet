@@ -16,6 +16,15 @@ export const AuthProvider = ({ children }) => {
         return signInWithEmailAndPassword(auth, email, password);
     };
 
+    const signup = async (email, password, displayName) => {
+        const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth');
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        if (displayName) {
+            await updateProfile(userCredential.user, { displayName });
+        }
+        return userCredential;
+    };
+
     // Signup is handled via backend API endpoints (register-institute, register-teacher, etc.)
     // so we don't need a client-side signup function here.
 
@@ -93,6 +102,7 @@ export const AuthProvider = ({ children }) => {
         instituteId,
         loading,
         login,
+        signup,
         refreshAuth // Make refreshAuth available via context
     };
 
