@@ -170,12 +170,12 @@ router.get('/institute', verifyToken, [
         const { class: classValue, activityType, timeRange = 'all', limit = 50 } = req.query;
         let users = [];
 
-        // Check if user has instituteId
-        if (!req.instituteId) {
-            console.error('User missing instituteId:', req.uid);
-            // Fallback: return global leaderboard
+        // Check if user has instituteId or is a global user
+        if (!req.instituteId || req.userRole === 'global') {
+            console.log('Global user or missing instituteId, returning global leaderboard');
+            // Return global leaderboard for users not in an institute
             const usersQuery = db.collection('users')
-                .where('role', '==', 'student')
+                .where('role', 'in', ['student', 'global'])
                 .orderBy('ecoPoints', 'desc')
                 .limit(limit);
             
@@ -185,7 +185,7 @@ router.get('/institute', verifyToken, [
             });
             
             const leaderboard = buildLeaderboardResponse(users);
-            return res.json({ leaderboard, fallback: true });
+            return res.json({ leaderboard, scope: 'global' });
         }
 
         if (activityType) {

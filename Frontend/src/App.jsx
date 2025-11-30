@@ -56,6 +56,7 @@ function MainRedirect() {
       case 'hod': return <Navigate to="/dashboard/institute-admin" replace />;
       case 'teacher': return <Navigate to="/dashboard/teacher" replace />;
       case 'student': return <Navigate to="/dashboard/student" replace />;
+      case 'global': return <Navigate to="/dashboard" replace />; // Global users go to generic dashboard
       default: return <Navigate to="/dashboard" replace />;
     }
   }
@@ -65,6 +66,7 @@ function MainRedirect() {
   //   Purpose: When the user lands on / (the root), this component decides where they should end up.
   // If not logged in → show HomePage.
   // If logged in → instantly push them to their role‑specific dashboard.
+  // Global users → generic dashboard with games, ecobot, global leaderboard
 }
 
 function App() {
@@ -79,7 +81,7 @@ function App() {
         {/* Protected Routes */}
         <Route
           path="/dashboard"
-          element={<ProtectedRoute><p>Generic Dashboard - Role-based redirect expected</p></ProtectedRoute>}
+          element={<ProtectedRoute><DashboardLayout><MobileDashboardPage /></DashboardLayout></ProtectedRoute>}
         />
         <Route
           path="/dashboard/admin"

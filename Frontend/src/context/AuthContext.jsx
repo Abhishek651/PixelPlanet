@@ -38,7 +38,32 @@ export const AuthProvider = ({ children }) => {
                 console.log("AuthContext: Fetched user data:", userData);
                 setInstituteId(userData.instituteId);
             } else {
-                console.log("AuthContext: User document not found for user:", user.uid);
+                console.log("AuthContext: User document not found, creating one...");
+                // User document doesn't exist, create it via backend
+                try {
+                    const token = await user.getIdToken();
+                    const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/sync-user`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            name: user.displayName || user.email.split('@')[0],
+                            email: user.email
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log("AuthContext: User document created:", data);
+                        setInstituteId(data.user.instituteId);
+                        // Refresh token to get updated custom claims
+                        await user.getIdToken(true);
+                    }
+                } catch (error) {
+                    console.error("AuthContext: Error creating user document:", error);
+                }
             }
         }
     };

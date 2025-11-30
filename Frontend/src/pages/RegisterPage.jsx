@@ -64,11 +64,26 @@ const RegisterPage = () => {
         try {
             const fullName = `${formData.firstName} ${formData.lastName}`;
             await signup(formData.email, formData.password, fullName);
-            // Redirection handled by MainRedirect in App.jsx
+            // Wait a moment for auth state to update, then redirect
+            setTimeout(() => {
+                navigate('/');
+            }, 1000);
         } catch (err) {
-            console.error(err);
-            setError(err.message || 'Failed to create account. Please try again.');
-        } finally {
+            console.error('Signup error:', err);
+            // Handle specific Firebase error codes
+            if (err.code === 'auth/email-already-in-use') {
+                setError('This email is already registered. Please login instead.');
+            } else if (err.code === 'auth/invalid-email') {
+                setError('Invalid email address format.');
+            } else if (err.code === 'auth/weak-password') {
+                setError('Password is too weak. Please use at least 6 characters.');
+            } else if (err.code === 'auth/operation-not-allowed') {
+                setError('Email/password accounts are not enabled. Please contact support.');
+            } else if (err.code === 'auth/network-request-failed') {
+                setError('Network error. Please check your internet connection.');
+            } else {
+                setError(err.message || 'Failed to create account. Please try again.');
+            }
             setLoading(false);
         }
     };

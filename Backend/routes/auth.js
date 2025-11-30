@@ -324,4 +324,56 @@ router.get('/institute-stats', verifyToken, async (req, res) => {
     }
 });
 
+// 9. CREATE OR UPDATE USER DOCUMENT (for direct Firebase Auth signups)
+router.post('/sync-user', verifyToken, async (req, res) => {
+    try {
+        const { name, email } = req.body;
+        
+        // Check if user document already exists
+        const userDoc = await db.collection('users').doc(req.uid).get();
+        
+        if (userDoc.exists()) {
+            // User document exists, just return it
+            return res.json({ 
+                message: 'User document already exists.',
+                user: userDoc.data() 
+            });
+        }
+        
+        // Create new user document for direct signup (global user)
+        const userData = {
+            uid: req.uid,
+            name: name || email.split('@')[0],
+            email: email,
+            role: 'global', // Global user, not tied to any institute
+            instituteId: null,
+            isVerified: true,
+            ecoPoints: 0,
+            level: 1,
+            badges: [],
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+        };
+        
+        await db.collection('users').doc(req.uid).set(userData);
+        
+        // Set custom claims for global user
+        await admin.auth().setCustomUserClaims(req.uid, { 
+            role: 'global',
+            instituteId: null 
+        });
+        
+        res.status(201).json({ 
+            message: 'User document created successfully.',
+            user: userData 
+        });
+        
+    } catch (error) {
+        console.error('Error syncing user:', error);
+        res.status(500).json({ 
+            message: 'Failed to sync user document.',
+            error: error.message 
+        });
+    }
+});
+
 module.exports = router;

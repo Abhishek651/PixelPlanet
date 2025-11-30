@@ -28,8 +28,22 @@ const LoginPage = () => {
                 localStorage.removeItem('rememberMe');
             }
             navigate('/');
-        } catch (_err) {
-            setError('Failed to log in. Please check your credentials.');
+        } catch (err) {
+            console.error('Login error:', err);
+            // Handle specific Firebase error codes
+            if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
+                setError('Incorrect email or password. Please try again.');
+            } else if (err.code === 'auth/user-not-found') {
+                setError('No account found with this email. Please sign up first.');
+            } else if (err.code === 'auth/invalid-email') {
+                setError('Invalid email address format.');
+            } else if (err.code === 'auth/user-disabled') {
+                setError('This account has been disabled. Please contact support.');
+            } else if (err.code === 'auth/too-many-requests') {
+                setError('Too many failed login attempts. Please try again later.');
+            } else {
+                setError(err.message || 'Failed to log in. Please check your credentials.');
+            }
         }
         setLoading(false);
     };
@@ -49,8 +63,17 @@ const LoginPage = () => {
             await sendPasswordResetEmail(auth, email);
             setSuccess('Password reset email sent! Check your inbox.');
             setTimeout(() => setShowForgotPassword(false), 3000);
-        } catch (_err) {
-            setError('Failed to send reset email. Please check your email address.');
+        } catch (err) {
+            console.error('Password reset error:', err);
+            if (err.code === 'auth/user-not-found') {
+                setError('No account found with this email address.');
+            } else if (err.code === 'auth/invalid-email') {
+                setError('Invalid email address format.');
+            } else if (err.code === 'auth/too-many-requests') {
+                setError('Too many requests. Please try again later.');
+            } else {
+                setError(err.message || 'Failed to send reset email. Please try again.');
+            }
         }
         setLoading(false);
     };

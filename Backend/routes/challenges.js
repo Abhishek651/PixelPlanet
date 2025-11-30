@@ -12,6 +12,17 @@ const verifyToken = async (req, res, next) => {
         req.uid = decoded.uid;
         req.userRole = decoded.role;
         req.instituteId = decoded.instituteId;
+        
+        // If custom claims are missing, fetch from Firestore
+        if (!req.instituteId || !req.userRole) {
+            const userDoc = await db.collection('users').doc(req.uid).get();
+            if (userDoc.exists) {
+                const userData = userDoc.data();
+                req.instituteId = req.instituteId || userData.instituteId;
+                req.userRole = req.userRole || userData.role;
+            }
+        }
+        
         next();
     } catch (error) {
         res.status(403).json({ message: 'Invalid token.' });
@@ -125,6 +136,14 @@ router.post('/create-manual-quiz', verifyToken, [
 // Get Challenges
 router.get('/list', verifyToken, async (req, res) => {
     try {
+        // Global users see no challenges (or we could create global challenges later)
+        if (!req.instituteId || req.userRole === 'global') {
+            return res.json({ 
+                challenges: [],
+                message: 'No challenges available. Join an institute to access challenges.' 
+            });
+        }
+        
         let query = db.collection('challenges').where('instituteId', '==', req.instituteId);
         
         if (req.userRole === 'student' && req.query.class) {
@@ -136,6 +155,7 @@ router.get('/list', verifyToken, async (req, res) => {
         const snapshot = await query.orderBy('createdAt', 'desc').get();
         res.json({ challenges: snapshot.docs.map(doc => doc.data()) });
     } catch (error) {
+        console.error('Error fetching challenges:', error);
         res.status(500).json({ message: 'Failed to fetch challenges.' });
     }
 });
