@@ -5,14 +5,20 @@ const fetch = require('node-fetch');
 
 const getApiSettings = async () => {
     const settingsDoc = await db.collection('settings').doc('site').get();
-    if (!settingsDoc.exists) throw new Error('API settings not configured by admin.');
-    const settings = settingsDoc.data();
+    
+    // Try to get from Firestore first
+    let settings = {};
+    if (settingsDoc.exists) {
+        settings = settingsDoc.data();
+    }
+    
+    // Fallback to environment variables if Firestore is empty
     return {
-        defaultProvider: settings.defaultApiProvider || 'openrouter',
+        defaultProvider: settings.defaultApiProvider || process.env.DEFAULT_API_PROVIDER || 'openai',
         keys: {
-            openrouter: settings.openRouterApiKey,
-            gemini: settings.geminiApiKey,
-            openai: settings.openaiApiKey
+            openrouter: settings.openRouterApiKey || process.env.OPENROUTER_API_KEY,
+            gemini: settings.geminiApiKey || process.env.GEMINI_API_KEY,
+            openai: settings.openaiApiKey || process.env.OPENAI_API_KEY
         }
     };
 };
