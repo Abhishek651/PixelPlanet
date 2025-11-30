@@ -325,12 +325,32 @@ router.get('/institute-stats', verifyToken, async (req, res) => {
 });
 
 // 9. CREATE OR UPDATE USER DOCUMENT (for direct Firebase Auth signups)
-router.post('/sync-user', verifyToken, async (req, res) => {
+// Note: This endpoint uses a modified verifyToken that doesn't require existing claims
+router.post('/sync-user', async (req, res) => {
     try {
+        // Verify token manually without requiring existing claims
+        const header = req.headers.authorization;
+        if (!header) {
+            return res.status(401).json({ message: 'Authorization header missing.' });
+        }
+        const token = header.split(' ')[1];
+        if (!token) {
+            return res.status(401).json({ message: 'Token missing.' });
+        }
+
+        let decodedToken;
+        try {
+            decodedToken = await admin.auth().verifyIdToken(token);
+        } catch (error) {
+            console.error("Token verification failed:", error);
+            return res.status(403).json({ message: 'Invalid or expired token.' });
+        }
+
+        const uid = decodedToken.uid;
         const { name, email } = req.body;
         
         // Check if user document already exists
-        const userDoc = await db.collection('users').doc(req.uid).get();
+        const userDoc = await db.collection('users').doc(uid).get();
         
         if (userDoc.exists()) {
             // User document exists, just return it
@@ -342,7 +362,7 @@ router.post('/sync-user', verifyToken, async (req, res) => {
         
         // Create new user document for direct signup (global user)
         const userData = {
-            uid: req.uid,
+            uid: uid,
             name: name || email.split('@')[0],
             email: email,
             role: 'global', // Global user, not tied to any institute
@@ -354,10 +374,10 @@ router.post('/sync-user', verifyToken, async (req, res) => {
             createdAt: admin.firestore.FieldValue.serverTimestamp()
         };
         
-        await db.collection('users').doc(req.uid).set(userData);
+        await db.collection('users').doc(uid).set(userData);
         
         // Set custom claims for global user
-        await admin.auth().setCustomUserClaims(req.uid, { 
+        await admin.auth().setCustomUserClaims(uid, { 
             role: 'global',
             instituteId: null 
         });
