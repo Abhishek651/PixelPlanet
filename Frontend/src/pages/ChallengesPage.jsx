@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/useAuth';
+import { leaderboardAPI } from '../services/api';
 import SegmentedControl from '../components/SegmentedControl';
 import LeaderboardAvatar from '../components/LeaderboardAvatar';
 import LeaderboardListItem from '../components/LeaderboardListItem';
@@ -36,13 +37,11 @@ const ChallengesPage = () => {
     const fetchLeaderboard = async () => {
         try {
             const token = await currentUser.getIdToken();
-            const response = await fetch('http://localhost:5000/api/leaderboard/institute', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await response.json();
+            const data = await leaderboardAPI.getInstitute(token);
             setLeaderboard(data.leaderboard || []);
         } catch (error) {
             console.error('Error fetching leaderboard:', error);
+            setLeaderboard([]); // Set empty array on error
         } finally {
             setLoading(false);
         }
