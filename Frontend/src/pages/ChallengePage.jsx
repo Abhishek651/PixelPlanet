@@ -4,7 +4,6 @@ import { useAuth } from '../context/useAuth';
 import SegmentedControl from '../components/SegmentedControl';
 import LeaderboardAvatar from '../components/LeaderboardAvatar';
 import LeaderboardListItem from '../components/LeaderboardListItem';
-import BottomNavbar from '../components/BottomNavbar';
 import DashboardLayout from '../components/DashboardLayout';
 import ChallengesList from '../components/ChallengesList';
 import ChallengeCreatorFAB from '../components/ChallengeCreatorFAB';
@@ -70,7 +69,9 @@ const ChallengePage = () => {
                 initial={{ opacity: 0, y: -30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
-                className="bg-gradient-to-b from-primary to-primary-light p-6 pb-12 rounded-b-3xl shadow-soft-lg"
+                // cancel DashboardLayout's padding so this header spans the full width of the layout container
+                // and match the parent's top rounded corners so no white gaps are visible at the sides
+                className="bg-gradient-to-b from-primary to-primary-light p-6 pb-12 rounded-t-2xl rounded-b-3xl shadow-soft-lg -mx-6 lg:-mx-8 -mt-6 lg:-mt-8"
             >
                 <div className="flex items-center justify-between mb-4">
                     <button className="material-symbols-outlined text-white text-2xl">arrow_back_ios</button>
@@ -83,7 +84,8 @@ const ChallengePage = () => {
             </motion.div>
 
             {/* Segmented Control */}
-            <div className="relative z-10 -mt-8 mb-6">
+            {/* keep segmented control flush with the header edge by compensating for parent padding */}
+            <div className="relative z-10 -mt-8 mb-6 px-4 lg:px-6">
                 <SegmentedControl
                     segments={segments}
                     activeSegment={activeSegment}
@@ -190,7 +192,7 @@ const ChallengePage = () => {
                 </>
             )}
 
-            <BottomNavbar />
+            {/* Bottom navbar provided by DashboardLayout */}
             <LoginPromptModal 
                 isOpen={showLoginModal} 
                 onClose={() => setShowLoginModal(false)} 

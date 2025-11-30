@@ -9,6 +9,24 @@ body {
   font-family: 'Poppins', sans-serif;
 }
 
+/* Ensure any screen-reader-only helpers don't accidentally increase page height
+   Some components add `.sr-only` spans that are absolutely positioned; without
+   an explicit off-screen offset they can end up contributing to the document
+   height and create blank whitespace below the footer. Adding a left offset
+   keeps them accessible to assistive tech while keeping them off-screen. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+  left: -9999px; /* keep the element safely off-screen */
+}
+
 .nav-item-active {
   @apply bg-primary/20 text-primary;
 }

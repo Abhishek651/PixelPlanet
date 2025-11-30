@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useAuth } from './context/useAuth'; // remove AuthProvider import here
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
+import RegisterPage from './pages/RegisterPage';
 import RegisterInstitutePage from './pages/RegisterInstitutePage';
 import InstituteAdminPage from './pages/InstituteAdminPage';
 import JoinInstitutePage from './pages/JoinInstitutePage';
@@ -27,6 +28,7 @@ import MobileDashboardPage from './pages/MobileDashboardPage';
 import WebDashboardPage from './pages/WebDashboardPage';
 import StorePage from './pages/StorePage';
 import GreenFeedPage from './pages/GreenFeedPage';
+import AboutPage from './pages/AboutPage';
 
 function ProtectedRoute({ children, allowedRoles }) {
   const { currentUser, userRole, loading } = useAuth();
@@ -70,7 +72,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<MainRedirect />} />
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/login" element={<LoginPage />} />`r`n        <Route path="/register" element={<RegisterPage />} />
         <Route path="/register/institute" element={<RegisterInstitutePage />} />
         <Route path="/join-institute/:instituteId/:role" element={<JoinInstitutePage />} />
 
@@ -115,7 +117,9 @@ function App() {
           path="/challenges"
           element={
             <ProtectedRoute allowedRoles={['student', 'teacher']}>
-              <ChallengePage />
+              <DashboardLayout>
+                <ChallengePage />
+              </DashboardLayout>
             </ProtectedRoute>
           }
         />
@@ -128,7 +132,7 @@ function App() {
           }
         />
         <Route
-          path="/dashboard/mobile"
+          path="/menu"
           element={
             <ProtectedRoute allowedRoles={['student', 'teacher', 'hod']}>
               <MobileDashboardPage />
@@ -191,7 +195,7 @@ function App() {
             path="waste-segregator"
             element={
               <ProtectedRoute allowedRoles={['student', 'teacher', 'hod']}>
-                <DashboardLayout><WasteSegregatorGame /></DashboardLayout>
+                <WasteSegregatorGame />
               </ProtectedRoute>
             }
           />
@@ -199,11 +203,13 @@ function App() {
             path="quiz"
             element={
               <ProtectedRoute allowedRoles={['student', 'teacher', 'hod']}>
-                <DashboardLayout><QuizGame /></DashboardLayout>
+                <QuizGame />
               </ProtectedRoute>
             }
           />
         </Route>
+
+        <Route path="/about" element={<AboutPage />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

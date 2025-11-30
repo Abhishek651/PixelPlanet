@@ -25,26 +25,27 @@ const SideNavbar = () => {
     let navItems = [];
     if (userRole === 'student') {
         navItems = [
-            { icon: 'public', path: '/dashboard/student', label: 'Home' },
+            { icon: 'home', path: '/dashboard/student', label: 'Home' },
             { icon: 'shield', path: '/challenges', label: 'Challenges' },
-            { icon: 'trending_up', path: '/leaderboard', label: 'Leaders' },
+            { icon: 'dynamic_feed', path: '/green-feed', label: 'Feed' },
             { icon: 'videogame_asset', path: '/games', label: 'Games' },
-            { icon: 'hub', path: '/profile', label: 'Profile' },
+            { icon: 'menu', path: '/menu', label: 'Menu' },
         ];
     } else if (userRole === 'teacher') {
         navItems = [
-            { icon: 'dashboard', path: '/dashboard/teacher', label: 'Dashboard Home' },
+            { icon: 'dashboard', path: '/dashboard/teacher', label: 'Dashboard' },
             { icon: 'shield', path: '/challenges', label: 'Challenges' },
-            { icon: 'book', path: '/teacher/curriculum', label: 'Curriculum' },
+            { icon: 'dynamic_feed', path: '/green-feed', label: 'Feed' },
+            { icon: 'videogame_asset', path: '/games', label: 'Games' },
+            { icon: 'menu', path: '/menu', label: 'Menu' },
         ];
     } else if (userRole === 'hod') {
         navItems = [
             { icon: 'dashboard', path: '/dashboard/institute-admin', label: 'Admin' },
             { icon: 'group', path: '/hod/teachers', label: 'Teachers' },
-            { icon: 'school', path: '/hod/students', label: 'Students' },
+            { icon: 'dynamic_feed', path: '/green-feed', label: 'Feed' },
             { icon: 'analytics', path: '/hod/analytics', label: 'Analytics' },
-            { icon: 'videogame_asset', path: '/games', label: 'Games' },
-            { icon: 'person', path: '/profile', label: 'Profile' },
+            { icon: 'menu', path: '/menu', label: 'Menu' },
         ];
     } else if (userRole === 'admin') {
         navItems = [
@@ -63,8 +64,8 @@ const SideNavbar = () => {
     }
 
     return (
-        <nav 
-            className={`hidden lg:flex flex-col items-center justify-between p-4 transition-all duration-300 m-6 rounded-2xl shadow-lg bg-white dark:bg-gray-800 border ${isExpanded ? 'w-56' : 'w-20'}`}
+        <nav
+            className={`hidden lg:flex flex-col items-center justify-between p-4 transition-all duration-300 bg-white dark:bg-gray-800 border-r ${isExpanded ? 'w-56' : 'w-20'} h-full`}
             onMouseEnter={() => setIsExpanded(true)}
             onMouseLeave={() => setIsExpanded(false)}
         >

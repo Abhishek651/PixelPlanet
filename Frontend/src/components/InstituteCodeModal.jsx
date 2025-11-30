@@ -1,11 +1,10 @@
 // frontend/src/components/InstituteCodeModal.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 
 function InstituteCodeModal({ isOpen, onClose }) {
     const [instituteCode, setInstituteCode] = useState('');
-    // const [selectedRole, setSelectedRole] = useState('student'); // REMOVED
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
@@ -25,9 +24,8 @@ function InstituteCodeModal({ isOpen, onClose }) {
 
         try {
             // Send only the code to the backend
-            const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/auth/verify-institute-code`, {
+            const response = await api.post('/api/auth/verify-institute-code', {
                 code: instituteCode,
-                // role: selectedRole, // REMOVED
             });
 
             // The backend now returns the 'role'
@@ -64,7 +62,6 @@ function InstituteCodeModal({ isOpen, onClose }) {
                 {error && <p className="text-red-600 text-sm mb-4 text-center">{error}</p>}
 
                 <form onSubmit={handleVerifyCode} className="space-y-4">
-                    {/* Role selection removed from here */}
                     <input
                         type="text"
                         placeholder="Institute Registration Code"

@@ -1,21 +1,25 @@
 // frontend/src/pages/HomePage.jsx
-import React, { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useState, useRef } from 'react';
+import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 
 // Import all the components
 import SideNavbar from '../components/SideNavbar';
 import BottomNavbar from '../components/BottomNavbar';
 import HeroSection from '../components/HeroSection';
+import FeaturesVelocitySection from '../components/FeaturesVelocitySection';
 import StatsSection from '../components/StatsSection';
 import AuthSidebar from '../components/AuthSidebar';
 import InstituteCodeModal from '../components/InstituteCodeModal';
 import GamesSection from '../components/GamesSection';
 import GlobalLeaderboardSection from '../components/GlobalLeaderboardSection';
+import Footer from '../components/Footer';
+import FeatureCards from '../components/FeatureCards';
 
 function HomePage() {
     const { currentUser, loading } = useAuth();
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const scrollRef = useRef(null);
 
     if (loading) {
         return (
@@ -38,43 +42,47 @@ function HomePage() {
                 <h3 className="text-2xl font-bold font-display text-text-light dark:text-text-dark">Ready to Start?</h3>
                 <p className="mt-2 mb-6 text-text-secondary-light dark:text-text-secondary-dark">Join a community of eco-warriors and make a difference.</p>
                 <div className="space-y-4">
-                    <a href="/register/institute" className="w-full block py-3 px-6 bg-primary text-white font-semibold rounded-full hover:bg-primary-light transition shadow-soft">
-                        Register Institute
-                    </a>
-                    <button 
+                    <Link to="/register" className="w-full block py-3 px-6 bg-primary text-white font-semibold rounded-full hover:bg-primary-light transition shadow-soft">
+                        Sign Up Now
+                    </Link>
+                    <button
                         onClick={() => setIsModalOpen(true)}
                         className="w-full py-3 px-6 bg-surface-light dark:bg-surface-dark border border-primary/20 text-primary font-semibold rounded-full hover:bg-primary/10 transition"
                     >
-                        Join with Code
+                        Join Institute
                     </button>
                 </div>
                 <div className="mt-8 text-sm">
                     <span className="text-text-secondary-light dark:text-text-secondary-dark">Already have an account? </span>
-                    <a href="/login" className="font-semibold text-primary hover:underline">
+                    <Link to="/login" className="font-semibold text-primary hover:underline">
                         Log In
-                    </a>
+                    </Link>
                 </div>
             </div>
         </aside>
     );
 
     return (
-        <div className="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark transition-colors duration-300 font-body">
-            <div className="flex h-screen w-full max-w-screen-2xl mx-auto overflow-hidden">
+        <div className="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark transition-colors duration-300 font-body h-screen overflow-hidden">
+            <div className="flex h-full w-full">
                 {/* Side Navbar - for Desktop */}
                 <SideNavbar />
 
                 {/* Main Scrolling Content */}
-                <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 space-y-8 md:space-y-12">
-                    <HeroSection />
-                    <StatsSection />
-                    <GamesSection />
-                    <GlobalLeaderboardSection />
-                    
-                    {/* Footer or extra content can go here */}
-                    <footer className="text-center py-8 text-text-secondary-light dark:text-text-secondary-dark text-sm">
-                        &copy; {new Date().getFullYear()} PixelPlanet. All Rights Reserved.
-                    </footer>
+                <main
+                    ref={scrollRef}
+                    className="flex-1 overflow-y-auto scroll-smooth bg-background-light dark:bg-background-dark"
+                >
+                    <div className="px-4 md:px-6 lg:px-8 space-y-8 md:space-y-12">
+                        <HeroSection />
+                        <FeaturesVelocitySection scrollContainerRef={scrollRef} />
+                        <FeatureCards />
+                        <StatsSection />
+                        <GamesSection />
+                        <GlobalLeaderboardSection />
+                    </div>
+
+                    <Footer />
                 </main>
 
                 {/* Auth Sidebar - for large desktops */}
@@ -85,7 +93,7 @@ function HomePage() {
             <BottomNavbar />
 
             {/* The modal, controlled by state */}
-            <InstituteCodeModal 
+            <InstituteCodeModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
             />

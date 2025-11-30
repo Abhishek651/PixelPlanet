@@ -1,12 +1,10 @@
 // frontend/src/context/AuthContext.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from '../services/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
 import { AuthContext } from './AuthContextDefinition';
-
-
 
 export const AuthProvider = ({ children }) => {
     const [currentUser, setCurrentUser] = useState(null);
@@ -18,26 +16,8 @@ export const AuthProvider = ({ children }) => {
         return signInWithEmailAndPassword(auth, email, password);
     };
 
-    const signup = async (email, password, { instituteId, role, fullName }) => {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-        await user.updateProfile({ displayName: fullName });
-
-        const token = await user.getIdToken();
-
-        await fetch('/api/set-user-claims', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ uid: user.uid, email, name: fullName, role, instituteId }),
-        });
-
-        await refreshAuth();
-
-        return userCredential;
-    };
+    // Signup is handled via backend API endpoints (register-institute, register-teacher, etc.)
+    // so we don't need a client-side signup function here.
 
     const fetchUserData = async (user) => {
         if (user) {
@@ -113,7 +93,6 @@ export const AuthProvider = ({ children }) => {
         instituteId,
         loading,
         login,
-        signup,
         refreshAuth // Make refreshAuth available via context
     };
 

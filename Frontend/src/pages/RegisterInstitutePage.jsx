@@ -1,34 +1,55 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useAuth } from '../context/useAuth';
 import AuthLayout from '../components/AuthLayout';
+import api from '../services/api';
 
 const RegisterInstitutePage = () => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [instituteName, setInstituteName] = useState('');
+    const [formData, setFormData] = useState({
+        instituteName: '',
+        instituteType: 'School',
+        instituteLocation: '',
+        adminName: '',
+        adminEmail: '',
+        adminPassword: '',
+        confirmPassword: ''
+    });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const { signup } = useAuth();
     const navigate = useNavigate();
+
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (password !== confirmPassword) {
+        if (formData.adminPassword !== formData.confirmPassword) {
             return setError('Passwords do not match');
         }
         setError('');
         setLoading(true);
+
         try {
-            await signup(email, password, { instituteName, role: 'hod' });
-            navigate('/');
-        } catch (_err) { // eslint-disable-line no-unused-vars
-            setError('Failed to create an account. Please try again.');
+            const response = await api.post('/api/auth/register-institute', {
+                instituteName: formData.instituteName,
+                instituteType: formData.instituteType,
+                instituteLocation: formData.instituteLocation,
+                adminName: formData.adminName,
+                adminEmail: formData.adminEmail,
+                adminPassword: formData.adminPassword
+            });
+
+            if (response.status === 201) {
+                alert('Institute registered successfully! Please log in.');
+                navigate('/login');
+            }
+        } catch (err) {
+            console.error(err);
+            setError(err.response?.data?.message || 'Failed to register institute. Please try again.');
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     const inputVariants = {
@@ -42,7 +63,7 @@ const RegisterInstitutePage = () => {
             heading="Register Your Institute"
             subheading="Create an admin account to get started."
         >
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4 max-h-[60vh] overflow-y-auto px-2">
                 {error && (
                     <motion.p
                         initial={{ opacity: 0, scale: 0.8 }}
@@ -52,55 +73,103 @@ const RegisterInstitutePage = () => {
                         {error}
                     </motion.p>
                 )}
+
                 <motion.div variants={inputVariants} transition={{ delay: 0.1 }}>
                     <input
                         type="text"
+                        name="instituteName"
                         placeholder="Institute Name"
-                        value={instituteName}
-                        onChange={(e) => setInstituteName(e.target.value)}
+                        value={formData.instituteName}
+                        onChange={handleChange}
                         className="w-full p-4 bg-gray-100 dark:bg-gray-800 border border-border-light dark:border-border-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                         required
                     />
                 </motion.div>
+
+                <motion.div variants={inputVariants} transition={{ delay: 0.15 }}>
+                    <select
+                        name="instituteType"
+                        value={formData.instituteType}
+                        onChange={handleChange}
+                        className="w-full p-4 bg-gray-100 dark:bg-gray-800 border border-border-light dark:border-border-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                        <option value="School">School</option>
+                        <option value="College">College</option>
+                        <option value="University">University</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </motion.div>
+
                 <motion.div variants={inputVariants} transition={{ delay: 0.2 }}>
                     <input
-                        type="email"
-                        placeholder="Admin Email Address"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        type="text"
+                        name="instituteLocation"
+                        placeholder="Location (City, Country)"
+                        value={formData.instituteLocation}
+                        onChange={handleChange}
                         className="w-full p-4 bg-gray-100 dark:bg-gray-800 border border-border-light dark:border-border-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                         required
                     />
                 </motion.div>
+
+                <motion.div variants={inputVariants} transition={{ delay: 0.25 }}>
+                    <input
+                        type="text"
+                        name="adminName"
+                        placeholder="Administrator Name"
+                        value={formData.adminName}
+                        onChange={handleChange}
+                        className="w-full p-4 bg-gray-100 dark:bg-gray-800 border border-border-light dark:border-border-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+                        required
+                    />
+                </motion.div>
+
                 <motion.div variants={inputVariants} transition={{ delay: 0.3 }}>
                     <input
-                        type="password"
-                        placeholder="Password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        type="email"
+                        name="adminEmail"
+                        placeholder="Admin Email Address"
+                        value={formData.adminEmail}
+                        onChange={handleChange}
                         className="w-full p-4 bg-gray-100 dark:bg-gray-800 border border-border-light dark:border-border-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                         required
                     />
                 </motion.div>
+
+                <motion.div variants={inputVariants} transition={{ delay: 0.35 }}>
+                    <input
+                        type="password"
+                        name="adminPassword"
+                        placeholder="Password"
+                        value={formData.adminPassword}
+                        onChange={handleChange}
+                        className="w-full p-4 bg-gray-100 dark:bg-gray-800 border border-border-light dark:border-border-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+                        required
+                    />
+                </motion.div>
+
                 <motion.div variants={inputVariants} transition={{ delay: 0.4 }}>
                     <input
                         type="password"
+                        name="confirmPassword"
                         placeholder="Confirm Password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        value={formData.confirmPassword}
+                        onChange={handleChange}
                         className="w-full p-4 bg-gray-100 dark:bg-gray-800 border border-border-light dark:border-border-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                         required
                     />
                 </motion.div>
+
                 <motion.div variants={inputVariants} transition={{ delay: 0.5 }}>
                     <button
                         type="submit"
                         disabled={loading}
                         className="w-full p-4 font-bold text-white bg-primary rounded-xl hover:bg-primary-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
                     >
-                        {loading ? 'Creating Account...' : 'Register'}
+                        {loading ? 'Creating Account...' : 'Register Institute'}
                     </button>
                 </motion.div>
+
                 <p className="text-center text-text-secondary-light dark:text-text-secondary-dark">
                     Already have an account?{' '}
                     <Link to="/login" className="font-medium text-primary hover:underline">

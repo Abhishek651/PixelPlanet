@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../services/firebase';
 import { signOut } from "firebase/auth";
-import axios from 'axios'; // For making HTTP requests
+import api from '../services/api'; // Use centralized API service
 
 function DashboardPage() {
   // Get the currently logged-in user from Firebase Auth
@@ -29,16 +29,9 @@ function DashboardPage() {
       // Make sure there is a logged-in user
       if (user) {
         try {
-          // Get the ID token from the current user. This token proves the user's identity.
-          const token = await user.getIdToken();
-
           // Make a GET request to our protected backend endpoint
-          // We must include the token in the 'Authorization' header
-          const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/protected`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
+          // The api service automatically attaches the Authorization header
+          const response = await api.get('/api/protected');
 
           // Set the message from the backend's response
           setProtectedMessage(response.data.message);

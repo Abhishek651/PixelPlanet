@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/useAuth';
 import BottomNavbar from '../components/BottomNavbar';
+import SideNavbar from '../components/SideNavbar';
 
 const StorePage = () => {
     const { currentUser } = useAuth();
@@ -72,9 +73,11 @@ const StorePage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-20 lg:pb-8">
-            {/* Header */}
-            <header className="bg-white shadow-sm border-b sticky top-0 z-30">
+        <div className="flex h-screen bg-gray-50 overflow-hidden">
+            <SideNavbar />
+            <div className="flex-1 flex flex-col overflow-hidden">
+                {/* Header */}
+                <header className="bg-white shadow-sm border-b sticky top-0 z-30">
                 <div className="max-w-7xl mx-auto px-4 lg:px-6 py-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
@@ -239,8 +242,9 @@ const StorePage = () => {
                         </div>
                     </div>
                 </section>
-            </main>
-            <BottomNavbar />
+                </main>
+                <BottomNavbar />
+            </div>
         </div>
     );
 };

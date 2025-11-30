@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import BottomNavbar from '../components/BottomNavbar';
+import SideNavbar from '../components/SideNavbar';
 
 const GreenFeedPage = () => {
     const [activeTab, setActiveTab] = useState('posts');
@@ -68,9 +69,11 @@ const GreenFeedPage = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-20">
-            {/* Header */}
-            <header className="bg-white shadow-sm border-b sticky top-0 z-30">
+        <div className="flex h-screen bg-gray-50 overflow-hidden">
+            <SideNavbar />
+            <div className="flex-1 flex flex-col overflow-hidden">
+                {/* Header */}
+                <header className="bg-white shadow-sm border-b sticky top-0 z-30">
                 <div className="px-4 py-4">
                     <div className="flex items-center justify-between">
                         <h1 className="text-2xl font-bold text-gray-800 flex items-center">
@@ -186,7 +189,8 @@ const GreenFeedPage = () => {
                 )}
             </main>
 
-            <BottomNavbar />
+                <BottomNavbar />
+            </div>
         </div>
     );
 };

@@ -2,15 +2,18 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 import BottomNavbar from '../components/BottomNavbar';
+import SideNavbar from '../components/SideNavbar';
 
 const MobileDashboardPage = () => {
     const { currentUser, userRole } = useAuth();
     const userName = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'User';
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-20">
-            {/* Header */}
-            <header className="flex items-center justify-between p-4 bg-white sticky top-0 z-30 shadow-sm">
+        <div className="flex h-screen bg-gray-50 overflow-hidden">
+            <SideNavbar />
+            <div className="flex-1 flex flex-col overflow-hidden">
+                {/* Header */}
+                <header className="flex items-center justify-between p-4 bg-white sticky top-0 z-30 shadow-sm">
                 <Link to="/profile" className="flex items-center space-x-2 text-gray-800 text-lg font-medium">
                     <span className="material-symbols-outlined text-3xl">account_circle</span>
                     <span>my account</span>
@@ -25,9 +28,9 @@ const MobileDashboardPage = () => {
                         <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
                     </button>
                 </div>
-            </header>
+                </header>
 
-            <main className="p-4">
+                <main className="flex-1 overflow-y-auto p-4 pb-20 lg:pb-4">
                 {/* My Journey Section */}
                 <section className="mb-8">
                     <h2 className="text-2xl font-bold text-gray-800 mb-4">my journey</h2>
@@ -183,6 +186,16 @@ const MobileDashboardPage = () => {
                             </Link>
                         )}
 
+                        <Link to="/about" className="bg-white rounded-xl shadow-sm p-4 h-32 flex flex-col justify-between">
+                            <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
+                                <span className="material-symbols-outlined text-xl text-teal-600">info</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-800 font-medium text-sm">About Us</span>
+                                <span className="material-symbols-outlined text-gray-400">chevron_right</span>
+                            </div>
+                        </Link>
+
                         <Link to="/profile" className="bg-white rounded-xl shadow-sm p-4 h-32 flex flex-col justify-between">
                             <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
                                 <span className="material-symbols-outlined text-xl text-gray-600">person</span>
@@ -194,8 +207,9 @@ const MobileDashboardPage = () => {
                         </Link>
                     </div>
                 </section>
-            </main>
-            <BottomNavbar />
+                </main>
+                <BottomNavbar />
+            </div>
         </div>
     );
 };

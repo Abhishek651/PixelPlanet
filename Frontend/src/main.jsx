@@ -15,25 +15,19 @@ preloaderRoot.render(
   </React.StrictMode>
 );
 
-setTimeout(() => {
-  preloaderRoot.unmount();
-  document.getElementById('preloader-root').remove();
-}, 5000);
+// Remove preloader immediately after main app mounts
+preloaderRoot.unmount();
+document.getElementById('preloader-root').remove();
 
-
-// Finds the <div id="root"></div> that lives in index.html and turns it into a reactive root
 ReactDOM.createRoot(document.getElementById('root')).render(
-  // Tells React to take the JSX you pass in and mount it into that root element. The tree you render is: <React.StrictMode> → <AuthProvider> → <App />.
   <React.StrictMode>
     <ErrorBoundary>
-      {/* context provider that likely holds authentication state (user, login(), logout(), etc.) and makes it available to every component inside app */}
       <AuthProvider>
         <SettingsProvider>
           <ChallengeProvider>
             <App />
           </ChallengeProvider>
         </SettingsProvider>
-        {/* Your actual application component (router, layout, pages…). It receives the context values via useContext(AuthContext) or the AuthProvider’s consumer API.	Keeps your UI code clean and focused on presentation/logic */}
       </AuthProvider>
     </ErrorBoundary>
   </React.StrictMode>,

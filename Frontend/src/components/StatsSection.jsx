@@ -1,9 +1,9 @@
 import React from 'react';
 
 const stats = [
-    { icon: 'park', value: '12,450+', label: 'Trees Planted' },
-    { icon: 'recycling', value: '8,970 kg', label: 'Waste Recycled' },
-    { icon: 'school', value: '350+', label: 'Schools Joined' },
+    { icon: 'eco', value: 'Eco Activities', label: 'Real-World Impact' },
+    { icon: 'leaderboard', value: 'Leaderboard', label: 'Global Competition' },
+    { icon: 'videogame_asset', value: 'Green Games', label: 'Learn by Playing' },
 ];
 
 const StatsSection = () => {
@@ -12,9 +12,9 @@ const StatsSection = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
                 {stats.map((stat) => (
                     <div key={stat.label}>
-                        <span className="material-symbols-outlined text-5xl text-primary">{stat.icon}</span>
-                        <p className="text-4xl font-bold font-display mt-2 text-text-light dark:text-text-dark">{stat.value}</p>
-                        <p className="mt-1 text-text-secondary-light dark:text-text-secondary-dark">{stat.label}</p>
+                        <span className="material-symbols-outlined text-4xl text-primary">{stat.icon}</span>
+                        <p className="text-2xl font-bold font-display mt-2 text-text-light dark:text-text-dark">{stat.value}</p>
+                        <p className="mt-1 text-sm text-text-secondary-light dark:text-text-secondary-dark">{stat.label}</p>
                     </div>
                 ))}
             </div>
