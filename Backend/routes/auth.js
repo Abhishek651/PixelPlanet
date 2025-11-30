@@ -59,6 +59,11 @@ const verifyToken = async (req, res, next) => {
 
 // --- ROUTES ---
 
+// 0. HEALTH CHECK
+router.get('/health', (req, res) => {
+    res.json({ status: 'ok', message: 'Auth routes are working', timestamp: new Date().toISOString() });
+});
+
 // 1. REGISTER INSTITUTE (HOD/Admin)
 router.post('/register-institute', [
     body('instituteName').notEmpty().withMessage('Institute name is required.'),
@@ -327,32 +332,38 @@ router.get('/institute-stats', verifyToken, async (req, res) => {
 // 9. CREATE OR UPDATE USER DOCUMENT (for direct Firebase Auth signups)
 // Note: This endpoint uses a modified verifyToken that doesn't require existing claims
 router.post('/sync-user', async (req, res) => {
+    console.log('[sync-user] Request received');
     try {
         // Verify token manually without requiring existing claims
         const header = req.headers.authorization;
         if (!header) {
+            console.error('[sync-user] Authorization header missing');
             return res.status(401).json({ message: 'Authorization header missing.' });
         }
         const token = header.split(' ')[1];
         if (!token) {
+            console.error('[sync-user] Token missing from header');
             return res.status(401).json({ message: 'Token missing.' });
         }
 
         let decodedToken;
         try {
             decodedToken = await admin.auth().verifyIdToken(token);
+            console.log('[sync-user] Token verified for uid:', decodedToken.uid);
         } catch (error) {
-            console.error("Token verification failed:", error);
-            return res.status(403).json({ message: 'Invalid or expired token.' });
+            console.error('[sync-user] Token verification failed:', error);
+            return res.status(403).json({ message: 'Invalid or expired token.', error: error.message });
         }
 
         const uid = decodedToken.uid;
         const { name, email } = req.body;
+        console.log('[sync-user] Processing for uid:', uid, 'name:', name, 'email:', email);
         
         // Check if user document already exists
         const userDoc = await db.collection('users').doc(uid).get();
         
         if (userDoc.exists()) {
+            console.log('[sync-user] User document already exists');
             // User document exists, just return it
             return res.json({ 
                 message: 'User document already exists.',
@@ -360,6 +371,7 @@ router.post('/sync-user', async (req, res) => {
             });
         }
         
+        console.log('[sync-user] Creating new user document');
         // Create new user document for direct signup (global user)
         const userData = {
             uid: uid,
@@ -375,12 +387,14 @@ router.post('/sync-user', async (req, res) => {
         };
         
         await db.collection('users').doc(uid).set(userData);
+        console.log('[sync-user] User document created in Firestore');
         
         // Set custom claims for global user
         await admin.auth().setCustomUserClaims(uid, { 
             role: 'global',
             instituteId: null 
         });
+        console.log('[sync-user] Custom claims set successfully');
         
         res.status(201).json({ 
             message: 'User document created successfully.',
@@ -388,10 +402,12 @@ router.post('/sync-user', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error syncing user:', error);
+        console.error('[sync-user] Error syncing user:', error);
+        console.error('[sync-user] Error stack:', error.stack);
         res.status(500).json({ 
             message: 'Failed to sync user document.',
-            error: error.message 
+            error: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
 });
