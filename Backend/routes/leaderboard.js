@@ -19,6 +19,17 @@ const verifyToken = async (req, res, next) => {
         req.uid = decodedToken.uid;
         req.userRole = decodedToken.role;
         req.instituteId = decodedToken.instituteId;
+        
+        // If custom claims are missing, fetch from Firestore
+        if (!req.instituteId || !req.userRole) {
+            const userDoc = await db.collection('users').doc(req.uid).get();
+            if (userDoc.exists) {
+                const userData = userDoc.data();
+                req.instituteId = req.instituteId || userData.instituteId;
+                req.userRole = req.userRole || userData.role;
+            }
+        }
+        
         next();
     } catch (error) {
         console.error("Token verification failed:", error);
@@ -159,6 +170,24 @@ router.get('/institute', verifyToken, [
         const { class: classValue, activityType, timeRange = 'all', limit = 50 } = req.query;
         let users = [];
 
+        // Check if user has instituteId
+        if (!req.instituteId) {
+            console.error('User missing instituteId:', req.uid);
+            // Fallback: return global leaderboard
+            const usersQuery = db.collection('users')
+                .where('role', '==', 'student')
+                .orderBy('ecoPoints', 'desc')
+                .limit(limit);
+            
+            const usersSnapshot = await usersQuery.get();
+            usersSnapshot.forEach(doc => {
+                users.push(doc.data());
+            });
+            
+            const leaderboard = buildLeaderboardResponse(users);
+            return res.json({ leaderboard, fallback: true });
+        }
+
         if (activityType) {
             const userIds = new Set();
             const challengesQuery = db.collection('challenges')
@@ -229,7 +258,11 @@ router.get('/institute', verifyToken, [
 
     } catch (error) {
         console.error('Error fetching institute leaderboard:', error);
-        res.status(500).json({ message: 'Failed to fetch institute leaderboard.' });
+        console.error('Error details:', error.message);
+        res.status(500).json({ 
+            message: 'Failed to fetch institute leaderboard.',
+            error: error.message 
+        });
     }
 });
 
