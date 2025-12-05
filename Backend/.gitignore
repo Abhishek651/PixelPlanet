@@ -16,3 +16,7 @@ npm-debug.log*
 # OS files
 .DS_Store
 Thumbs.db
+
+# Editor directories and files
+.vscode/
+.kiro/

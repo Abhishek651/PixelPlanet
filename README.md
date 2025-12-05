@@ -1,415 +1,114 @@
-# EcoLearn Platform
-
-A comprehensive environmental education platform that gamifies learning about sustainability, ecology, and environmental conservation through challenges, quizzes, and interactive games.
-
-## 🌟 Features
-
-### 👥 User Roles & Authentication
-
-#### Student
-- Complete environmental challenges and quizzes
-- Earn Eco Points, Coins, and XP
-- Track progress with level system (Eco Beginner → Eco Legend)
-- View real-time leaderboards
-- Play educational games
-- Access personalized dashboard
-
-#### Teacher
-- Create and manage challenges (Quiz, Video, Physical)
-- Generate AI-powered quizzes from topics or paragraphs
-- Monitor student progress
-- View classroom analytics
-- Manage class assignments
-
-#### HOD (Head of Department)
-- Oversee multiple teachers and classes
-- Access institute-wide analytics
-- Manage institute settings
-- Create institute-level challenges
-
-#### Admin
-- Full system access
-- Manage all users and institutes
-- Create global challenges
-- System configuration
-
-#### Sub-Admin
-- Configurable permissions
-- User management
-- Content moderation
-- Analytics access
-
-#### Creator
-- Create global environmental challenges
-- Content creation tools
-- Challenge management
-
-#### Global User
-- Access public challenges
-- Join institutes with code
-- Limited features until institute join
-
-### 🎮 Gamification System
-
-#### XP & Leveling
-- **XP Calculation**: Exponential curve (100 × level^1.5)
-- **8 Level Titles**: 
-  - Eco Beginner (Level 1-4)
-  - Green Explorer (Level 5-9)
-  - Eco Warrior (Level 10-14)
-  - Nature Defender (Level 15-19)
-  - Eco Champion (Level 20-29)
-  - Green Guardian (Level 30-39)
-  - Planet Protector (Level 40-49)
-  - Eco Legend (Level 50+)
-- **Real-time Progress Tracking**: Animated progress bars with live updates
-
-#### Rewards System
-- **Eco Points**: Main progression currency (100 per quiz completion)
-- **Coins**: Activity rewards (10 per correct answer)
-- **XP Rewards**:
-  - Quiz: 50-150 XP based on performance
-  - Perfect Score Bonus: +50 XP
-  - Game: 30-80 XP based on level completed
-
-#### Visual Feedback
-- Animated badges with hover effects
-- Shine effects on score displays
-- Sparkle particles on progress changes
-- Color-coded level badges with gradients
-- Real-time value updates with spring animations
-
-### 📚 Challenge Types
-
-#### 1. Auto-Generated Quiz
-- AI-powered question generation using Gemini API
-- Generate from:
-  - Topic only
-  - Paragraph only
-  - Topic + Paragraph
-- Automatic MCQ creation with 4 options
-- Configurable difficulty and question count
-
-#### 2. Manual Quiz
-- Custom question creation
-- Multiple choice format
-- Teacher-defined correct answers
-- Flexible question count
-
-#### 3. Video Challenge
-- YouTube video integration
-- Educational content delivery
-- Progress tracking
-
-#### 4. Physical Challenge
-- Real-world environmental activities
-- Photo/video submission
-- Teacher verification and grading
-
-### 🎯 Quiz Features
-
-#### Quiz Creation
-- AI-powered generation with Gemini API
-- Topic-based generation
-- Paragraph-based generation
-- Combined topic + paragraph generation
-- Preview before publishing
-- Class/section targeting
-- Edit and regenerate questions
-- Duplicate question prevention
-- Paragraph expansion for more content
-
-#### Quiz Management (Teachers/Creators)
-- Review mode: View all questions with answers
-- Edit mode: Modify questions, options, and answers
-- Regenerate individual questions with AI
-- Delete unwanted questions
-- Expand paragraphs for more question variety
-- Navigate quizzes from dashboard
-
-#### Quiz Taking
-- Clean, intuitive interface
-- Progress indicator
-- Question navigation (Previous/Next)
-- Answer selection tracking
-- Paragraph display (if provided)
-
-#### Quiz Results
-- Percentage score with color coding:
-  - Green: ≥80%
-  - Yellow: ≥60%
-  - Red: <60%
-- Detailed answer review
-- Correct/incorrect indicators
-- Visual checkmarks
-- Reward summary (Eco Points, Coins, XP)
-- Navigation options
-
-### 🎲 Educational Games
-
-#### Waste Segregator Game
-- Interactive waste sorting
-- Multiple difficulty levels
-- Real-time scoring
-- XP and Coins rewards
-- Level-based XP calculation (30 + level × 10)
-- Integrated reward system
-
-### 📊 Dashboard Features
-
-#### Student Dashboard
-- **Desktop View**:
-  - Welcome header with streak tracking
-  - Animated score badges (Level, Eco Points, Coins)
-  - Profile widget with XP progress
-  - Active challenges section
-  - Daily quests
-  - Recommended challenges
-  - Leaderboard widget
-  - Achievements display
-
-- **Mobile View**:
-  - Compact header with location
-  - Horizontal scrollable score badges
-  - Continue learning section
-  - Daily quests grid
-  - Featured challenges
-  - Categories browser
-  - Leaderboard integration
-
-#### Teacher Dashboard
-- Class overview
-- Student progress tracking
-- Challenge management
-- Analytics and insights
-
-#### Menu Page (Mobile/Tablet)
-- Profile widget with XP progress
-- Quick access to all features
-- Journey tracking
-- Eco-explore section
-- Help and resources
-
-### 🔄 Real-Time Features
-
-#### Live Updates
-- Firestore `onSnapshot` listeners
-- Instant score updates
-- Real-time leaderboard
-- Live XP progress
-- Automatic level calculation
-
-#### Animations
-- Framer Motion integration
-- Spring-based transitions
-- Hover and tap effects
-- Value change animations
-- Progress bar fills
-- Sparkle effects
-
-### 🏆 Leaderboard System
-
-#### Institute Leaderboard
-- Top students by Eco Points
-- Real-time ranking
-- Profile pictures
-- Score display
-- Rank indicators (top 3 highlighted)
-
-#### Global Leaderboard
-- Cross-institute rankings
-- Public challenges
-- Achievement tracking
-
-### 🤖 AI Integration
-
-#### EcoBot Assistant
-- Gemini AI-powered chatbot
-- Environmental education support
-- Context-aware responses
-- Conversation history
-- Floating chat interface
-
-#### AI Quiz Generation
-- Gemini API integration
-- Natural language processing
-- Automatic question formatting
-- Answer validation
-- Multiple generation modes
-- Duplicate question detection
-- Context-aware regeneration
-- Paragraph expansion capability
-- Strict paragraph-based questions (when paragraph provided)
-
-### 🎨 UI/UX Features
-
-#### Responsive Design
-- Mobile-first approach
-- Tablet optimization
-- Desktop layouts
-- Breakpoints: sm (640px), md (768px), lg (1024px)
-
-#### Dark Mode
-- System-wide dark theme support
-- Automatic color adjustments
-- Smooth transitions
-
-#### Animations
-- Framer Motion library
-- Spring physics
-- Staggered animations
-- Micro-interactions
-- Loading states
-
-#### Navigation
-- Bottom navbar (mobile)
-- Side navbar (desktop)
-- Role-based menu items
-- Active state indicators
-- Smooth transitions
-
-### 🔐 Security & Permissions
-
-#### Firestore Rules
-- Role-based access control
-- User data protection
-- Challenge visibility rules
-- Submission permissions
-- Institute isolation
-
-#### Authentication
-- Firebase Authentication
-- Email/password login
-- Role assignment
-- Token-based authorization
-- Custom claims
-
-### 📱 Mobile Features
-
-#### Bottom Navigation
-- 5-tab layout
-- Role-specific items
-- Active indicators
-- Smooth animations
-- Touch-optimized
-
-#### Mobile Optimizations
-- Touch-friendly buttons
-- Swipe gestures
-- Compact layouts
-- Optimized images
-- Fast loading
-
-### 🎓 Institute Management
-
-#### Institute Features
-- Unique institute codes
-- Class and section management
-- Student enrollment
-- Teacher assignment
-- Institute-specific challenges
-
-#### Join Institute
-- Code-based joining
-- Global to institute conversion
-- Automatic class assignment
-- Permission updates
-
-### 📈 Analytics & Tracking
-
-#### Student Analytics
-- Challenge completion rates
-- Quiz scores
-- XP progression
-- Activity history
-- Achievement tracking
-
-#### Teacher Analytics
-- Class performance
-- Student engagement
-- Challenge statistics
-- Submission tracking
-
-### 🎁 Achievements System
-
-#### Badge Types
-- First Steps
-- Quiz Master
-- Tree Hugger
-- Water Saver
-- Custom achievements
-
-#### Achievement Display
-- Visual badges
-- Unlock animations
-- Progress tracking
-- Locked state indicators
-
-### 🌐 Content Management
-
-#### Challenge Management
-- Create, edit, delete
-- Visibility controls (Global/Institute)
-- Class targeting
-- Deadline management
-- Status tracking
-
-#### Content Types
-- Quizzes (Auto/Manual)
-- Videos
-- Physical activities
-- Games
-- Articles
-
-### 🔧 Technical Features
-
-#### Frontend
-- React 18
-- React Router v6
-- Framer Motion
-- Tailwind CSS
-- Firebase SDK
-- Lucide Icons
-- Material Symbols
-
-#### Backend
-- Node.js + Express
-- Firebase Admin SDK
-- Firestore Database
-- Google Gemini AI API
-- RESTful API architecture
-
-#### State Management
-- React Context API
-- Custom hooks
-- Real-time listeners
-- Local state management
-
-#### Performance
-- Code splitting
-- Lazy loading
-- Optimized images
-- Efficient re-renders
-- Memoization
+<div align="center">
+
+# 🌍 PixelPlanet
+
+### *Gamifying Environmental Education for a Sustainable Future*
+
+[![Made with React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=white)](https://reactjs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-16+-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com/)
+[![AI Powered](https://img.shields.io/badge/AI-Gemini-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
+
+**Transform environmental learning into an engaging adventure with challenges, quizzes, games, and AI-powered education.**
+
+*Developed by Team Invictus*
+
+[Features](#-features) • [Getting Started](#-getting-started) • [Tech Stack](#-tech-stack) • [Documentation](#-documentation)
+
+</div>
+
+---
+
+## 📖 Overview
+
+**PixelPlanet** is a comprehensive environmental education platform that makes learning about sustainability fun and engaging. Through gamification, AI-powered content generation, and interactive challenges, students embark on a journey from **Eco Beginner** to **Eco Legend** while earning rewards and competing on leaderboards.
+
+
+---
+
+## ✨ Features
+
+<table>
+<tr>
+<td width="50%">
+
+### 🎮 **Gamification System**
+- **8 Progressive Levels** from Eco Beginner to Eco Legend
+- **XP System** with exponential curve (100 × level^1.5)
+- **Dual Currency**: Eco Points & Coins
+- **Real-time Progress** with animated bars
+- **Visual Rewards** with sparkle effects
+
+</td>
+<td width="50%">
+
+### 🤖 **AI-Powered Learning**
+- **Auto-Generated Quizzes** using Gemini AI
+- **Smart Question Generation** from topics/paragraphs
+- **EcoBot Assistant** for instant help
+- **Duplicate Prevention** algorithm
+- **Context-Aware** content creation
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+### 📚 **Challenge Types**
+- ✅ **Auto Quiz** - AI-generated questions
+- ✏️ **Manual Quiz** - Custom teacher questions
+- 🎥 **Video Challenge** - YouTube integration
+- 🏃 **Physical Challenge** - Real-world activities
+- 🎲 **Educational Games** - Interactive learning
+
+</td>
+<td width="50%">
+
+### 👥 **Multi-Role System**
+- 🎓 **Students** - Learn and compete
+- 👨‍🏫 **Teachers** - Create and manage
+- 🏛️ **HOD** - Institute oversight
+- 👑 **Admin** - Full system control
+- ⚙️ **Sub-Admin** - Configurable permissions
+- ✍️ **Creator** - Global content creation
+
+</td>
+</tr>
+</table>
+
+---
+
+## 🎯 Key Highlights
+
+<div align="center">
+
+| 🏆 Leaderboards | 📊 Analytics | 🎨 Beautiful UI | 📱 Responsive |
+|:---:|:---:|:---:|:---:|
+| Real-time rankings | Detailed insights | Dark mode support | Mobile-first design |
+| Institute & Global | Progress tracking | Framer Motion | Touch-optimized |
+
+</div>
+
+---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js (v16 or higher)
-- npm or yarn
-- Firebase project
-- Google Gemini API key
 
-### Installation
-
-1. Clone the repository
 ```bash
-git clone <repository-url>
-cd ecolearn-platform
+Node.js v16+  |  npm/yarn  |  Firebase Project  |  Gemini API Key
 ```
 
-2. Install dependencies
+### Quick Setup
+
+<details>
+<summary><b>1️⃣ Clone & Install</b></summary>
+
 ```bash
+# Clone the repository
+git clone <repository-url>
+cd PixelPlanet
+
 # Install frontend dependencies
 cd Frontend
 npm install
@@ -418,10 +117,12 @@ npm install
 cd ../Backend
 npm install
 ```
+</details>
 
-3. Configure environment variables
+<details>
+<summary><b>2️⃣ Configure Environment</b></summary>
 
-**Frontend** (`.env`):
+**Frontend** (`Frontend/.env`):
 ```env
 VITE_FIREBASE_API_KEY=your_api_key
 VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
@@ -432,7 +133,7 @@ VITE_FIREBASE_APP_ID=your_app_id
 VITE_API_URL=http://localhost:5001
 ```
 
-**Backend** (`.env`):
+**Backend** (`Backend/.env`):
 ```env
 PORT=5001
 FIREBASE_PROJECT_ID=your_project_id
@@ -440,65 +141,87 @@ FIREBASE_CLIENT_EMAIL=your_client_email
 FIREBASE_PRIVATE_KEY=your_private_key
 GEMINI_API_KEY=your_gemini_api_key
 ```
+</details>
 
-4. Deploy Firestore rules
+<details>
+<summary><b>3️⃣ Deploy & Run</b></summary>
+
 ```bash
+# Deploy Firestore rules
 firebase deploy --only firestore:rules
-```
 
-5. Start development servers
-
-**Frontend**:
-```bash
-cd Frontend
+# Start frontend (in Frontend directory)
 npm run dev
-```
 
-**Backend**:
-```bash
-cd Backend
+# Start backend (in Backend directory)
 npm start
 ```
+</details>
 
-## 📦 Project Structure
+---
+
+## 🏗️ Tech Stack
+
+<div align="center">
+
+### Frontend
+![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/Tailwind-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)
+![Framer Motion](https://img.shields.io/badge/Framer_Motion-0055FF?style=flat-square&logo=framer&logoColor=white)
+
+### Backend
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=node.js&logoColor=white)
+![Express](https://img.shields.io/badge/Express-000000?style=flat-square&logo=express&logoColor=white)
+![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=flat-square&logo=firebase&logoColor=black)
+![Gemini AI](https://img.shields.io/badge/Gemini_AI-4285F4?style=flat-square&logo=google&logoColor=white)
+
+</div>
+
+---
+
+## 📂 Project Structure
 
 ```
-ecolearn-platform/
-├── Frontend/
+PixelPlanet/
+│
+├── 🎨 Frontend/
 │   ├── src/
-│   │   ├── components/      # Reusable components
-│   │   ├── pages/          # Page components
-│   │   ├── context/        # React Context providers
-│   │   ├── services/       # API and Firebase services
-│   │   ├── utils/          # Utility functions
-│   │   ├── data/           # Static data
-│   │   └── App.jsx         # Main app component
+│   │   ├── components/      # Reusable UI components
+│   │   ├── pages/          # Page components & routes
+│   │   ├── context/        # React Context (Auth, etc.)
+│   │   ├── services/       # API & Firebase services
+│   │   ├── utils/          # Helper functions & XP system
+│   │   ├── data/           # Static data & configurations
+│   │   └── App.jsx         # Main application component
 │   ├── public/
-│   │   └── Games/          # Game files
+│   │   └── Games/          # Interactive game files
 │   └── package.json
-├── Backend/
-│   ├── routes/             # API routes
+│
+├── ⚙️ Backend/
+│   ├── routes/             # Express API routes
+│   │   ├── auth.js         # Authentication endpoints
+│   │   ├── challenges.js   # Challenge management
+│   │   ├── quiz.js         # Quiz operations
+│   │   ├── ecobot.js       # AI chatbot
+│   │   └── leaderboard.js  # Rankings & scores
+│   ├── middleware/         # Auth & validation
 │   ├── utils/              # Backend utilities
 │   ├── migrations/         # Database migrations
-│   └── server.js           # Express server
-├── firestore.rules         # Firestore security rules
-└── README.md
+│   └── server.js           # Express server setup
+│
+├── 🔥 firestore.rules      # Firestore security rules
+└── 📖 README.md            # You are here!
 ```
 
-## 🎓 Recent Updates
+---
 
-### Quiz Management Enhancements
-- **Review & Edit Mode**: Teachers and creators can now review and edit quizzes after creation
-- **Question Regeneration**: Regenerate individual questions with AI while avoiding duplicates
-- **Paragraph Expansion**: Automatically expand short paragraphs to enable more question variety
-- **Duplicate Prevention**: AI actively avoids generating duplicate questions (up to 3 attempts)
-- **Dashboard Navigation**: Click quiz challenges from dashboards to review/edit them
-- **Strict Paragraph Mode**: Questions from paragraphs are strictly based on paragraph content only
+## 🎓 User Roles & Permissions
 
-## 🔑 User Roles & Permissions
+<div align="center">
 
-| Feature | Student | Teacher | HOD | Admin | Sub-Admin | Creator | Global |
-|---------|---------|---------|-----|-------|-----------|---------|--------|
+| Feature | 🎓 Student | 👨‍🏫 Teacher | 🏛️ HOD | 👑 Admin | ⚙️ Sub-Admin | ✍️ Creator | 🌍 Global |
+|---------|:----------:|:---------:|:------:|:--------:|:------------:|:----------:|:---------:|
 | Take Quizzes | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Create Challenges | ❌ | ✅ | ✅ | ✅ | ✅* | ✅ | ❌ |
 | Edit/Review Quizzes | ❌ | ✅ | ✅ | ✅ | ✅* | ✅ | ❌ |
@@ -507,195 +230,267 @@ ecolearn-platform/
 | Manage Institutes | ❌ | ❌ | ✅ | ✅ | ✅* | ❌ | ❌ |
 | Global Challenges | ❌ | ❌ | ❌ | ✅ | ✅* | ✅ | ✅ |
 
-*Sub-Admin permissions are configurable
+<sub>*Sub-Admin permissions are configurable</sub>
 
-## 🎯 Reward Calculations
-
-### Quiz Rewards
-- **Eco Points**: 100 (fixed)
-- **Coins**: 10 × correct answers
-- **XP**: 50 (base) + 50 (perfect bonus) + performance bonus (0-50)
-
-### Game Rewards
-- **Eco Points**: 50 × level
-- **Coins**: Game score
-- **XP**: 30 + (level × 10)
-
-### Level Progression
-- Level 1: 0 XP
-- Level 2: 100 XP
-- Level 3: 282 XP
-- Level 4: 500 XP
-- Level 5: 750 XP
-- Formula: 100 × level^1.5
-
-## 🎨 Design System
-
-### Colors
-- **Primary**: Green (#22C55E)
-- **Secondary**: Emerald (#10B981)
-- **Accent**: Yellow (#F59E0B)
-- **Success**: Green (#22C55E)
-- **Warning**: Yellow (#F59E0B)
-- **Error**: Red (#EF4444)
-
-### Typography
-- **Font Family**: Inter, system-ui, sans-serif
-- **Headings**: Bold, larger sizes
-- **Body**: Regular, readable sizes
-- **Mobile**: Smaller, optimized sizes
-
-## 📄 License
-
-This project is proprietary and confidential.
-
-## 👥 Support
-
-For support, contact the development team or create an issue in the repository.
+</div>
 
 ---
 
-**Built with ❤️ for environmental education**ent variables
+## 🎮 Gamification Details
 
-**Frontend** (`.env`):
-```env
-VITE_FIREBASE_API_KEY=your_api_key
-VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
-VITE_FIREBASE_PROJECT_ID=your_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket
-VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-VITE_FIREBASE_APP_ID=your_app_id
-VITE_API_URL=http://localhost:5001
+### 🏅 Level Progression
+
+<table>
+<tr>
+<td align="center">
+
+**Level 1-4**<br>
+🌱 Eco
+ Beginner
+
+</td>
+<td align="center">
+
+**Level 5-9**<br>
+🔍 Green Explorer
+
+</td>
+<td align="center">
+
+**Level 10-14**<br>
+⚔️ Eco Warrior
+
+</td>
+<td align="center">
+
+**Level 15-19**<br>
+🛡️ Nature Defender
+
+</td>
+</tr>
+<tr>
+<td align="center">
+
+**Level 20-29**<br>
+🏆 Eco Champion
+
+</td>
+<td align="center">
+
+**Level 30-39**<br>
+👑 Green Guardian
+
+</td>
+<td align="center">
+
+**Level 40-49**<br>
+🌟 Planet Protector
+
+</td>
+<td align="center">
+
+**Level 50+**<br>
+⚡ Eco Legend
+
+</td>
+</tr>
+</table>
+
+### 💰 Reward System
+
 ```
+📊 Quiz Completion
+├─ Eco Points: 100 (fixed)
+├─ Coins: 10 × correct answers
+└─ XP: 50 (base) + 50 (perfect bonus) + 0-50 (performance)
 
-**Backend** (`.env`):
-```env
-PORT=5001
-FIREBASE_PROJECT_ID=your_project_id
-FIREBASE_CLIENT_EMAIL=your_client_email
-FIREBASE_PRIVATE_KEY=your_private_key
-GEMINI_API_KEY=your_gemini_api_key
+🎮 Game Completion
+├─ Eco Points: 50 × level
+├─ Coins: Game score
+└─ XP: 30 + (level × 10)
+
+📈 XP Formula: 100 × level^1.5
 ```
-
-4. Deploy Firestore rules
-```bash
-firebase deploy --only firestore:rules
-```
-
-5. Start development servers
-
-**Frontend**:
-```bash
-cd Frontend
-npm run dev
-```
-
-**Backend**:
-```bash
-cd Backend
-npm start
-```
-
-## 📦 Project Structure
-
-```
-ecolearn-platform/
-├── Frontend/
-│   ├── src/
-│   │   ├── components/      # Reusable components
-│   │   ├── pages/          # Page components
-│   │   ├── context/        # React Context providers
-│   │   ├── services/       # API and Firebase services
-│   │   ├── utils/          # Utility functions
-│   │   ├── data/           # Static data
-│   │   └── App.jsx         # Main app component
-│   ├── public/
-│   │   └── Games/          # Game files
-│   └── package.json
-├── Backend/
-│   ├── routes/             # API routes
-│   ├── utils/              # Backend utilities
-│   ├── migrations/         # Database migrations
-│   └── server.js           # Express server
-├── firestore.rules         # Firestore security rules
-└── README.md
-```
-
-## 🔑 User Roles & Permissions
-
-| Feature | Student | Teacher | HOD | Admin | Sub-Admin | Creator | Global |
-|---------|---------|---------|-----|-------|-----------|---------|--------|
-| Take Quizzes | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Create Challenges | ❌ | ✅ | ✅ | ✅ | ✅* | ✅ | ❌ |
-| View Analytics | ❌ | ✅ | ✅ | ✅ | ✅* | ✅ | ❌ |
-| Manage Users | ❌ | ❌ | ✅ | ✅ | ✅* | ❌ | ❌ |
-| Manage Institutes | ❌ | ❌ | ✅ | ✅ | ✅* | ❌ | ❌ |
-| Global Challenges | ❌ | ❌ | ❌ | ✅ | ✅* | ✅ | ✅ |
-
-*Sub-Admin permissions are configurable
-
-## 🎯 Reward Calculations
-
-### Quiz Rewards
-- **Eco Points**: 100 (fixed)
-- **Coins**: 10 × correct answers
-- **XP**: 50 (base) + 50 (perfect bonus) + performance bonus (0-50)
-
-### Game Rewards
-- **Eco Points**: 50 × level
-- **Coins**: Game score
-- **XP**: 30 + (level × 10)
-
-### Level Progression
-- Level 1: 0 XP
-- Level 2: 100 XP
-- Level 3: 282 XP
-- Level 4: 500 XP
-- Level 5: 750 XP
-- Formula: 100 × level^1.5
-
-## 🎨 Design System
-
-### Colors
-- **Primary**: Green (#22C55E)
-- **Secondary**: Emerald (#10B981)
-- **Accent**: Yellow (#F59E0B)
-- **Success**: Green (#22C55E)
-- **Warning**: Yellow (#F59E0B)
-- **Error**: Red (#EF4444)
-
-### Typography
-- **Font Family**: Inter, system-ui, sans-serif
-- **Headings**: Bold, larger sizes
-- **Body**: Regular, readable sizes
-- **Mobile**: Smaller, optimized sizes
-
-## 🐛 Known Issues & Limitations
-
-- Leaderboard API returns 500 error (backend issue)
-- Some analytics features in development
-- Limited offline support
-- Mobile game performance varies by device
-
-## 🔮 Future Enhancements
-
-- Push notifications
-- Offline mode
-- Social features (teams, chat)
-- More game types
-- Advanced analytics
-- Mobile app (React Native)
-- Multilingual support
-- Accessibility improvements
-
-## 📄 License
-
-This project is proprietary and confidential.
-
-## 👥 Support
-
-For support, contact the development team or create an issue in the repository.
 
 ---
 
-**Built with ❤️ for environmental education**
+## 🎨 Design System
+
+<table>
+<tr>
+<td>
+
+### 🎨 Color Palette
+- **Primary**: `#22C55E` 🟢
+- **Secondary**: `#10B981` 💚
+- **Accent**: `#F59E0B` 🟡
+- **Success**: `#22C55E` ✅
+- **Warning**: `#F59E0B` ⚠️
+- **Error**: `#EF4444` ❌
+
+</td>
+<td>
+
+### 📱 Responsive Breakpoints
+- **Mobile**: `< 640px`
+- **Tablet**: `640px - 1024px`
+- **Desktop**: `> 1024px`
+
+### ✨ Animations
+- Framer Motion spring physics
+- Micro-interactions
+- Loading states
+
+</td>
+</tr>
+</table>
+
+---
+
+## 🔐 Security Features
+
+- ✅ **Firebase Authentication** - Secure email/password login
+- ✅ **Role-Based Access Control** - Firestore security rules
+- ✅ **Token Authorization** - Custom claims & JWT
+- ✅ **Data Protection** - User data isolation
+- ✅ **Institute Isolation** - Separate data per institute
+
+---
+
+## 📊 Recent Updates
+
+### ✨ Quiz Management Enhancements
+- 📝 **Review & Edit Mode** - Teachers can review and edit quizzes after creation
+- 🔄 **Question Regeneration** - Regenerate individual questions with AI
+- 📄 **Paragraph Expansion** - Auto-expand short paragraphs for more questions
+- 🚫 **Duplicate Prevention** - AI avoids generating duplicate questions (3 attempts)
+- 🎯 **Dashboard Navigation** - Click quiz challenges to review/edit
+- 📖 **Strict Paragraph Mode** - Questions strictly based on paragraph content
+
+---
+
+## 🎯 Educational Games
+
+### 🗑️ Waste Segregator Game
+- Interactive waste sorting simulation
+- Multiple difficulty levels
+- Real-time scoring system
+- XP and Coins rewards
+- Level-based progression
+
+---
+
+## 🔮 Future Roadmap
+
+<table>
+<tr>
+<td>
+
+- [ ] 📱 Mobile app (React Native)
+- [ ] 🔔 Push notifications
+- [ ] 🌐 Multilingual support
+- [ ] ♿ Accessibility improvements
+
+</td>
+<td>
+
+- [ ] 👥 Social features (teams, chat)
+- [ ] 📴 Offline mode
+- [ ] 🎮 More game types
+- [ ] 📈 Advanced analytics
+
+</td>
+</tr>
+</table>
+
+---
+
+## 📚 Documentation
+
+<details>
+<summary><b>🎮 How to Play</b></summary>
+
+1. **Register** as a student with your institute code
+2. **Complete challenges** to earn Eco Points, Coins, and XP
+3. **Level up** from Eco Beginner to Eco Legend
+4. **Compete** on leaderboards
+5. **Play games** for extra rewards
+6. **Chat with EcoBot** for environmental questions
+
+</details>
+
+<details>
+<summary><b>👨‍🏫 For Teachers</b></summary>
+
+1. **Create challenges** using AI or manual entry
+2. **Assign to classes** or sections
+3. **Monitor progress** through analytics
+4. **Review submissions** for physical challenges
+5. **Edit quizzes** anytime after creation
+6. **Regenerate questions** with AI assistance
+
+</details>
+
+<details>
+<summary><b>🔧 For Developers</b></summary>
+
+- **API Documentation**: Check `/Backend/routes/` for endpoint details
+- **Component Library**: Reusable components in `/Frontend/src/components/`
+- **State Management**: React Context in `/Frontend/src/context/`
+- **Utilities**: Helper functions in `/Frontend/src/utils/`
+- **Styling**: Tailwind CSS with custom configurations
+
+</details>
+
+---
+
+## 🐛 Known Issues
+
+- ⚠️ Leaderboard API occasionally returns 500 error
+- 🔧 Some analytics features still in development
+- 📴 Limited offline support
+- 📱 Mobile game performance varies by device
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
+## 📄 License
+
+This project is **proprietary and confidential**.
+
+---
+
+## 💬 Support
+
+Need help? Reach out to us:
+
+- � Crealte an issue in the repository
+- � Crheck the documentation
+- �  Contact Team Invictus
+
+---
+
+<div align="center">
+
+### 🌱 Built with ❤️ by Team Invictus
+
+**Making sustainability education engaging, one challenge at a time.**
+
+---
+
+**PixelPlanet** - Where Environmental Education Meets Innovation
+
+⭐ **Star this repo** if you find it helpful! | 🐛 **Report bugs** to help us improve
+
+</div>
