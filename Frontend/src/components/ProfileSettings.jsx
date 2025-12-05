@@ -1,12 +1,15 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import ProfileCard from './ProfileCard';
 import { useAuth } from '../context/useAuth';
-import { signOut } from 'firebase/auth';
-import { auth } from '../services/firebase';
+import { signOut, updateProfile, updateEmail, updatePassword } from 'firebase/auth';
+import { auth, db } from '../services/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
+import EditProfileModal from './EditProfileModal';
 
 const ProfileSettings = ({ variants }) => {
-    const { refreshAuth } = useAuth();
+    const { refreshAuth, currentUser } = useAuth();
+    const [showEditModal, setShowEditModal] = useState(false);
 
     const handleLogout = async () => {
         try {
@@ -19,14 +22,31 @@ const ProfileSettings = ({ variants }) => {
     };
 
     return (
-        <ProfileCard title="Profile Settings" variants={variants}>
-            <button
-                onClick={handleLogout}
-                className="w-full p-4 font-bold text-white bg-red-600 rounded-xl hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
-            >
-                Logout
-            </button>
-        </ProfileCard>
+        <>
+            <ProfileCard title="Profile Settings" variants={variants}>
+                <div className="space-y-3">
+                    <button
+                        onClick={() => setShowEditModal(true)}
+                        className="w-full p-4 font-semibold text-gray-800 bg-gray-100 rounded-xl hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-colors flex items-center justify-center gap-2"
+                    >
+                        <span className="material-symbols-outlined">edit</span>
+                        Edit Profile
+                    </button>
+                    <button
+                        onClick={handleLogout}
+                        className="w-full p-4 font-bold text-white bg-red-600 rounded-xl hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                        <span className="material-symbols-outlined">logout</span>
+                        Logout
+                    </button>
+                </div>
+            </ProfileCard>
+            
+            <EditProfileModal 
+                isOpen={showEditModal}
+                onClose={() => setShowEditModal(false)}
+            />
+        </>
     );
 };
 

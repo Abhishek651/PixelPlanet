@@ -52,7 +52,7 @@ const ChallengesPage = () => {
             <SideNavbar />
 
             <div className="flex-1 flex flex-col h-full overflow-hidden relative">
-                <main className="flex-1 overflow-y-auto pb-20">
+                <main className="flex-1 overflow-y-auto pb-20 lg:pb-4">
                     {/* Top Gradient Header */}
                     <motion.div
                         initial={{ opacity: 0, y: -30 }}
@@ -60,8 +60,7 @@ const ChallengesPage = () => {
                         transition={{ duration: 0.6 }}
                         className="bg-gradient-to-b from-dark-gradient-start to-dark-gradient-end p-6 pb-12 rounded-b-3xl shadow-dark-deep"
                     >
-                        <div className="flex items-center justify-between mb-4">
-                            <button className="material-symbols-outlined text-dark-text-primary text-2xl">arrow_back_ios</button>
+                        <div className="flex items-center justify-end mb-4">
                             <span className="material-symbols-outlined text-dark-text-primary text-2xl">more_vert</span>
                         </div>
                         <h1 className="text-3xl font-bold font-display text-dark-text-primary mb-2">Challenges</h1>
@@ -156,6 +155,9 @@ const ChallengesPage = () => {
                         )}
                     </div>
                 </main>
+                
+
+
                 <BottomNavbar />
             </div>
         </div>

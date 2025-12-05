@@ -57,10 +57,8 @@ const JoinInstitutePage = () => {
 
             const response = await api.post(endpoint, payload);
 
-            if (response.status === 201) {
-                alert('Registration successful! Please log in.');
-                navigate('/login');
-            }
+            alert('Registration successful! Please log in.');
+            navigate('/login');
         } catch (err) {
             console.error(err);
             setError(err.response?.data?.message || 'Failed to join institute. Please try again.');

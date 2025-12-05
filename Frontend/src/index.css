@@ -5,6 +5,19 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+.animate-shimmer {
+    animation: shimmer 2s infinite;
+}
+
 body {
   font-family: 'Poppins', sans-serif;
 }
@@ -45,3 +58,47 @@ body {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* Fix for input fields with dark backgrounds - ensure proper contrast */
+/* Apply to all standard form inputs except those with white borders (login/register) */
+input[type="text"]:not([class*="border-white"]),
+input[type="email"]:not([class*="border-white"]),
+input[type="password"]:not([class*="border-white"]),
+input[type="number"]:not([class*="border-white"]),
+input[type="date"]:not([class*="border-white"]),
+input[type="datetime-local"]:not([class*="border-white"]),
+input[type="url"]:not([class*="border-white"]),
+textarea:not([class*="border-white"]),
+select:not([class*="border-white"]) {
+  background-color: white !important;
+  color: #1f2937 !important;
+}
+
+/* Ensure placeholder text is visible for all form inputs */
+input:not([class*="border-white"])::placeholder,
+textarea:not([class*="border-white"])::placeholder {
+  color: #9ca3af !important;
+  opacity: 1 !important;
+}
+
+/* Date picker specific fixes */
+input[type="date"]:not([class*="border-white"]),
+input[type="datetime-local"]:not([class*="border-white"]) {
+  position: relative;
+  cursor: pointer;
+}
+
+/* Ensure date picker calendar icon is visible */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.6;
+  filter: invert(0);
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+/* Inputs with white borders (login/register pages) keep their own styling */

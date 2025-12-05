@@ -28,9 +28,8 @@ function InstituteCodeModal({ isOpen, onClose }) {
                 code: instituteCode,
             });
 
-            // The backend now returns the 'role'
-            const { instituteId, instituteName, role: inferredRole } = response.data; // Destructure inferredRole
-            console.log("Code verified:", response.data);
+            const { instituteId, instituteName, role: inferredRole } = response; // Destructure inferredRole
+            console.log("Code verified:", response);
 
             // Close the modal and navigate to the dynamic JoinInstitutePage
             onClose(); // Close the modal

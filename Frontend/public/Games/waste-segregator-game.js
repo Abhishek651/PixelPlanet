@@ -757,6 +757,36 @@ class GameScene extends Phaser.Scene {
         const { width, height } = this.cameras.main;
         const isSuccess = this.itemsSorted >= this.levelConfig.itemCount;
         
+        // Award points and coins based on performance
+        // Give rewards even if not fully successful, scaled by performance
+        const completionRate = this.itemsSorted / this.levelConfig.itemCount;
+        const baseEcoPoints = 50 * this.currentLevel;
+        const baseXP = 30 + (this.currentLevel * 10);
+        
+        const ecoPoints = Math.floor(baseEcoPoints * (isSuccess ? 1 : completionRate * 0.5)); // Half rewards if incomplete
+        const coins = this.score; // Coins always equal to game score
+        const xp = Math.floor(baseXP * (isSuccess ? 1 : completionRate * 0.5)); // Half XP if incomplete
+        
+        // Always send rewards to parent window (React app) if there's any score
+        if (this.score > 0 || this.itemsSorted > 0) {
+            console.log('Sending game rewards:', { ecoPoints, coins, xp, score: this.score, isSuccess });
+            
+            if (window.parent !== window) {
+                window.parent.postMessage({
+                    type: 'GAME_COMPLETE',
+                    game: 'waste-segregator',
+                    level: this.currentLevel,
+                    score: this.score,
+                    ecoPoints: ecoPoints,
+                    coins: coins,
+                    xp: xp,
+                    isSuccess: isSuccess
+                }, '*');
+            } else {
+                console.warn('Not in iframe, rewards not sent to parent');
+            }
+        }
+        
         // Overlay
         const overlay = this.add.rectangle(width/2, height/2, width, height, 0x000000, 0.85).setDepth(100);
         
@@ -789,7 +819,7 @@ class GameScene extends Phaser.Scene {
         }).setOrigin(0.5).setDepth(101).setAlpha(0);
         
         // Score
-        const scoreText = this.add.text(width/2, height * 0.35, `Final Score: ${this.score} KP`, {
+        const scoreText = this.add.text(width/2, height * 0.32, `Game Score: ${this.score}`, {
             fontSize: Math.min(width * 0.05, 32) + 'px',
             fontFamily: 'Arial',
             fill: '#fff',
@@ -798,11 +828,26 @@ class GameScene extends Phaser.Scene {
         }).setOrigin(0.5).setDepth(101).setAlpha(0);
         
         // Items
-        const itemsText = this.add.text(width/2, height * 0.43, `Items: ${this.itemsSorted}/${this.levelConfig.itemCount}`, {
+        const itemsText = this.add.text(width/2, height * 0.39, `Items: ${this.itemsSorted}/${this.levelConfig.itemCount}`, {
             fontSize: Math.min(width * 0.04, 20) + 'px',
             fontFamily: 'Arial',
             fill: '#bdc3c7'
         }).setOrigin(0.5).setDepth(101).setAlpha(0);
+        
+        // Rewards (only if successful)
+        let rewardsText = null;
+        if (isSuccess) {
+            const ecoPoints = 50 * this.currentLevel;
+            const coins = this.score;
+            const xp = 30 + (this.currentLevel * 10);
+            rewardsText = this.add.text(width/2, height * 0.47, `🌱 +${ecoPoints} Points  🪙 +${coins} Coins  ⭐ +${xp} XP`, {
+                fontSize: Math.min(width * 0.035, 20) + 'px',
+                fontFamily: 'Arial Black',
+                fill: '#f1c40f',
+                stroke: '#000',
+                strokeThickness: 3
+            }).setOrigin(0.5).setDepth(101).setAlpha(0);
+        }
         
         // Buttons
         let yPos = height * 0.55;
@@ -836,6 +881,9 @@ class GameScene extends Phaser.Scene {
         this.tweens.add({ targets: title, alpha: 1, scale: { from: 0, to: 1 }, duration: 500, ease: 'Back.easeOut' });
         this.tweens.add({ targets: scoreText, alpha: 1, duration: 500, delay: 200 });
         this.tweens.add({ targets: itemsText, alpha: 1, duration: 500, delay: 400 });
+        if (rewardsText) {
+            this.tweens.add({ targets: rewardsText, alpha: 1, scale: { from: 0.5, to: 1 }, duration: 600, delay: 600, ease: 'Back.easeOut' });
+        }
     }
 
     createEndButton(x, y, text, color, callback) {

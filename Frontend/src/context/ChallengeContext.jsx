@@ -50,6 +50,9 @@ export const ChallengeProvider = ({ children }) => {
             } else if (userRole === 'teacher' || userRole === 'hod' || userRole === 'admin') {
                 console.log(`[ChallengeProvider] User is a ${userRole}. Fetching created challenges...`);
                 q = query(collection(db, 'challenges'), where('createdBy', '==', currentUser.uid));
+            } else if (userRole === 'global') {
+                console.log('[ChallengeProvider] User is global. Fetching global challenges...');
+                q = query(collection(db, 'challenges'), where('isGlobal', '==', true));
             } else {
                 console.log(`[ChallengeProvider] Unknown user role: ${userRole}`);
             }

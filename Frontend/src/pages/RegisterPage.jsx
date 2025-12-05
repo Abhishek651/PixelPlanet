@@ -3,6 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/useAuth';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
+import { getUserFriendlyError, getValidationError } from '../utils/errorMessages';
+import { logAuthEvent, logError, logUserAction } from '../utils/logger';
+
+// ============================================
+// PAGE: RegisterPage
+// Multi-step registration form for new users
+// Creates global user account
+// ============================================
 
 const RegisterPage = () => {
     const [step, setStep] = useState(1);
@@ -20,27 +28,30 @@ const RegisterPage = () => {
 
     const totalSteps = 4;
 
+    // Handle next step with validation
     const handleNext = () => {
-        // Validation for each step
+        // Step-specific validation
         if (step === 1 && (!formData.firstName || !formData.lastName)) {
-            setError('Please enter both first and last name');
+            setError(getValidationError('name', 'required'));
             return;
         }
         if (step === 2 && !formData.email) {
-            setError('Please enter your email address');
+            setError(getValidationError('email', 'required'));
             return;
         }
         if (step === 3 && !formData.password) {
-            setError('Please enter a password');
+            setError(getValidationError('password', 'required'));
             return;
         }
 
         setError('');
         if (step < totalSteps) {
             setStep(step + 1);
+            logUserAction('Registration step completed', { step });
         }
     };
 
+    // Handle back to previous step
     const handleBack = () => {
         setError('');
         if (step > 1) {
@@ -48,42 +59,39 @@ const RegisterPage = () => {
         }
     };
 
+    // Handle final registration submission
     const handleSubmit = async () => {
+        // Validate password match
         if (formData.password !== formData.confirmPassword) {
-            setError('Passwords do not match');
+            setError(getValidationError('passwords', 'match'));
             return;
         }
+        
+        // Validate password length
         if (formData.password.length < 6) {
-            setError('Password must be at least 6 characters');
+            setError(getValidationError('password', 'min', 6));
             return;
         }
 
         setError('');
         setLoading(true);
 
+        logUserAction('Registration attempt', { email: formData.email });
+
         try {
             const fullName = `${formData.firstName} ${formData.lastName}`;
             await signup(formData.email, formData.password, fullName);
-            // Wait a moment for auth state to update, then redirect
+            
+            logAuthEvent('Registration successful', { email: formData.email });
+            
+            // Wait for auth state to update, then redirect
             setTimeout(() => {
                 navigate('/');
             }, 1000);
         } catch (err) {
-            console.error('Signup error:', err);
-            // Handle specific Firebase error codes
-            if (err.code === 'auth/email-already-in-use') {
-                setError('This email is already registered. Please login instead.');
-            } else if (err.code === 'auth/invalid-email') {
-                setError('Invalid email address format.');
-            } else if (err.code === 'auth/weak-password') {
-                setError('Password is too weak. Please use at least 6 characters.');
-            } else if (err.code === 'auth/operation-not-allowed') {
-                setError('Email/password accounts are not enabled. Please contact support.');
-            } else if (err.code === 'auth/network-request-failed') {
-                setError('Network error. Please check your internet connection.');
-            } else {
-                setError(err.message || 'Failed to create account. Please try again.');
-            }
+            logError('RegisterPage', 'Registration failed', err);
+            setError(getUserFriendlyError(err, 'register'));
+        } finally {
             setLoading(false);
         }
     };
@@ -121,8 +129,8 @@ const RegisterPage = () => {
                 input:-webkit-autofill:hover, 
                 input:-webkit-autofill:focus, 
                 input:-webkit-autofill:active {
-                    -webkit-text-fill-color: white;
-                    -webkit-box-shadow: 0 0 0px 1000px transparent inset;
+                    -webkit-text-fill-color: white !important;
+                    -webkit-box-shadow: 0 0 0px 1000px transparent inset !important;
                     transition: background-color 5000s ease-in-out 0s;
                 }
             `}</style>

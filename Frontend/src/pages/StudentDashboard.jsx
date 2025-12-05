@@ -1,12 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/useAuth';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '../services/firebase';
+import { getLevelFromXP, getLevelTitle } from '../utils/xpSystem';
 
 // Components for Desktop Dashboard
 import DashboardLayout from '../components/DashboardLayout';
 import ProfileStatsWidget from '../components/ProfileStatsWidget';
 import MentorCard from '../components/MentorCard';
+import ScoreCoinsBar from '../components/ScoreCoinsBar';
 
 // Components for Mobile Dashboard
 import BottomNavbar from '../components/BottomNavbar';
@@ -22,6 +26,8 @@ const MobileStudentDashboard = () => {
     const [showEcoBot, setShowEcoBot] = useState(false);
     const [showBotHint, setShowBotHint] = useState(true);
     const [showLoginModal, setShowLoginModal] = useState(false);
+    const [ecoPoints, setEcoPoints] = useState(0);
+    const [coins, setCoins] = useState(0);
 
     const categories = [
         { label: 'All', icon: 'apps', to: '/challenges' },
@@ -41,6 +47,27 @@ const MobileStudentDashboard = () => {
         { id: '3', title: 'Community Tree Planting', date: '10 July, 2025', location: 'Lahore, Pakistan', participants: '30+', image: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=2940&auto=format&fit=crop' },
         { id: '4', title: 'DIY Solar Panel Workshop', date: '20 July, 2025', location: 'Karachi, Pakistan', participants: '25+', image: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?q=80&w=2940&auto=format&fit=crop' }
     ];
+
+    // Real-time listener for user data
+    useEffect(() => {
+        if (!currentUser) return;
+
+        const unsubscribe = onSnapshot(
+            doc(db, 'users', currentUser.uid),
+            (doc) => {
+                if (doc.exists()) {
+                    const data = doc.data();
+                    setEcoPoints(data.ecoPoints || 0);
+                    setCoins(data.coins || 0);
+                }
+            },
+            (error) => {
+                console.error('Error fetching user data:', error);
+            }
+        );
+
+        return () => unsubscribe();
+    }, [currentUser]);
 
     return (
         <div className="min-h-screen bg-gray-50 pb-20">
@@ -88,6 +115,28 @@ const MobileStudentDashboard = () => {
                     </button>
                 </div>
             </header>
+
+            {/* Score and Coins Bar - Mobile */}
+            {currentUser && (
+                <div className="px-4 pt-2 pb-3 bg-white border-b border-gray-100">
+                    <div className="flex gap-2 overflow-x-auto">
+                        <div className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-3 py-2 rounded-full shadow-md flex-shrink-0">
+                            <span className="text-lg">🌱</span>
+                            <div className="flex flex-col">
+                                <span className="text-xs font-medium opacity-90">Eco Points</span>
+                                <span className="text-sm font-bold leading-none">{ecoPoints.toLocaleString()}</span>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-amber-600 text-white px-3 py-2 rounded-full shadow-md flex-shrink-0">
+                            <span className="text-lg">🪙</span>
+                            <div className="flex flex-col">
+                                <span className="text-xs font-medium opacity-90">Coins</span>
+                                <span className="text-sm font-bold leading-none">{coins.toLocaleString()}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Search Bar */}
             <div className="p-4">
@@ -335,6 +384,14 @@ const MobileStudentDashboard = () => {
 const DesktopStudentDashboard = () => {
     const { currentUser } = useAuth();
     const [showEcoBot, setShowEcoBot] = useState(false);
+    const [ecoPoints, setEcoPoints] = useState(0);
+    const [coins, setCoins] = useState(0);
+    const [level, setLevel] = useState(1);
+    const [xpInfo, setXpInfo] = useState({
+        currentLevelXP: 0,
+        xpForNextLevel: 100,
+        progress: 0
+    });
 
     // Mock Data
     const activeChallenges = [
@@ -384,6 +441,37 @@ const DesktopStudentDashboard = () => {
         { id: 4, name: 'Water Saver', icon: 'water_drop', color: 'text-blue-500 bg-blue-100' }
     ];
 
+    // Real-time listener for user data (desktop)
+    useEffect(() => {
+        if (!currentUser) return;
+
+        const unsubscribe = onSnapshot(
+            doc(db, 'users', currentUser.uid),
+            (doc) => {
+                if (doc.exists()) {
+                    const data = doc.data();
+                    setEcoPoints(data.ecoPoints || 0);
+                    setCoins(data.coins || 0);
+                    
+                    // Calculate level and XP info from total XP
+                    const totalXP = data.xp || 0;
+                    const levelInfo = getLevelFromXP(totalXP);
+                    setLevel(levelInfo.level);
+                    setXpInfo({
+                        currentLevelXP: levelInfo.currentLevelXP,
+                        xpForNextLevel: levelInfo.xpForNextLevel,
+                        progress: levelInfo.progress
+                    });
+                }
+            },
+            (error) => {
+                console.error('Error fetching user data:', error);
+            }
+        );
+
+        return () => unsubscribe();
+    }, [currentUser]);
+
     return (
         <DashboardLayout>
             <div className="space-y-8 pb-10">
@@ -397,26 +485,7 @@ const DesktopStudentDashboard = () => {
                             You're on a <span className="font-bold text-orange-500">5-day streak</span>. Keep it up!
                         </p>
                     </div>
-                    <div className="flex items-center gap-4">
-                        <div className="bg-white dark:bg-gray-800 p-3 rounded-2xl shadow-sm flex items-center gap-3 border border-gray-100 dark:border-gray-700">
-                            <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600">
-                                <span className="material-icons">emoji_events</span>
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">Total Points</p>
-                                <p className="text-lg font-bold text-gray-800 dark:text-white">2,490</p>
-                            </div>
-                        </div>
-                        <div className="bg-white dark:bg-gray-800 p-3 rounded-2xl shadow-sm flex items-center gap-3 border border-gray-100 dark:border-gray-700">
-                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                                <span className="material-icons">military_tech</span>
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">Current Level</p>
-                                <p className="text-lg font-bold text-gray-800 dark:text-white">Level 5</p>
-                            </div>
-                        </div>
-                    </div>
+                    <ScoreCoinsBar />
                 </div>
 
                 <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
@@ -533,15 +602,40 @@ const DesktopStudentDashboard = () => {
                                     <img src={`https://ui-avatars.com/api/?name=${currentUser?.displayName || 'User'}&background=random`} alt="Profile" className="w-full h-full object-cover" />
                                 </div>
                                 <h3 className="text-xl font-bold text-gray-800 dark:text-white mt-3">{currentUser?.displayName || 'Eco Explorer'}</h3>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Level 5 • Earth Guardian</p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">Level {level} • {getLevelTitle(level)}</p>
 
                                 <div className="mt-6">
                                     <div className="flex justify-between text-xs mb-1">
                                         <span className="font-medium text-gray-600 dark:text-gray-300">XP Progress</span>
-                                        <span className="text-primary">2490 / 3000</span>
+                                        <span className="text-primary">{xpInfo.currentLevelXP.toLocaleString()} / {xpInfo.xpForNextLevel.toLocaleString()}</span>
                                     </div>
-                                    <div className="w-full h-2.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                                        <div className="h-full bg-gradient-to-r from-primary to-emerald-400 rounded-full" style={{ width: '83%' }}></div>
+                                    <div className="w-full h-2.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden relative">
+                                        <motion.div 
+                                            className="h-full bg-gradient-to-r from-primary to-emerald-400 rounded-full relative"
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${xpInfo.progress}%` }}
+                                            transition={{ 
+                                                duration: 1.2, 
+                                                ease: [0.4, 0, 0.2, 1],
+                                                type: "spring",
+                                                stiffness: 50,
+                                                damping: 20
+                                            }}
+                                        >
+                                            {/* Animated glow effect */}
+                                            <motion.div
+                                                className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/40 to-white/0 rounded-full"
+                                                animate={{
+                                                    x: ['-100%', '100%']
+                                                }}
+                                                transition={{
+                                                    duration: 1.5,
+                                                    repeat: Infinity,
+                                                    repeatDelay: 1,
+                                                    ease: "easeInOut"
+                                                }}
+                                            />
+                                        </motion.div>
                                     </div>
                                 </div>
                             </div>

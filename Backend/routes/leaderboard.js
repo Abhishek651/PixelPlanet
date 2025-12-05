@@ -70,7 +70,7 @@ const chunkArray = (array, size) => {
     return chunks;
 };
 
-// GET /global - Global Leaderboard
+// GET /global - Global Leaderboard (ALL students from all institutes + global users)
 router.get('/global', [
     query('class').optional(),
     query('activityType').optional().isIn(['physical', 'quiz_auto', 'quiz_manual', 'video']),
@@ -113,40 +113,37 @@ router.get('/global', [
             const userIdChunks = chunkArray(Array.from(userIds), 10);
             for (const chunk of userIdChunks) {
                 const chunkQuery = db.collection('users')
-                    .where(admin.firestore.FieldPath.documentId(), 'in', chunk)
-                    .where('role', '==', 'student');
+                    .where(admin.firestore.FieldPath.documentId(), 'in', chunk);
 
                 const chunkSnapshot = await chunkQuery.get();
                 chunkSnapshot.forEach(doc => {
                     const userData = doc.data();
-                    if (!classValue || userData.class === classValue) {
+                    // Include all students and global users
+                    if ((userData.role === 'student' || userData.role === 'global') && 
+                        (!classValue || userData.class === classValue)) {
                         users.push(userData);
                     }
                 });
             }
         } else {
-            let usersQuery = db.collection('users').where('role', '==', 'student');
-
-            if (classValue) {
-                usersQuery = usersQuery.where('class', '==', classValue);
-                const usersSnapshot = await usersQuery.get();
-                usersSnapshot.forEach(doc => {
-                    users.push(doc.data());
-                });
-            } else {
-                usersQuery = usersQuery.orderBy('ecoPoints', 'desc').limit(limit);
-                const usersSnapshot = await usersQuery.get();
-                usersSnapshot.forEach(doc => {
-                    users.push(doc.data());
-                });
-            }
+            // Fetch ALL students and global users from all institutes
+            const usersSnapshot = await db.collection('users').get();
+            
+            usersSnapshot.forEach(doc => {
+                const userData = doc.data();
+                // Include all students (from any institute) and global users
+                if ((userData.role === 'student' || userData.role === 'global') && 
+                    (!classValue || userData.class === classValue)) {
+                    users.push(userData);
+                }
+            });
         }
 
         users.sort((a, b) => (b.ecoPoints || 0) - (a.ecoPoints || 0));
         users = users.slice(0, limit);
 
         const leaderboard = buildLeaderboardResponse(users);
-        res.json({ leaderboard });
+        res.json({ leaderboard, scope: 'global' });
 
     } catch (error) {
         console.error('Error fetching global leaderboard:', error);
@@ -171,21 +168,33 @@ router.get('/institute', verifyToken, [
         let users = [];
 
         // Check if user has instituteId or is a global user
-        if (!req.instituteId || req.userRole === 'global') {
-            console.log('Global user or missing instituteId, returning global leaderboard');
-            // Return global leaderboard for users not in an institute
-            const usersQuery = db.collection('users')
-                .where('role', 'in', ['student', 'global'])
-                .orderBy('ecoPoints', 'desc')
-                .limit(limit);
+        if (!req.instituteId || req.userRole === 'global' || req.userRole === 'teacher') {
+            console.log('Global user, teacher, or missing instituteId, returning global leaderboard');
+            console.log('User role:', req.userRole, 'InstituteId:', req.instituteId);
             
-            const usersSnapshot = await usersQuery.get();
-            usersSnapshot.forEach(doc => {
-                users.push(doc.data());
-            });
-            
-            const leaderboard = buildLeaderboardResponse(users);
-            return res.json({ leaderboard, scope: 'global' });
+            // Return global leaderboard for users not in an institute or teachers
+            // Fetch all users and filter/sort in memory to avoid Firestore query limitations
+            try {
+                const usersSnapshot = await db.collection('users').get();
+                
+                usersSnapshot.forEach(doc => {
+                    const userData = doc.data();
+                    // Include students and global users
+                    if (userData.role === 'student' || userData.role === 'global') {
+                        users.push(userData);
+                    }
+                });
+                
+                // Sort by ecoPoints and limit
+                users.sort((a, b) => (b.ecoPoints || 0) - (a.ecoPoints || 0));
+                users = users.slice(0, limit);
+                
+                const leaderboard = buildLeaderboardResponse(users);
+                return res.json({ leaderboard, scope: 'global' });
+            } catch (fetchError) {
+                console.error('Error fetching users for global leaderboard:', fetchError);
+                return res.json({ leaderboard: [], scope: 'global' });
+            }
         }
 
         if (activityType) {

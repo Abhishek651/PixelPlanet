@@ -1,15 +1,36 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/useAuth';
+import { useChallenges } from '../context/useChallenges';
 import DashboardLayout from '../components/DashboardLayout';
 import AnalyticsCard from '../components/AnalyticsCard';
 import EcoBot from '../components/EcoBot';
+import ChallengeTypeModal from '../components/ChallengeTypeModal';
 
 const TeacherDashboard = () => {
     const { currentUser } = useAuth();
+    const { challenges, refreshChallenges } = useChallenges();
+    const navigate = useNavigate();
     const [showEcoBot, setShowEcoBot] = useState(false);
+    const [showCreateModal, setShowCreateModal] = useState(false);
     const teacherName = currentUser?.displayName || 'Teacher';
+
+    useEffect(() => {
+        // Refresh challenges when dashboard loads
+        refreshChallenges();
+    }, []);
+
+    // Get recent challenges (last 3)
+    const recentChallenges = challenges.slice(0, 3).map(challenge => ({
+        id: challenge.id,
+        title: challenge.title || 'Untitled Challenge',
+        type: challenge.type || 'Unknown',
+        submissions: challenge.submissions?.length || 0,
+        totalStudents: 50, // You can calculate this based on classes
+        avgScore: 0, // Calculate from submissions
+        status: challenge.isActive ? 'active' : 'inactive'
+    }));
 
     // Mock data - replace with real data from your backend
     const analytics = {
@@ -18,36 +39,6 @@ const TeacherDashboard = () => {
         completionRate: 78,
         avgScore: 85
     };
-
-    const recentChallenges = [
-        {
-            id: 1,
-            title: 'Forest Restoration Quiz',
-            type: 'Quiz',
-            submissions: 45,
-            totalStudents: 50,
-            avgScore: 82,
-            status: 'active'
-        },
-        {
-            id: 2,
-            title: 'Beach Cleanup Documentation',
-            type: 'Physical',
-            submissions: 38,
-            totalStudents: 50,
-            avgScore: 88,
-            status: 'active'
-        },
-        {
-            id: 3,
-            title: 'Renewable Energy Video',
-            type: 'Video',
-            submissions: 42,
-            totalStudents: 50,
-            avgScore: 75,
-            status: 'grading'
-        }
-    ];
 
     const topPerformers = [
         { name: 'Emma Wilson', points: 2850, challenges: 12, avatar: null },
@@ -79,13 +70,13 @@ const TeacherDashboard = () => {
                             Here's what's happening with your classes today
                         </p>
                     </div>
-                    <Link
-                        to="/create-challenge"
+                    <button
+                        onClick={() => setShowCreateModal(true)}
                         className="px-6 py-3 bg-primary text-white font-medium rounded-xl hover:bg-primary-light transition-colors flex items-center gap-2"
                     >
                         <span className="material-icons">add</span>
                         Create Challenge
-                    </Link>
+                    </button>
                 </div>
 
                 {/* Analytics Cards */}
@@ -174,12 +165,22 @@ const TeacherDashboard = () => {
                             </div>
 
                             <div className="space-y-3">
-                                {recentChallenges.map((challenge, index) => (
+                                {recentChallenges.map((challenge, index) => {
+                                    const handleChallengeClick = () => {
+                                        if (challenge.type === 'quiz_auto' || challenge.type === 'quiz_manual') {
+                                            navigate(`/quiz/${challenge.id}`);
+                                        } else {
+                                            navigate(`/challenge/${challenge.id}`);
+                                        }
+                                    };
+                                    
+                                    return (
                                     <motion.div
                                         key={challenge.id}
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: index * 0.1 }}
+                                        onClick={handleChallengeClick}
                                         className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
                                     >
                                         <div className="flex items-center gap-4 flex-1">
@@ -221,11 +222,13 @@ const TeacherDashboard = () => {
                                         <Link
                                             to={`/challenges/${challenge.id}/submissions`}
                                             className="ml-4 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-light transition-colors"
+                                            onClick={(e) => e.stopPropagation()}
                                         >
                                             Review
                                         </Link>
                                     </motion.div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                     </div>
@@ -324,6 +327,12 @@ const TeacherDashboard = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Create Challenge Modal */}
+            <ChallengeTypeModal 
+                isOpen={showCreateModal} 
+                onClose={() => setShowCreateModal(false)} 
+            />
 
             {/* EcoBot */}
             <EcoBot isOpen={showEcoBot} onClose={() => setShowEcoBot(false)} />

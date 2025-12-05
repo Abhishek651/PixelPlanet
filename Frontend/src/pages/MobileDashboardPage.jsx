@@ -1,19 +1,58 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAuth } from '../context/useAuth';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '../services/firebase';
+import { getLevelFromXP, getLevelTitle } from '../utils/xpSystem';
 import BottomNavbar from '../components/BottomNavbar';
 import SideNavbar from '../components/SideNavbar';
+import JoinInstituteModal from '../components/JoinInstituteModal';
 
 const MobileDashboardPage = () => {
     const { currentUser, userRole } = useAuth();
     const userName = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'User';
+    const [showJoinModal, setShowJoinModal] = useState(false);
+    const [level, setLevel] = useState(1);
+    const [xpInfo, setXpInfo] = useState({
+        currentLevelXP: 0,
+        xpForNextLevel: 100,
+        progress: 0
+    });
+
+    // Real-time listener for XP data
+    useEffect(() => {
+        if (!currentUser) return;
+
+        const unsubscribe = onSnapshot(
+            doc(db, 'users', currentUser.uid),
+            (doc) => {
+                if (doc.exists()) {
+                    const data = doc.data();
+                    const totalXP = data.xp || 0;
+                    const levelInfo = getLevelFromXP(totalXP);
+                    setLevel(levelInfo.level);
+                    setXpInfo({
+                        currentLevelXP: levelInfo.currentLevelXP,
+                        xpForNextLevel: levelInfo.xpForNextLevel,
+                        progress: levelInfo.progress
+                    });
+                }
+            },
+            (error) => {
+                console.error('Error fetching XP data:', error);
+            }
+        );
+
+        return () => unsubscribe();
+    }, [currentUser]);
 
     return (
         <div className="flex h-screen bg-gray-50 overflow-hidden">
             <SideNavbar />
-            <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 flex flex-col h-full overflow-hidden">
                 {/* Header */}
-                <header className="flex items-center justify-between p-4 bg-white sticky top-0 z-30 shadow-sm">
+                <header className="flex items-center justify-between p-4 bg-white sticky top-0 z-30 shadow-sm flex-shrink-0">
                 <Link to="/profile" className="flex items-center space-x-2 text-gray-800 text-lg font-medium">
                     <span className="material-symbols-outlined text-3xl">account_circle</span>
                     <span>my account</span>
@@ -31,6 +70,65 @@ const MobileDashboardPage = () => {
                 </header>
 
                 <main className="flex-1 overflow-y-auto p-4 pb-20 lg:pb-4">
+                {/* Profile Widget - Mobile/Tablet Only */}
+                <div className="mb-6 lg:hidden">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 text-center relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-20 bg-gradient-to-r from-primary to-emerald-400"></div>
+                        <div className="relative z-10 pt-8 pb-4 px-4">
+                            <div className="w-20 h-20 rounded-full border-4 border-white dark:border-gray-800 mx-auto bg-gray-200 overflow-hidden shadow-md">
+                                <img 
+                                    src={`https://ui-avatars.com/api/?name=${currentUser?.displayName || 'User'}&background=random`} 
+                                    alt="Profile" 
+                                    className="w-full h-full object-cover" 
+                                />
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-800 dark:text-white mt-2">
+                                {currentUser?.displayName || 'Eco Explorer'}
+                            </h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                Level {level} • {getLevelTitle(level)}
+                            </p>
+
+                            <div className="mt-4">
+                                <div className="flex justify-between text-xs mb-1">
+                                    <span className="font-medium text-gray-600 dark:text-gray-300">XP Progress</span>
+                                    <span className="text-primary">
+                                        {xpInfo.currentLevelXP.toLocaleString()} / {xpInfo.xpForNextLevel.toLocaleString()}
+                                    </span>
+                                </div>
+                                <div className="w-full h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden relative">
+                                    <motion.div 
+                                        className="h-full bg-gradient-to-r from-primary to-emerald-400 rounded-full relative"
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${xpInfo.progress}%` }}
+                                        transition={{ 
+                                            duration: 1.2, 
+                                            ease: [0.4, 0, 0.2, 1],
+                                            type: "spring",
+                                            stiffness: 50,
+                                            damping: 20
+                                        }}
+                                    >
+                                        {/* Animated glow effect */}
+                                        <motion.div
+                                            className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/40 to-white/0 rounded-full"
+                                            animate={{
+                                                x: ['-100%', '100%']
+                                            }}
+                                            transition={{
+                                                duration: 1.5,
+                                                repeat: Infinity,
+                                                repeatDelay: 1,
+                                                ease: "easeInOut"
+                                            }}
+                                        />
+                                    </motion.div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 {/* My Journey Section */}
                 <section className="mb-8">
                     <h2 className="text-2xl font-bold text-gray-800 mb-4">my journey</h2>
@@ -96,6 +194,26 @@ const MobileDashboardPage = () => {
                         </Link>
                     </div>
                 </section>
+
+                {/* Join Institute Banner (only for global users) */}
+                {userRole === 'global' && (
+                    <div className="mb-8">
+                        <button
+                            onClick={() => setShowJoinModal(true)}
+                            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl shadow-lg p-6 flex items-center justify-between hover:shadow-xl transition-shadow"
+                        >
+                            <div className="text-left">
+                                <div className="flex items-center mb-2">
+                                    <span className="material-symbols-outlined text-white mr-2">school</span>
+                                    <span className="text-white text-sm font-medium">Join Your Institute</span>
+                                </div>
+                                <h3 className="text-xl font-bold text-white mb-1">Connect with Your School</h3>
+                                <p className="text-blue-100 text-sm">Enter your institute code to access exclusive challenges</p>
+                            </div>
+                            <span className="material-symbols-outlined text-white text-3xl">arrow_forward</span>
+                        </button>
+                    </div>
+                )}
 
                 {/* Featured Quests Banner */}
                 <Link to="/quests" className="block mb-8">
@@ -210,6 +328,12 @@ const MobileDashboardPage = () => {
                 </main>
                 <BottomNavbar />
             </div>
+            
+            {/* Join Institute Modal */}
+            <JoinInstituteModal 
+                isOpen={showJoinModal}
+                onClose={() => setShowJoinModal(false)}
+            />
         </div>
     );
 };

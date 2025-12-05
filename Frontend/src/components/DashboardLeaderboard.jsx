@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Trophy, Medal, Award } from 'lucide-react';
+import { Trophy, Medal, Award, Globe, Building2 } from 'lucide-react';
 import { useAuth } from '../context/useAuth';
 import { apiRequest } from '../services/api';
 
 const DashboardLeaderboard = () => {
-    const { currentUser } = useAuth();
+    const { currentUser, userRole } = useAuth();
     const [leaderboard, setLeaderboard] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [scope, setScope] = useState('institute'); // 'institute' or 'global'
 
     useEffect(() => {
         fetchLeaderboard();
-    }, []);
+    }, [scope]);
 
     const fetchLeaderboard = async () => {
         if (!currentUser) {
@@ -18,9 +19,14 @@ const DashboardLeaderboard = () => {
             return;
         }
         
+        setLoading(true);
         try {
             const token = await currentUser.getIdToken();
-            const data = await apiRequest('/api/leaderboard/institute?limit=5', {
+            const endpoint = scope === 'global' 
+                ? '/api/leaderboard/global?limit=5'
+                : '/api/leaderboard/institute?limit=5';
+            
+            const data = await apiRequest(endpoint, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             setLeaderboard(data.leaderboard || []);
@@ -68,6 +74,34 @@ const DashboardLeaderboard = () => {
                 <h3 className="text-lg font-bold text-gray-800">Top Eco-Warriors</h3>
                 <button className="text-green-500 text-sm font-medium">View All</button>
             </div>
+            
+            {/* Scope Toggle - Only show for students */}
+            {userRole === 'student' && (
+                <div className="flex gap-2 mb-4">
+                    <button
+                        onClick={() => setScope('institute')}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+                            scope === 'institute'
+                                ? 'bg-green-500 text-white'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                    >
+                        <Building2 className="w-4 h-4" />
+                        Institute
+                    </button>
+                    <button
+                        onClick={() => setScope('global')}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+                            scope === 'global'
+                                ? 'bg-blue-500 text-white'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                    >
+                        <Globe className="w-4 h-4" />
+                        Global
+                    </button>
+                </div>
+            )}
             
             {leaderboard.length === 0 ? (
                 <p className="text-gray-500 text-center py-4">No rankings available yet</p>

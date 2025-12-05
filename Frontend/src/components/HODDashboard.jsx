@@ -2,15 +2,32 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/useAuth';
 
 const HODDashboard = () => {
-    const { currentUser } = useAuth();
+    const { currentUser, instituteId } = useAuth();
     const [stats, setStats] = useState(null);
     const [pendingTeachers, setPendingTeachers] = useState([]);
     const [analytics, setAnalytics] = useState(null);
     const [activeTab, setActiveTab] = useState('overview');
+    const [instituteData, setInstituteData] = useState(null);
+    const [copiedCode, setCopiedCode] = useState(null);
 
     useEffect(() => {
         fetchData();
+        fetchInstituteData();
     }, []);
+
+    const fetchInstituteData = async () => {
+        if (!instituteId) return;
+        try {
+            const { doc, getDoc } = await import('firebase/firestore');
+            const { db } = await import('../services/firebase');
+            const instituteDoc = await getDoc(doc(db, 'institutes', instituteId));
+            if (instituteDoc.exists()) {
+                setInstituteData(instituteDoc.data());
+            }
+        } catch (error) {
+            console.error('Error fetching institute data:', error);
+        }
+    };
 
     const fetchData = async () => {
         try {
@@ -29,6 +46,12 @@ const HODDashboard = () => {
         } catch (error) {
             console.error('Error fetching data:', error);
         }
+    };
+
+    const copyToClipboard = (text, type) => {
+        navigator.clipboard.writeText(text);
+        setCopiedCode(type);
+        setTimeout(() => setCopiedCode(null), 2000);
     };
 
     const verifyTeacher = async (teacherId, approved) => {
@@ -60,22 +83,63 @@ const HODDashboard = () => {
             </div>
 
             {activeTab === 'overview' && (
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <div className="bg-white rounded-lg shadow-md p-6">
-                        <h3 className="text-lg font-semibold text-gray-700">Teachers</h3>
-                        <p className="text-3xl font-bold text-primary">{stats?.totalTeachers || 0}</p>
-                    </div>
-                    <div className="bg-white rounded-lg shadow-md p-6">
-                        <h3 className="text-lg font-semibold text-gray-700">Students</h3>
-                        <p className="text-3xl font-bold text-green-600">{stats?.totalStudents || 0}</p>
-                    </div>
-                    <div className="bg-white rounded-lg shadow-md p-6">
-                        <h3 className="text-lg font-semibold text-gray-700">Eco Points</h3>
-                        <p className="text-3xl font-bold text-yellow-600">{analytics?.overview?.totalEcoPoints || 0}</p>
-                    </div>
-                    <div className="bg-white rounded-lg shadow-md p-6">
-                        <h3 className="text-lg font-semibold text-gray-700">Challenges</h3>
-                        <p className="text-3xl font-bold text-blue-600">{analytics?.challengeStats?.active || 0}</p>
+                <div className="space-y-6">
+                    {/* Registration Codes */}
+                    {instituteData && (
+                        <div className="bg-gradient-to-r from-primary to-primary-light rounded-lg shadow-md p-6 text-white">
+                            <h3 className="text-xl font-semibold mb-4">Registration Codes</h3>
+                            <p className="text-sm mb-4 opacity-90">Share these codes with teachers and students to join your institute</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-sm font-medium">Teacher Code</span>
+                                        <button
+                                            onClick={() => copyToClipboard(instituteData.teacherRegistrationCode, 'teacher')}
+                                            className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded-md text-xs transition-colors"
+                                        >
+                                            {copiedCode === 'teacher' ? '✓ Copied!' : 'Copy'}
+                                        </button>
+                                    </div>
+                                    <div className="font-mono text-2xl font-bold tracking-wider">
+                                        {instituteData.teacherRegistrationCode}
+                                    </div>
+                                </div>
+                                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-sm font-medium">Student Code</span>
+                                        <button
+                                            onClick={() => copyToClipboard(instituteData.studentRegistrationCode, 'student')}
+                                            className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded-md text-xs transition-colors"
+                                        >
+                                            {copiedCode === 'student' ? '✓ Copied!' : 'Copy'}
+                                        </button>
+                                    </div>
+                                    <div className="font-mono text-2xl font-bold tracking-wider">
+                                        {instituteData.studentRegistrationCode}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Stats Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div className="bg-white rounded-lg shadow-md p-6">
+                            <h3 className="text-lg font-semibold text-gray-700">Teachers</h3>
+                            <p className="text-3xl font-bold text-primary">{stats?.totalTeachers || 0}</p>
+                        </div>
+                        <div className="bg-white rounded-lg shadow-md p-6">
+                            <h3 className="text-lg font-semibold text-gray-700">Students</h3>
+                            <p className="text-3xl font-bold text-green-600">{stats?.totalStudents || 0}</p>
+                        </div>
+                        <div className="bg-white rounded-lg shadow-md p-6">
+                            <h3 className="text-lg font-semibold text-gray-700">Eco Points</h3>
+                            <p className="text-3xl font-bold text-yellow-600">{analytics?.overview?.totalEcoPoints || 0}</p>
+                        </div>
+                        <div className="bg-white rounded-lg shadow-md p-6">
+                            <h3 className="text-lg font-semibold text-gray-700">Challenges</h3>
+                            <p className="text-3xl font-bold text-blue-600">{analytics?.challengeStats?.active || 0}</p>
+                        </div>
                     </div>
                 </div>
             )}

@@ -34,28 +34,7 @@ const getFirebaseErrorMessage = (error) => {
     }
 };
 
-// --- MIDDLEWARE: VERIFY FIREBASE ID TOKEN ---
-const verifyToken = async (req, res, next) => {
-    const header = req.headers.authorization;
-    if (!header) {
-        return res.status(401).send({ message: 'Authorization header missing.' });
-    }
-    const token = header.split(' ')[1];
-    if (!token) {
-        return res.status(401).send({ message: 'Token missing.' });
-    }
-
-    try {
-        const decodedToken = await admin.auth().verifyIdToken(token);
-        req.uid = decodedToken.uid;
-        req.userRole = decodedToken.role;
-        req.instituteId = decodedToken.instituteId;
-        next();
-    } catch (error) {
-        console.error("Token verification failed:", error);
-        return res.status(403).send({ message: 'Invalid or expired token.', debugInfo: error.message });
-    }
-};
+const { verifyToken } = require('../middleware/auth');
 
 // --- ROUTES ---
 
@@ -89,7 +68,9 @@ router.post('/register-institute', [
         });
 
         const instituteRef = db.collection('institutes').doc();
-        const role = adminEmail === 'cyberlord700@gmail.com' ? 'admin' : 'hod';
+        // All institute registrations create HOD, never admin
+        // Admin is created separately via script for security
+        const role = 'hod';
 
         await admin.auth().setCustomUserClaims(userRecord.uid, {
             role: role,
@@ -116,10 +97,13 @@ router.post('/register-institute', [
             uid: userRecord.uid,
             name: adminName,
             email: adminEmail,
-            role: 'hod',
+            role: role, // Use the determined role (admin or hod)
             instituteId: instituteRef.id,
             isVerified: true,
             ecoPoints: 0,
+            coins: 0,
+            xp: 0,
+            level: 1,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
         });
 
@@ -217,7 +201,7 @@ router.post('/register-teacher', [
         
         await db.collection('users').doc(userRecord.uid).set({
             uid: userRecord.uid, name, email, role: 'teacher', instituteId, department,
-            isVerified: false, ecoPoints: 0, createdAt: admin.firestore.FieldValue.serverTimestamp()
+            isVerified: false, ecoPoints: 0, coins: 0, xp: 0, level: 1, createdAt: admin.firestore.FieldValue.serverTimestamp()
         });
 
         res.status(201).json({ message: 'Teacher registered. Awaiting verification.' });
@@ -248,7 +232,7 @@ router.post('/register-student', [
         
         await db.collection('users').doc(userRecord.uid).set({
             uid: userRecord.uid, name, email, role: 'student', instituteId, admissionNumber,
-            class: studentClass, section: section || '', isVerified: true, ecoPoints: 0, level: 1,
+            class: studentClass, section: section || '', isVerified: true, ecoPoints: 0, coins: 0, xp: 0, level: 1,
             badges: [], createdAt: admin.firestore.FieldValue.serverTimestamp()
         });
 
@@ -329,7 +313,144 @@ router.get('/institute-stats', verifyToken, async (req, res) => {
     }
 });
 
-// 9. CREATE OR UPDATE USER DOCUMENT (for direct Firebase Auth signups)
+// 9. GET ALL USERS (Admin only)
+router.get('/admin/users', verifyToken, async (req, res) => {
+    if (req.userRole !== 'admin') return res.status(403).json({ message: 'Admin access required.' });
+    
+    try {
+        const usersSnapshot = await db.collection('users').get();
+        const users = usersSnapshot.docs.map(doc => doc.data());
+        
+        // Count by role
+        const stats = {
+            total: users.length,
+            global: users.filter(u => u.role === 'global').length,
+            students: users.filter(u => u.role === 'student').length,
+            teachers: users.filter(u => u.role === 'teacher').length,
+            hods: users.filter(u => u.role === 'hod').length,
+            admins: users.filter(u => u.role === 'admin').length
+        };
+        
+        res.json({ users, stats });
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        res.status(500).json({ message: 'Failed to fetch users.' });
+    }
+});
+
+// 10. GET ALL INSTITUTES (Admin only)
+router.get('/admin/institutes', verifyToken, async (req, res) => {
+    if (req.userRole !== 'admin') return res.status(403).json({ message: 'Admin access required.' });
+    
+    try {
+        const institutesSnapshot = await db.collection('institutes').get();
+        const institutes = [];
+        
+        for (const doc of institutesSnapshot.docs) {
+            const instituteData = doc.data();
+            
+            // Count students and teachers for this institute
+            const [studentsSnapshot, teachersSnapshot] = await Promise.all([
+                db.collection('users').where('instituteId', '==', doc.id).where('role', '==', 'student').get(),
+                db.collection('users').where('instituteId', '==', doc.id).where('role', '==', 'teacher').get()
+            ]);
+            
+            institutes.push({
+                ...instituteData,
+                studentCount: studentsSnapshot.size,
+                teacherCount: teachersSnapshot.size
+            });
+        }
+        
+        res.json({ institutes });
+    } catch (error) {
+        console.error('Error fetching institutes:', error);
+        res.status(500).json({ message: 'Failed to fetch institutes.' });
+    }
+});
+
+// 11. GET INSTITUTE DETAILS WITH USERS (Admin only)
+router.get('/admin/institutes/:instituteId', verifyToken, async (req, res) => {
+    if (req.userRole !== 'admin') return res.status(403).json({ message: 'Admin access required.' });
+    
+    try {
+        const { instituteId } = req.params;
+        const instituteDoc = await db.collection('institutes').doc(instituteId).get();
+        
+        if (!instituteDoc.exists) {
+            return res.status(404).json({ message: 'Institute not found.' });
+        }
+        
+        const [studentsSnapshot, teachersSnapshot, hodSnapshot] = await Promise.all([
+            db.collection('users').where('instituteId', '==', instituteId).where('role', '==', 'student').get(),
+            db.collection('users').where('instituteId', '==', instituteId).where('role', '==', 'teacher').get(),
+            db.collection('users').where('instituteId', '==', instituteId).where('role', '==', 'hod').get()
+        ]);
+        
+        res.json({
+            institute: instituteDoc.data(),
+            students: studentsSnapshot.docs.map(doc => doc.data()),
+            teachers: teachersSnapshot.docs.map(doc => doc.data()),
+            hods: hodSnapshot.docs.map(doc => doc.data())
+        });
+    } catch (error) {
+        console.error('Error fetching institute details:', error);
+        res.status(500).json({ message: 'Failed to fetch institute details.' });
+    }
+});
+
+// 12. DELETE USER (Admin only)
+router.delete('/admin/users/:userId', verifyToken, async (req, res) => {
+    if (req.userRole !== 'admin') return res.status(403).json({ message: 'Admin access required.' });
+    
+    try {
+        const { userId } = req.params;
+        
+        // Delete from Firestore
+        await db.collection('users').doc(userId).delete();
+        
+        // Delete from Firebase Auth
+        await admin.auth().deleteUser(userId);
+        
+        res.json({ message: 'User deleted successfully.' });
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        res.status(500).json({ message: 'Failed to delete user.', error: error.message });
+    }
+});
+
+// 13. DELETE INSTITUTE (Admin only)
+router.delete('/admin/institutes/:instituteId', verifyToken, async (req, res) => {
+    if (req.userRole !== 'admin') return res.status(403).json({ message: 'Admin access required.' });
+    
+    try {
+        const { instituteId } = req.params;
+        
+        // Get all users from this institute
+        const usersSnapshot = await db.collection('users').where('instituteId', '==', instituteId).get();
+        
+        // Delete all users
+        const batch = db.batch();
+        const deleteAuthPromises = [];
+        
+        usersSnapshot.docs.forEach(doc => {
+            batch.delete(doc.ref);
+            deleteAuthPromises.push(admin.auth().deleteUser(doc.id).catch(err => console.error('Error deleting auth user:', err)));
+        });
+        
+        // Delete institute document
+        batch.delete(db.collection('institutes').doc(instituteId));
+        
+        await Promise.all([batch.commit(), ...deleteAuthPromises]);
+        
+        res.json({ message: 'Institute and all associated users deleted successfully.' });
+    } catch (error) {
+        console.error('Error deleting institute:', error);
+        res.status(500).json({ message: 'Failed to delete institute.', error: error.message });
+    }
+});
+
+// 14. CREATE OR UPDATE USER DOCUMENT (for direct Firebase Auth signups)
 // Note: This endpoint uses a modified verifyToken that doesn't require existing claims
 router.post('/sync-user', async (req, res) => {
     console.log('[sync-user] Request received');
@@ -381,6 +502,8 @@ router.post('/sync-user', async (req, res) => {
             instituteId: null,
             isVerified: true,
             ecoPoints: 0,
+            coins: 0,
+            xp: 0,
             level: 1,
             badges: [],
             createdAt: admin.firestore.FieldValue.serverTimestamp()
@@ -408,6 +531,107 @@ router.post('/sync-user', async (req, res) => {
             message: 'Failed to sync user document.',
             error: error.message,
             stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
+    }
+});
+
+// 15. JOIN INSTITUTE (for existing global users)
+router.post('/join-institute', verifyToken, [
+    body('code').notEmpty().withMessage('Registration code is required.'),
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ message: 'Validation failed.', errors: errors.array() });
+    }
+
+    const { code } = req.body;
+    const uid = req.uid;
+
+    try {
+        // Get current user data
+        const userDoc = await db.collection('users').doc(uid).get();
+        if (!userDoc.exists) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+
+        const userData = userDoc.data();
+
+        // Check if user is already in an institute
+        if (userData.instituteId) {
+            return res.status(400).json({ message: 'You are already part of an institute.' });
+        }
+
+        // Verify the code and determine role
+        let querySnapshot = await db.collection('institutes')
+            .where('teacherRegistrationCode', '==', code)
+            .limit(1)
+            .get();
+
+        let inferredRole = null;
+        let instituteDoc = null;
+
+        if (!querySnapshot.empty) {
+            instituteDoc = querySnapshot.docs[0];
+            inferredRole = 'teacher';
+        } else {
+            querySnapshot = await db.collection('institutes')
+                .where('studentRegistrationCode', '==', code)
+                .limit(1)
+                .get();
+
+            if (!querySnapshot.empty) {
+                instituteDoc = querySnapshot.docs[0];
+                inferredRole = 'student';
+            }
+        }
+
+        if (!instituteDoc) {
+            return res.status(404).json({ message: 'Invalid registration code.' });
+        }
+
+        const instituteData = instituteDoc.data();
+        const instituteId = instituteDoc.id;
+
+        // Update user document
+        const updateData = {
+            role: inferredRole,
+            instituteId: instituteId,
+            wasGlobal: true, // Track that this user was global before
+            joinedInstituteAt: admin.firestore.FieldValue.serverTimestamp(),
+            isVerified: inferredRole === 'student' ? true : false // Teachers need HOD approval
+        };
+
+        // For teachers, add department field if not exists
+        if (inferredRole === 'teacher' && !userData.department) {
+            updateData.department = 'General';
+        }
+
+        // For students, add class field if not exists
+        if (inferredRole === 'student' && !userData.class) {
+            updateData.class = 'Not Specified';
+        }
+
+        await db.collection('users').doc(uid).update(updateData);
+
+        // Update custom claims
+        await admin.auth().setCustomUserClaims(uid, {
+            role: inferredRole,
+            instituteId: instituteId
+        });
+
+        res.status(200).json({
+            message: `Successfully joined institute as ${inferredRole}.`,
+            role: inferredRole,
+            instituteName: instituteData.name,
+            instituteId: instituteId,
+            needsVerification: inferredRole === 'teacher'
+        });
+
+    } catch (error) {
+        console.error('Error joining institute:', error);
+        res.status(500).json({ 
+            message: 'Failed to join institute.',
+            error: error.message 
         });
     }
 });

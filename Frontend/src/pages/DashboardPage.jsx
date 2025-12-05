@@ -34,7 +34,7 @@ function DashboardPage() {
           const response = await api.get('/api/protected');
 
           // Set the message from the backend's response
-          setProtectedMessage(response.data.message);
+          setProtectedMessage(response.message);
         } catch (error) {
           // If the request fails (e.g., token is invalid), log the error
           console.error('Could not fetch protected data:', error);

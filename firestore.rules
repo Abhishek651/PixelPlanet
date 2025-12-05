@@ -1,21 +1,211 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
     }
-
-    match /classes/{classId} {
-      allow read: if request.auth != null;
+    
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.role == 'admin';
     }
-
-    // Allow teachers/admins to create quizzes
-    match /quizzes/{quizId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null && (request.auth.token.role == 'teacher' || request.auth.token.role == 'admin');
-      allow delete: if request.auth != null && resource.data.createdBy == request.auth.uid;
+    
+    function isSubAdmin() {
+      return isAuthenticated() && request.auth.token.role == 'sub-admin';
     }
-
-    // Allow challenges collection access
+    
+    function isCreator() {
+      return isAuthenticated() && request.auth.token.role == 'creator';
+    }
+    
+    function isHOD() {
+      return isAuthenticated() && request.auth.token.role == 'hod';
+    }
+    
+    function isTeacher() {
+      return isAuthenticated() && request.auth.token.role == 'teacher';
+    }
+    
+    function isStudent() {
+      return isAuthenticated() && request.auth.token.role == 'student';
+    }
+    
+    function isGlobal() {
+      return isAuthenticated() && request.auth.token.role == 'global';
+    }
+    
+    function belongsToInstitute(instituteId) {
+      return isAuthenticated() && request.auth.token.instituteId == instituteId;
+    }
+    
+    function hasPermission(permission) {
+      return isAuthenticated() && 
+             request.auth.token.permissions != null && 
+             request.auth.token.permissions[permission] == true;
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      // Users can read their own document
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      // Admins and sub-admins with permission can read all users
+      allow read: if isAdmin() || (isSubAdmin() && hasPermission('canManageUsers'));
+      
+      // Users can update their own profile (name, gender, photoURL, etc.)
+      // But cannot change role, instituteId, class, or section
+      // Users CAN update ecoPoints, coins, xp, and completedChallenges (for quiz/game rewards)
+      allow update: if isAuthenticated() && request.auth.uid == userId && (
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'instituteId', 'class', 'section'])
+      );
+      
+      // Only backend can create users
+      allow create: if false;
+      // Only admins can delete users
+      allow delete: if isAdmin();
+    }
+    
+    // Institutes collection
+    match /institutes/{instituteId} {
+      // Institute members can read their institute (via token or user document)
+      allow read: if isAuthenticated() && (
+        belongsToInstitute(instituteId) ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.instituteId == instituteId
+      );
+      // Admins and sub-admins with permission can read all institutes
+      allow read: if isAdmin() || (isSubAdmin() && hasPermission('canManageInstitutes'));
+      // Admins can delete institutes
+      allow delete: if isAdmin();
+      // Only backend can create/update
+      allow create, update: if false;
+    }
+    
+    // Settings collection (site-wide settings)
+    match /settings/{settingId} {
+      // Anyone can read settings (for public config)
+      allow read: if true;
+      // Only admins and sub-admins with permission can write
+      allow write: if isAdmin() || (isSubAdmin() && hasPermission('canManageInstitutes'));
+    }
+    
+    // Challenges collection
     match /challenges/{challengeId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null && (request.auth.token.role == 'teacher' || request.auth.token.role == 'admin' || request.auth.token.role == 'hod');
-      allow update, delete: if request.auth != null && resource.data.createdBy == request.auth.uid;
+      // Global users can read global challenges
+      // Institute users can read global challenges + their institute challenges
+      // Teachers can read challenges they created
+      allow read: if isAuthenticated() && (
+        resource.data.isGlobal == true || 
+        belongsToInstitute(resource.data.instituteId) || 
+        resource.data.createdBy == request.auth.uid ||
+        isAdmin() ||
+        (isSubAdmin() && hasPermission('canViewAnalytics'))
+      );
+      
+      // Teachers and HODs can create institute challenges
+      // Admins and creators can create global challenges
+      allow create: if (
+        (isTeacher() || isHOD()) ||
+        isAdmin() ||
+        (isCreator() && request.resource.data.isGlobal == true) ||
+        (isSubAdmin() && hasPermission('canCreateGlobalChallenges'))
+      );
+      
+      // Creators can update/delete their own challenges
+      // Admins and sub-admins with permission can delete any challenge
+      allow update: if isAuthenticated() && (
+        resource.data.createdBy == request.auth.uid || 
+        isAdmin() ||
+        (isSubAdmin() && hasPermission('canDeleteContent'))
+      );
+      
+      allow delete: if isAuthenticated() && (
+        resource.data.createdBy == request.auth.uid || 
+        isAdmin() ||
+        (isSubAdmin() && hasPermission('canDeleteContent'))
+      );
+    }
+    
+    // Submissions collection
+    match /submissions/{submissionId} {
+      // Students can read their own submissions
+      allow read: if isAuthenticated() && resource.data.studentId == request.auth.uid;
+      // Teachers can read submissions for their challenges
+      allow read: if isTeacher() || isHOD() || isAdmin() || 
+                     (isSubAdmin() && hasPermission('canViewAnalytics'));
+      // Students can create submissions
+      allow create: if isStudent();
+      // Teachers can update submissions (for grading)
+      allow update: if isTeacher() || isHOD() || isAdmin();
+      // Only creators, admins, or sub-admins with permission can delete
+      allow delete: if isAuthenticated() && (
+        resource.data.studentId == request.auth.uid || 
+        isAdmin() ||
+        (isSubAdmin() && hasPermission('canDeleteContent'))
+      );
+    }
+    
+    // Quizzes collection
+    match /quizzes/{quizId} {
+      // Anyone authenticated can read quizzes
+      allow read: if isAuthenticated();
+      // Teachers, creators, and admins can create quizzes
+      allow create: if isTeacher() || isHOD() || isAdmin() || isCreator() ||
+                       (isSubAdmin() && hasPermission('canCreateGlobalChallenges'));
+      // Creators can delete their own quizzes, admins can delete any
+      allow delete: if isAuthenticated() && (
+        resource.data.createdBy == request.auth.uid || 
+        isAdmin() ||
+        (isSubAdmin() && hasPermission('canDeleteContent'))
+      );
+    }
+    
+    // Classes collection
+    match /classes/{classId} {
+      // Authenticated users can read classes
+      allow read: if isAuthenticated();
+      // Teachers and HODs can manage classes
+      allow write: if isTeacher() || isHOD() || isAdmin();
+    }
+    
+    // EcoBot conversations
+    match /ecoBotConversations/{conversationId} {
+      // Users can read their own conversations
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      // Users can create their own conversations
+      allow create: if isAuthenticated();
+      // Users can update their own conversations
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      // Admins can read all conversations
+      allow read: if isAdmin();
+    }
+    
+    // Announcements collection
+    match /announcements/{announcementId} {
+      // Everyone can read announcements
+      allow read: if isAuthenticated();
+      // Only HODs and admins can create/update/delete
+      allow write: if isHOD() || isAdmin();
+    }
+    
+    // Leaderboard data (if stored in Firestore)
+    match /leaderboard/{entry} {
+      // Everyone can read leaderboard
+      allow read: if isAuthenticated();
+      // Only backend can write
+      allow write: if false;
+    }
+    
+    // Analytics collection (for sub-admins with permission)
+    match /analytics/{analyticsId} {
+      // Admins and sub-admins with permission can read analytics
+      allow read: if isAdmin() || (isSubAdmin() && hasPermission('canViewAnalytics'));
+      // Only backend can write
+      allow write: if false;
+    }
+    
+    // Default deny all other collections
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

@@ -1,126 +1,95 @@
 // frontend/src/components/ChallengeTypeModal.jsx
-import React, { useState } from 'react';
+// Version 2.0 - Updated design with 4 challenge cards
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const ChallengeTypeModal = ({ isOpen, onClose }) => {
-    const [challengeType, setChallengeType] = useState('physical');
-    const [quizType, setQuizType] = useState('auto');
     const navigate = useNavigate();
 
     if (!isOpen) return null;
 
-    const handleCreate = () => {
-        onClose(); // Close the modal first
-        switch (challengeType) {
-            case 'quiz':
-                if (quizType === 'auto') {
-                    navigate('/create-auto-quiz');
-                } else {
-                    navigate('/create-manual-quiz');
-                }
-                break;
-            case 'physical':
-                navigate('/create-physical-challenge');
-                break;
-            case 'video':
-                navigate('/create-video-challenge');
-                break;
-            default:
-                console.error("Unknown challenge type");
-        }
+    const handleNavigate = (path) => {
+        console.log('ChallengeTypeModal: Navigating to', path);
+        onClose();
+        setTimeout(() => {
+            navigate(path);
+        }, 100); // Small delay to ensure modal closes first
     };
 
-    const RadioOption = ({ name, value, checked, onChange, label, children }) => (
-        <div 
-            className={`p-4 rounded-lg border border-gray-300 dark:border-gray-600 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 ${checked ? 'bg-blue-50 dark:bg-blue-900/50 border-blue-500' : 'bg-white dark:bg-gray-800'}`}
-            onClick={() => onChange(value)}
+    const ChallengeCard = ({ title, description, icon, onClick }) => (
+        <button
+            onClick={(e) => {
+                e.stopPropagation();
+                console.log('Card clicked:', title);
+                onClick();
+            }}
+            className="w-full p-6 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 text-left group"
         >
-            <label className="flex items-center space-x-4 cursor-pointer">
-                <input 
-                    type="radio" 
-                    name={name} 
-                    value={value} 
-                    checked={checked} 
-                    onChange={(e) => onChange(e.target.value)}
-                    className="form-radio h-5 w-5 text-blue-600 dark:text-blue-500 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-blue-500 dark:focus:ring-blue-600"
-                />
-                <span className="text-gray-800 dark:text-gray-200 font-medium">{label}</span>
-            </label>
-            {checked && children && (
-                <div className="ml-9 mt-4 space-y-3">
-                    {children}
+            <div className="flex items-center space-x-4">
+                <div className="text-4xl">{icon}</div>
+                <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                        {title}
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        {description}
+                    </p>
                 </div>
-            )}
-        </div>
+                <span className="material-symbols-outlined text-gray-400 group-hover:text-blue-500 transition-colors">
+                    arrow_forward
+                </span>
+            </div>
+        </button>
     );
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex justify-center items-center z-50 p-4">
-            <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-lg border border-gray-200 dark:border-gray-700">
-                <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8 text-center">Create a New Challenge</h2>
+        <div 
+            key="challenge-modal-v2"
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            onClick={onClose}
+        >
+            <div 
+                className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-2xl border border-gray-200 dark:border-gray-700"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="flex items-center justify-between mb-8">
+                    <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Create a Challenge</h2>
+                    <button
+                        onClick={onClose}
+                        className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                    >
+                        <span className="material-symbols-outlined text-3xl">close</span>
+                    </button>
+                </div>
                 
                 <div className="space-y-4">
-                    <RadioOption 
-                        name="challengeType" 
-                        value="physical" 
-                        checked={challengeType === 'physical'} 
-                        onChange={setChallengeType}
-                        label="Physical Challenge"
+                    <ChallengeCard
+                        title="Physical Challenge"
+                        description="Create a real-world eco-activity challenge"
+                        icon="🌱"
+                        onClick={() => handleNavigate('/create-physical-challenge')}
                     />
-                    <RadioOption 
-                        name="challengeType" 
-                        value="video" 
-                        checked={challengeType === 'video'} 
-                        onChange={setChallengeType}
-                        label="Video Challenge"
+                    
+                    <ChallengeCard
+                        title="Video Challenge"
+                        description="Challenge students to create eco-awareness videos"
+                        icon="🎥"
+                        onClick={() => handleNavigate('/create-video-challenge')}
                     />
-                    <RadioOption 
-                        name="challengeType" 
-                        value="quiz" 
-                        checked={challengeType === 'quiz'} 
-                        onChange={setChallengeType}
-                        label="Quiz Challenge"
-                    >
-                        <div className="flex items-center space-x-6">
-                            <label className="flex items-center space-x-3 cursor-pointer">
-                                <input 
-                                    type="radio" 
-                                    name="quizType" 
-                                    value="auto" 
-                                    checked={quizType === 'auto'} 
-                                    onChange={() => setQuizType('auto')}
-                                    className="form-radio h-4 w-4 text-blue-500"
-                                />
-                                <span className="text-gray-600 dark:text-gray-300">Auto-generate</span>
-                            </label>
-                            <label className="flex items-center space-x-3 cursor-pointer">
-                                <input 
-                                    type="radio" 
-                                    name="quizType" 
-                                    value="manual" 
-                                    checked={quizType === 'manual'} 
-                                    onChange={() => setQuizType('manual')}
-                                    className="form-radio h-4 w-4 text-blue-500"
-                                />
-                                <span className="text-gray-600 dark:text-gray-300">Create Manually</span>
-                            </label>
-                        </div>
-                    </RadioOption>
-                </div>
-
-                <div className="mt-10 flex justify-end space-x-4">
-                    <button 
-                        onClick={onClose} 
-                        className="px-6 py-2.5 rounded-lg text-gray-800 dark:text-gray-200 bg-transparent border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 font-semibold transition-all"
-                    >
-                        Cancel
-                    </button>
-                    <button 
-                        onClick={handleCreate} 
-                        className="px-6 py-2.5 rounded-lg text-white bg-blue-600 hover:bg-blue-700 font-semibold shadow-md hover:shadow-lg transition-all"
-                    >
-                        Create Challenge
-                    </button>
+                    
+                    <ChallengeCard
+                        title="Auto Quiz"
+                        description="AI-generated quiz on environmental topics"
+                        icon="🤖"
+                        onClick={() => handleNavigate('/create-auto-quiz')}
+                    />
+                    
+                    <ChallengeCard
+                        title="Manual Quiz"
+                        description="Create your own custom quiz questions"
+                        icon="✏️"
+                        onClick={() => handleNavigate('/create-manual-quiz')}
+                    />
                 </div>
             </div>
         </div>

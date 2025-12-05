@@ -37,28 +37,51 @@ router.post('/create-physical', verifyToken, [
     body('rewardPoints').isInt({ min: 1 }),
     body('expiryDate').isISO8601()
 ], async (req, res) => {
-    if (req.userRole !== 'teacher') return res.status(403).json({ message: 'Teacher access required.' });
+    // Only teachers, admins, and creators can create challenges
+    const allowedRoles = ['teacher', 'hod', 'admin', 'creator'];
+    if (!allowedRoles.includes(req.userRole)) {
+        return res.status(403).json({ message: 'Insufficient permissions.' });
+    }
     
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
     try {
+        // Determine if challenge is global
+        const isGlobal = req.body.isGlobal === true && (req.userRole === 'admin' || req.userRole === 'creator');
+        
+        // Teachers/HODs can only create institute challenges
+        if (req.userRole === 'teacher' || req.userRole === 'hod') {
+            if (!req.instituteId) {
+                return res.status(400).json({ message: 'Institute ID required for institute challenges.' });
+            }
+        }
+        
         const challengeRef = db.collection('challenges').doc();
         await challengeRef.set({
             id: challengeRef.id,
             type: 'physical',
             ...req.body,
+            rewardPoints: req.body.rewardPoints || 100,
+            rewardCoins: req.body.rewardCoins || 50,
+            rewardXP: req.body.rewardXP || 30,
             expiryDate: new Date(req.body.expiryDate),
             createdBy: req.uid,
-            instituteId: req.instituteId,
+            creatorRole: req.userRole,
+            instituteId: isGlobal ? null : req.instituteId,
+            isGlobal: isGlobal,
             isActive: true,
             enrolledStudents: [],
             submissions: [],
             createdAt: admin.firestore.FieldValue.serverTimestamp()
         });
         
-        res.status(201).json({ message: 'Physical challenge created.', challengeId: challengeRef.id });
+        res.status(201).json({ 
+            message: `${isGlobal ? 'Global' : 'Institute'} physical challenge created.`, 
+            challengeId: challengeRef.id 
+        });
     } catch (error) {
+        console.error('Error creating challenge:', error);
         res.status(500).json({ message: 'Failed to create challenge.' });
     }
 });
@@ -71,29 +94,47 @@ router.post('/create-auto-quiz', verifyToken, [
     body('targetClass').notEmpty(),
     body('rewardPoints').isInt({ min: 1 })
 ], async (req, res) => {
-    if (req.userRole !== 'teacher') return res.status(403).json({ message: 'Teacher access required.' });
+    const allowedRoles = ['teacher', 'hod', 'admin', 'creator'];
+    if (!allowedRoles.includes(req.userRole)) {
+        return res.status(403).json({ message: 'Insufficient permissions.' });
+    }
     
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
     try {
+        const isGlobal = req.body.isGlobal === true && (req.userRole === 'admin' || req.userRole === 'creator');
+        
         const challengeRef = db.collection('challenges').doc();
         await challengeRef.set({
             id: challengeRef.id,
             type: 'quiz_auto',
-            ...req.body,
+            title: req.body.title,
+            description: req.body.description,
+            numQuestions: req.body.numQuestions,
+            difficulty: req.body.difficulty,
+            targetClass: req.body.targetClass,
+            rewardPoints: req.body.rewardPoints || 100,
+            rewardCoins: req.body.rewardCoins || 50,
+            rewardXP: req.body.rewardXP || 30,
+            questions: req.body.questions || [],
+            paragraph: req.body.paragraph || null,
             startDate: req.body.startDate ? new Date(req.body.startDate) : new Date(),
             expiryDate: new Date(req.body.expiryDate),
             createdBy: req.uid,
-            instituteId: req.instituteId,
+            creatorRole: req.userRole,
+            instituteId: isGlobal ? null : req.instituteId,
+            isGlobal: isGlobal,
             isActive: true,
             enrolledStudents: [],
             submissions: [],
-            questions: [],
             createdAt: admin.firestore.FieldValue.serverTimestamp()
         });
         
-        res.status(201).json({ message: 'Auto quiz created.', challengeId: challengeRef.id });
+        res.status(201).json({ 
+            message: `${isGlobal ? 'Global' : 'Institute'} auto quiz created.`, 
+            challengeId: challengeRef.id 
+        });
     } catch (error) {
         res.status(500).json({ message: 'Failed to create quiz.' });
     }
@@ -106,28 +147,41 @@ router.post('/create-manual-quiz', verifyToken, [
     body('questions').isArray({ min: 1 }),
     body('rewardPoints').isInt({ min: 1 })
 ], async (req, res) => {
-    if (req.userRole !== 'teacher') return res.status(403).json({ message: 'Teacher access required.' });
+    const allowedRoles = ['teacher', 'hod', 'admin', 'creator'];
+    if (!allowedRoles.includes(req.userRole)) {
+        return res.status(403).json({ message: 'Insufficient permissions.' });
+    }
     
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
     try {
+        const isGlobal = req.body.isGlobal === true && (req.userRole === 'admin' || req.userRole === 'creator');
+        
         const challengeRef = db.collection('challenges').doc();
         await challengeRef.set({
             id: challengeRef.id,
             type: 'quiz_manual',
             ...req.body,
+            rewardPoints: req.body.rewardPoints || 100,
+            rewardCoins: req.body.rewardCoins || 50,
+            rewardXP: req.body.rewardXP || 30,
             startDate: req.body.startDate ? new Date(req.body.startDate) : new Date(),
             expiryDate: req.body.expiryDate ? new Date(req.body.expiryDate) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
             createdBy: req.uid,
-            instituteId: req.instituteId,
+            creatorRole: req.userRole,
+            instituteId: isGlobal ? null : req.instituteId,
+            isGlobal: isGlobal,
             isActive: true,
             enrolledStudents: [],
             submissions: [],
             createdAt: admin.firestore.FieldValue.serverTimestamp()
         });
         
-        res.status(201).json({ message: 'Manual quiz created.', challengeId: challengeRef.id });
+        res.status(201).json({ 
+            message: `${isGlobal ? 'Global' : 'Institute'} manual quiz created.`, 
+            challengeId: challengeRef.id 
+        });
     } catch (error) {
         res.status(500).json({ message: 'Failed to create quiz.' });
     }
@@ -136,27 +190,51 @@ router.post('/create-manual-quiz', verifyToken, [
 // Get Challenges
 router.get('/list', verifyToken, async (req, res) => {
     try {
-        // Global users see no challenges (or we could create global challenges later)
-        if (!req.instituteId || req.userRole === 'global') {
-            return res.json({ 
-                challenges: [],
-                message: 'No challenges available. Join an institute to access challenges.' 
-            });
-        }
+        let challenges = [];
         
-        let query = db.collection('challenges').where('instituteId', '==', req.instituteId);
+        // Fetch global challenges (visible to everyone)
+        const globalSnapshot = await db.collection('challenges')
+            .where('isGlobal', '==', true)
+            .orderBy('createdAt', 'desc')
+            .get();
+        challenges = globalSnapshot.docs.map(doc => doc.data());
         
-        if (req.userRole === 'student' && req.query.class) {
-            query = query.where('targetClass', '==', req.query.class);
-        } else if (req.userRole === 'teacher') {
-            query = query.where('createdBy', '==', req.uid);
-        }
+        // If user has institute, also fetch institute challenges
+        if (req.instituteId && req.userRole !== 'global') {
+            let instituteQuery = db.collection('challenges')
+                .where('instituteId', '==', req.instituteId)
+                .where('isGlobal', '==', false);
+            
+            // Filter by class for students
+            if (req.userRole === 'student' && req.query.class) {
+                instituteQuery = instituteQuery.where('targetClass', '==', req.query.class);
+            }
+            // Filter by creator for teachers
+            else if (req.userRole === 'teacher') {
+                instituteQuery = instituteQuery.where('createdBy', '==', req.uid);
+            }
 
-        const snapshot = await query.orderBy('createdAt', 'desc').get();
-        res.json({ challenges: snapshot.docs.map(doc => doc.data()) });
+            const instituteSnapshot = await instituteQuery.orderBy('createdAt', 'desc').get();
+            const instituteChallenges = instituteSnapshot.docs.map(doc => doc.data());
+            
+            // Combine global and institute challenges
+            challenges = [...challenges, ...instituteChallenges];
+        }
+        
+        // Sort by creation date
+        challenges.sort((a, b) => {
+            const dateA = a.createdAt?.toDate?.() || new Date(0);
+            const dateB = b.createdAt?.toDate?.() || new Date(0);
+            return dateB - dateA;
+        });
+        
+        res.json({ 
+            challenges,
+            message: challenges.length === 0 ? 'No challenges available.' : undefined
+        });
     } catch (error) {
         console.error('Error fetching challenges:', error);
-        res.status(500).json({ message: 'Failed to fetch challenges.' });
+        res.status(500).json({ message: 'Failed to fetch challenges.', error: error.message });
     }
 });
 

@@ -1,7 +1,7 @@
 // API Configuration
 // This file centralizes all API calls to the backend
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 // Debug: Log the API URL being used (remove in production)
 console.log('🔧 API_URL configured as:', API_URL);
@@ -83,9 +83,71 @@ export const adminAPI = {
     },
 };
 
-export default {
+/**
+ * Generic HTTP methods
+ */
+const api = {
+    get: async (endpoint, token = null) => {
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        const url = `${API_URL}${endpoint}`;
+        const response = await fetch(url, { headers });
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw { response: { status: response.status, data: errorData } };
+        }
+        return response.json();
+    },
+    post: async (endpoint, data, token = null) => {
+        const headers = {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        };
+        const url = `${API_URL}${endpoint}`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(data),
+        });
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw { response: { status: response.status, data: errorData } };
+        }
+        return response.json();
+    },
+    put: async (endpoint, data, token = null) => {
+        const headers = {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        };
+        const url = `${API_URL}${endpoint}`;
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers,
+            body: JSON.stringify(data),
+        });
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw { response: { status: response.status, data: errorData } };
+        }
+        return response.json();
+    },
+    delete: async (endpoint, token = null) => {
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        const url = `${API_URL}${endpoint}`;
+        const response = await fetch(url, {
+            method: 'DELETE',
+            headers,
+        });
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw { response: { status: response.status, data: errorData } };
+        }
+        return response.json();
+    },
     apiRequest,
     ecoBotAPI,
     leaderboardAPI,
     adminAPI,
 };
+
+export default api;

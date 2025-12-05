@@ -7,10 +7,12 @@ import { db, storage } from '../services/firebase';
 import { addDoc, collection } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { useAuth } from '../context/useAuth';
+import { getUserFriendlyError, getValidationError } from '../utils/errorMessages';
+import { logUserAction, logError, logApiRequest, logApiResponse } from '../utils/logger';
 
 const CreateVideoChallengePage = () => {
     const navigate = useNavigate();
-    const { currentUser } = useAuth();
+    const { currentUser, userRole } = useAuth();
     const [title, setTitle] = useState('');
     const [videoUrl, setVideoUrl] = useState('');
     const [videoFile, setVideoFile] = useState(null);
@@ -20,6 +22,10 @@ const CreateVideoChallengePage = () => {
     const [questions, setQuestions] = useState([{ text: '', options: ['', ''], correctAnswer: 0 }]);
     const [rewardPoints, setRewardPoints] = useState(100);
     const [sourceType, setSourceType] = useState('youtube'); // 'youtube' or 'upload'
+    const [isGlobal, setIsGlobal] = useState(false);
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
+    const [loading, setLoading] = useState(false);
 
     const classes = [
         { id: '1', name: 'Class A' },
@@ -83,58 +89,123 @@ const CreateVideoChallengePage = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Clear previous messages
+        setError('');
+        setSuccess('');
+
+        // Validation
         if (!currentUser) {
-            alert('You must be logged in to create a challenge.');
+            setError('You must be logged in to create a challenge.');
             return;
         }
 
-        let finalVideoUrl = videoUrl;
-
-        if (sourceType === 'upload' && videoFile) {
-            setIsUploading(true);
-            const storageRef = ref(storage, `videos/${currentUser.uid}/${Date.now()}_${videoFile.name}`);
-            const uploadTask = uploadBytesResumable(storageRef, videoFile);
-
-            await new Promise((resolve, reject) => {
-                uploadTask.on('state_changed',
-                    (snapshot) => {
-                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                        setUploadProgress(progress);
-                    },
-                    (error) => {
-                        console.error("Upload failed:", error);
-                        setIsUploading(false);
-                        reject(error);
-                    },
-                    async () => {
-                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                        finalVideoUrl = downloadURL;
-                        setIsUploading(false);
-                        resolve();
-                    }
-                );
-            });
+        if (!title.trim()) {
+            setError(getValidationError('title', 'required'));
+            return;
         }
 
-        const newChallenge = {
-            title,
-            videoUrl: finalVideoUrl,
-            classes: selectedClasses,
-            rewardPoints: Number(rewardPoints),
-            type: 'Video',
-            quizData: { questions },
-            createdBy: currentUser.uid,
-            createdAt: new Date(),
-            status: 'Active',
-            completion: 0,
-        };
+        if (sourceType === 'youtube' && !videoUrl.trim()) {
+            setError('YouTube URL is required');
+            return;
+        }
+
+        if (sourceType === 'upload' && !videoFile) {
+            setError('Please select a video file to upload');
+            return;
+        }
+
+        // Validate questions
+        for (let i = 0; i < questions.length; i++) {
+            if (!questions[i].text.trim()) {
+                setError(`Question ${i + 1} text is required`);
+                return;
+            }
+            if (questions[i].options.some(opt => !opt.trim())) {
+                setError(`All options for Question ${i + 1} must be filled`);
+                return;
+            }
+        }
+
+        setLoading(true);
+        logUserAction('Create video challenge attempt', { title, sourceType, questionCount: questions.length, isGlobal });
+
+        let finalVideoUrl = videoUrl;
+
+        // Handle video upload if needed
+        if (sourceType === 'upload' && videoFile) {
+            try {
+                setIsUploading(true);
+                const storageRef = ref(storage, `videos/${currentUser.uid}/${Date.now()}_${videoFile.name}`);
+                const uploadTask = uploadBytesResumable(storageRef, videoFile);
+
+                await new Promise((resolve, reject) => {
+                    uploadTask.on('state_changed',
+                        (snapshot) => {
+                            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                            setUploadProgress(progress);
+                        },
+                        (error) => {
+                            logError('CreateVideoChallengePage', 'Video upload failed', error);
+                            setIsUploading(false);
+                            reject(error);
+                        },
+                        async () => {
+                            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                            finalVideoUrl = downloadURL;
+                            setIsUploading(false);
+                            resolve();
+                        }
+                    );
+                });
+            } catch (error) {
+                setError('Failed to upload video. Please try again.');
+                setLoading(false);
+                return;
+            }
+        }
 
         try {
-            await addDoc(collection(db, 'quizzes'), newChallenge);
-            navigate('/challenges');
+            const token = await currentUser.getIdToken();
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+            
+            const DEFAULT_EXPIRY_DAYS = 30;
+            const payload = {
+                title,
+                description: `Video challenge with ${questions.length} questions`,
+                targetClass: selectedClasses.join(',') || 'All',
+                videoUrl: finalVideoUrl,
+                questions: questions,
+                rewardPoints: Number(rewardPoints),
+                expiryDate: new Date(Date.now() + DEFAULT_EXPIRY_DAYS * 24 * 60 * 60 * 1000).toISOString(),
+                isGlobal: isGlobal && (userRole === 'admin' || userRole === 'creator')
+            };
+
+            logApiRequest('POST', '/api/challenges/create-physical', payload);
+
+            const res = await fetch(`${apiUrl}/api/challenges/create-physical`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            logApiResponse('POST', '/api/challenges/create-physical', res.status);
+
+            if (res.ok) {
+                setSuccess('Video challenge created successfully! Redirecting...');
+                setTimeout(() => navigate('/challenges'), 1500);
+            } else {
+                const errorData = await res.json();
+                throw new Error(errorData.message || 'Failed to create challenge');
+            }
         } catch (error) {
-            console.error("Error creating video challenge:", error);
-            alert("Failed to create video challenge. Please check the console for details.");
+            logError('CreateVideoChallengePage', 'Challenge creation failed', error);
+            setError(getUserFriendlyError(error, 'create'));
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -169,6 +240,20 @@ const CreateVideoChallengePage = () => {
                         </div>
                     </div>
                     <form onSubmit={handleSubmit} className="p-6 space-y-8">
+                        {/* Error Message */}
+                        {error && (
+                            <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                                <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+                            </div>
+                        )}
+
+                        {/* Success Message */}
+                        {success && (
+                            <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                                <p className="text-sm text-green-800 dark:text-green-200">{success}</p>
+                            </div>
+                        )}
+
                         <div className="space-y-6">
                             <div>
                                 <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Challenge Title</label>
@@ -333,13 +418,47 @@ const CreateVideoChallengePage = () => {
                             <span>Add Another Question</span>
                         </button>
 
+                        {/* Global Challenge Toggle (only for admin/creator) */}
+                        {(userRole === 'admin' || userRole === 'creator') && (
+                            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                                <label className="flex items-center space-x-3 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={isGlobal}
+                                        onChange={(e) => setIsGlobal(e.target.checked)}
+                                        className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                                    />
+                                    <div>
+                                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                            Make this a global challenge
+                                        </span>
+                                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                            Global challenges are visible to all users, not just your institute
+                                        </p>
+                                    </div>
+                                </label>
+                            </div>
+                        )}
+
                         <div className="flex justify-end pt-4">
                             <button
                                 type="submit"
-                                disabled={isUploading}
-                                className="inline-flex justify-center py-2.5 px-6 border border-transparent shadow-md text-sm font-semibold rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-400 transition-all"
+                                disabled={isUploading || loading}
+                                className="inline-flex items-center justify-center py-2.5 px-6 border border-transparent shadow-md text-sm font-semibold rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 dark:disabled:bg-gray-600 transition-all"
                             >
-                                {isUploading ? <Loader className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" /> : 'Create Video Challenge'}
+                                {isUploading ? (
+                                    <>
+                                        <Loader className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" />
+                                        Uploading... {Math.round(uploadProgress)}%
+                                    </>
+                                ) : loading ? (
+                                    <>
+                                        <Loader className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" />
+                                        Creating...
+                                    </>
+                                ) : (
+                                    'Create Video Challenge'
+                                )}
                             </button>
                         </div>
                     </form>

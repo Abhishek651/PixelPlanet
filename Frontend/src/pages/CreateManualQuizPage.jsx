@@ -1,18 +1,24 @@
 // frontend/src/pages/CreateManualQuizPage.jsx
 import React, { useState } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Loader } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../services/firebase';
 import { addDoc, collection } from 'firebase/firestore';
 import { useAuth } from '../context/useAuth';
+import { getUserFriendlyError, getValidationError } from '../utils/errorMessages';
+import { logUserAction, logError, logApiRequest, logApiResponse } from '../utils/logger';
 
 const CreateManualQuizPage = () => {
     const navigate = useNavigate();
-    const { currentUser } = useAuth();
+    const { currentUser, userRole } = useAuth();
     const [title, setTitle] = useState('');
     const [selectedClasses, setSelectedClasses] = useState([]);
     const [questions, setQuestions] = useState([{ text: '', options: ['', ''], correctAnswer: 0 }]);
+    const [isGlobal, setIsGlobal] = useState(false);
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
+    const [loading, setLoading] = useState(false);
 
     const classes = [
         { id: '1', name: 'Class A' },
@@ -66,33 +72,74 @@ const CreateManualQuizPage = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log('CreateManualQuizPage: handleSubmit called.');
 
+        // Clear previous messages
+        setError('');
+        setSuccess('');
+
+        // Validation
         if (!currentUser) {
-            alert('You must be logged in to create a quiz.');
+            setError('You must be logged in to create a quiz.');
             return;
         }
 
-        const newChallenge = {
-            title,
-            classes: selectedClasses,
-            type: 'Quiz-Manual',
-            questions: questions.length,
-            rewardPoints: 100, // Mock reward points
-            quizData: { questions },
-            createdBy: currentUser.uid,
-            createdAt: new Date(),
-            status: 'Active',
-            completion: 0,
-        };
-        console.log('CreateManualQuizPage: Creating new manual quiz challenge:', newChallenge);
+        if (!title.trim()) {
+            setError(getValidationError('title', 'required'));
+            return;
+        }
+
+        // Validate questions
+        for (let i = 0; i < questions.length; i++) {
+            if (!questions[i].text.trim()) {
+                setError(`Question ${i + 1} text is required`);
+                return;
+            }
+            if (questions[i].options.some(opt => !opt.trim())) {
+                setError(`All options for Question ${i + 1} must be filled`);
+                return;
+            }
+        }
+
+        setLoading(true);
+        logUserAction('Create manual quiz attempt', { title, questionCount: questions.length, isGlobal });
+
         try {
-            const docRef = await addDoc(collection(db, 'quizzes'), newChallenge);
-            console.log('CreateManualQuizPage: Quiz pushed to Firebase with ID:', docRef.id);
-            navigate('/challenges');
+            const token = await currentUser.getIdToken();
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+            
+            const payload = {
+                title,
+                targetClass: selectedClasses.join(',') || 'All',
+                questions: questions,
+                rewardPoints: 100,
+                isGlobal: isGlobal && (userRole === 'admin' || userRole === 'creator')
+            };
+
+            logApiRequest('POST', '/api/challenges/create-manual-quiz', payload);
+
+            const res = await fetch(`${apiUrl}/api/challenges/create-manual-quiz`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            logApiResponse('POST', '/api/challenges/create-manual-quiz', res.status);
+
+            if (res.ok) {
+                setSuccess('Manual quiz created successfully! Redirecting...');
+                setTimeout(() => navigate('/challenges'), 1500);
+            } else {
+                const errorData = await res.json();
+                throw new Error(errorData.message || 'Failed to create quiz');
+            }
         } catch (error) {
-            console.error("Error creating manual quiz:", error);
-            alert("Failed to create quiz. Please check the console for details.");
+            logError('CreateManualQuizPage', 'Quiz creation failed', error);
+            setError(getUserFriendlyError(error, 'create'));
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -109,6 +156,20 @@ const CreateManualQuizPage = () => {
                         </div>
                     </div>
                     <form onSubmit={handleSubmit} className="p-6 space-y-8">
+                        {/* Error Message */}
+                        {error && (
+                            <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                                <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+                            </div>
+                        )}
+
+                        {/* Success Message */}
+                        {success && (
+                            <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                                <p className="text-sm text-green-800 dark:text-green-200">{success}</p>
+                            </div>
+                        )}
+
                         <div className="space-y-6">
                             <div>
                                 <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Quiz Title</label>
@@ -194,12 +255,42 @@ const CreateManualQuizPage = () => {
                             <span>Add Another Question</span>
                         </button>
 
+                        {/* Global Challenge Toggle (only for admin/creator) */}
+                        {(userRole === 'admin' || userRole === 'creator') && (
+                            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                                <label className="flex items-center space-x-3 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={isGlobal}
+                                        onChange={(e) => setIsGlobal(e.target.checked)}
+                                        className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                                    />
+                                    <div>
+                                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                            Make this a global challenge
+                                        </span>
+                                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                            Global challenges are visible to all users, not just your institute
+                                        </p>
+                                    </div>
+                                </label>
+                            </div>
+                        )}
+
                         <div className="flex justify-end pt-4">
                             <button
                                 type="submit"
-                                className="inline-flex justify-center py-2.5 px-6 border border-transparent shadow-md text-sm font-semibold rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all"
+                                disabled={loading}
+                                className="inline-flex items-center justify-center py-2.5 px-6 border border-transparent shadow-md text-sm font-semibold rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 dark:disabled:bg-gray-600 transition-all"
                             >
-                                Save Quiz
+                                {loading ? (
+                                    <>
+                                        <Loader className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" />
+                                        Creating...
+                                    </>
+                                ) : (
+                                    'Save Quiz'
+                                )}
                             </button>
                         </div>
                     </form>

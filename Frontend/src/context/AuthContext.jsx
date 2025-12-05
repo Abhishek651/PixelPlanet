@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }) => {
                 // User document doesn't exist, create it via backend
                 try {
                     const token = await user.getIdToken();
-                    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+                    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
                     console.log("AuthContext: Calling sync-user at:", `${apiUrl}/api/auth/sync-user`);
                     
                     const response = await fetch(`${apiUrl}/api/auth/sync-user`, {
@@ -64,7 +64,10 @@ export const AuthProvider = ({ children }) => {
                         console.log("AuthContext: User document created:", data);
                         setInstituteId(data.user.instituteId);
                         // Refresh token to get updated custom claims
-                        await user.getIdToken(true);
+                        const tokenResult = await user.getIdToken(true);
+                        const newTokenResult = await user.getIdTokenResult(true);
+                        setUserRole(newTokenResult.claims.role || 'global');
+                        console.log("AuthContext: Role set after sync:", newTokenResult.claims.role);
                     } else {
                         const errorData = await response.json().catch(() => ({}));
                         console.error("AuthContext: sync-user failed:", response.status, errorData);

@@ -3,6 +3,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/useAuth';
 import { ChevronRight } from 'lucide-react';
+import { getUserFriendlyError } from '../utils/errorMessages';
+import { logAuthEvent, logError, logUserAction } from '../utils/logger';
+
+// ============================================
+// PAGE: LoginPage
+// User authentication page with email/password
+// Includes forgot password functionality
+// ============================================
 
 const LoginPage = () => {
     const [email, setEmail] = useState('');
@@ -15,65 +23,61 @@ const LoginPage = () => {
     const { login } = useAuth();
     const navigate = useNavigate();
 
+    // Handle login form submission
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         setSuccess('');
         setLoading(true);
+
+        logUserAction('Login attempt', { email });
+
         try {
             await login(email, password);
+            
+            // Save remember me preference
             if (rememberMe) {
                 localStorage.setItem('rememberMe', 'true');
             } else {
                 localStorage.removeItem('rememberMe');
             }
+
+            logAuthEvent('Login successful', { email });
             navigate('/');
         } catch (err) {
-            console.error('Login error:', err);
-            // Handle specific Firebase error codes
-            if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
-                setError('Incorrect email or password. Please try again.');
-            } else if (err.code === 'auth/user-not-found') {
-                setError('No account found with this email. Please sign up first.');
-            } else if (err.code === 'auth/invalid-email') {
-                setError('Invalid email address format.');
-            } else if (err.code === 'auth/user-disabled') {
-                setError('This account has been disabled. Please contact support.');
-            } else if (err.code === 'auth/too-many-requests') {
-                setError('Too many failed login attempts. Please try again later.');
-            } else {
-                setError(err.message || 'Failed to log in. Please check your credentials.');
-            }
+            logError('LoginPage', 'Login failed', err);
+            setError(getUserFriendlyError(err, 'login'));
         }
         setLoading(false);
     };
 
+    // Handle forgot password form submission
     const handleForgotPassword = async (e) => {
         e.preventDefault();
+        
         if (!email) {
-            setError('Please enter your email address');
+            setError('Please enter your email address to reset your password.');
             return;
         }
+
         setError('');
         setSuccess('');
         setLoading(true);
+
+        logUserAction('Password reset requested', { email });
+
         try {
             const { sendPasswordResetEmail } = await import('firebase/auth');
             const { auth } = await import('../services/firebase');
             await sendPasswordResetEmail(auth, email);
+            
             setSuccess('Password reset email sent! Check your inbox.');
+            logAuthEvent('Password reset email sent', { email });
+            
             setTimeout(() => setShowForgotPassword(false), 3000);
         } catch (err) {
-            console.error('Password reset error:', err);
-            if (err.code === 'auth/user-not-found') {
-                setError('No account found with this email address.');
-            } else if (err.code === 'auth/invalid-email') {
-                setError('Invalid email address format.');
-            } else if (err.code === 'auth/too-many-requests') {
-                setError('Too many requests. Please try again later.');
-            } else {
-                setError(err.message || 'Failed to send reset email. Please try again.');
-            }
+            logError('LoginPage', 'Password reset failed', err);
+            setError(getUserFriendlyError(err, 'login'));
         }
         setLoading(false);
     };
@@ -85,8 +89,8 @@ const LoginPage = () => {
                 input:-webkit-autofill:hover, 
                 input:-webkit-autofill:focus, 
                 input:-webkit-autofill:active {
-                    -webkit-text-fill-color: white;
-                    -webkit-box-shadow: 0 0 0px 1000px transparent inset;
+                    -webkit-text-fill-color: #1f2937 !important;
+                    -webkit-box-shadow: 0 0 0px 1000px rgba(255, 255, 255, 0.9) inset !important;
                     transition: background-color 5000s ease-in-out 0s;
                 }
             `}</style>
@@ -159,7 +163,7 @@ const LoginPage = () => {
                                         type="email"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        className="w-full px-4 py-3 rounded-2xl border border-white border-opacity-20 bg-white bg-opacity-5 text-white text-lg outline-none transition-shadow duration-150 placeholder-white/60 focus:shadow-lg focus:shadow-white/10 focus:border-opacity-50 focus:outline-none"
+                                        className="w-full px-4 py-3 rounded-2xl border border-white border-opacity-30 bg-white bg-opacity-90 text-gray-900 text-lg outline-none transition-all duration-150 placeholder-gray-500 focus:shadow-lg focus:bg-white focus:border-white focus:outline-none"
                                         placeholder="your.email@example.com"
                                         required
                                         autoFocus
@@ -179,7 +183,7 @@ const LoginPage = () => {
                                             type="password"
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
-                                            className="w-full px-4 py-3 rounded-2xl border border-white border-opacity-20 bg-white bg-opacity-5 text-white text-lg outline-none transition-shadow duration-150 placeholder-white/60 focus:shadow-lg focus:shadow-white/10 focus:border-opacity-50 focus:outline-none"
+                                            className="w-full px-4 py-3 rounded-2xl border border-white border-opacity-30 bg-white bg-opacity-90 text-gray-900 text-lg outline-none transition-all duration-150 placeholder-gray-500 focus:shadow-lg focus:bg-white focus:border-white focus:outline-none"
                                             placeholder="••••••••"
                                             required
                                         />

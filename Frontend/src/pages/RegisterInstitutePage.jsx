@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import AuthLayout from '../components/AuthLayout';
 import api from '../services/api';
+import { useAuth } from '../context/useAuth';
 
 const RegisterInstitutePage = () => {
     const [formData, setFormData] = useState({
@@ -17,6 +18,7 @@ const RegisterInstitutePage = () => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+    const { login, refreshAuth } = useAuth();
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -40,7 +42,13 @@ const RegisterInstitutePage = () => {
                 adminPassword: formData.adminPassword
             });
 
-            if (response.status === 201) {
+            // Auto-login after successful registration
+            try {
+                await login(formData.adminEmail, formData.adminPassword);
+                await refreshAuth(); // Refresh to get updated claims
+                navigate('/dashboard'); // Redirect to dashboard
+            } catch (loginErr) {
+                console.error('Auto-login failed:', loginErr);
                 alert('Institute registered successfully! Please log in.');
                 navigate('/login');
             }

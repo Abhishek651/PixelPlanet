@@ -11,6 +11,7 @@ import JoinInstitutePage from './pages/JoinInstitutePage';
 import TeacherDashboard from './pages/TeacherDashboard';
 import StudentDashboard from './pages/StudentDashboard';
 import ProfilePage from './pages/ProfilePage';
+import TeacherClassroomPage from './pages/TeacherClassroomPage';
 import ChallengePage from './pages/ChallengePage';
 import CreateChallengePage from './pages/CreateChallengePage';
 import CreatePhysicalChallengePage from './pages/CreatePhysicalChallengePage';
@@ -19,6 +20,8 @@ import CreateManualQuizPage from './pages/CreateManualQuizPage';
 import CreateVideoChallengePage from './pages/CreateVideoChallengePage';
 import SubmissionsPage from './pages/SubmissionsPage';
 import MainAdminDashboard from './pages/MainAdminDashboard';
+import SubAdminDashboard from './pages/SubAdminDashboard';
+import CreatorDashboard from './pages/CreatorDashboard';
 import SiteSettings from './components/SiteSettings';
 import QuizPage from './pages/QuizPage';
 import GamesPage from './pages/GamesPage';
@@ -30,6 +33,7 @@ import WebDashboardPage from './pages/WebDashboardPage';
 import StorePage from './pages/StorePage';
 import GreenFeedPage from './pages/GreenFeedPage';
 import AboutPage from './pages/AboutPage';
+import ChallengeDetailPage from './pages/ChallengeDetailPage';
 
 function ProtectedRoute({ children, allowedRoles }) {
   const { currentUser, userRole, loading } = useAuth();
@@ -51,9 +55,16 @@ function MainRedirect() {
 
   if (loading) return <div className="flex justify-center items-center min-h-screen text-xl">Loading...</div>;
 
-  if (currentUser && userRole) {
+  if (currentUser) {
+    // If user is logged in but role is still loading/null, wait a bit
+    if (userRole === null || userRole === undefined) {
+      return <div className="flex justify-center items-center min-h-screen text-xl">Setting up your account...</div>;
+    }
+    
     switch (userRole) {
       case 'admin': return <Navigate to="/dashboard/admin" replace />;
+      case 'sub-admin': return <Navigate to="/dashboard/sub-admin" replace />;
+      case 'creator': return <Navigate to="/dashboard/creator" replace />;
       case 'hod': return <Navigate to="/dashboard/institute-admin" replace />;
       case 'teacher': return <Navigate to="/dashboard/teacher" replace />;
       case 'student': return <Navigate to="/dashboard/student" replace />;
@@ -82,11 +93,19 @@ function App() {
         {/* Protected Routes */}
         <Route
           path="/dashboard"
-          element={<ProtectedRoute><DashboardLayout><MobileDashboardPage /></DashboardLayout></ProtectedRoute>}
+          element={<ProtectedRoute allowedRoles={['global']}><StudentDashboard /></ProtectedRoute>}
         />
         <Route
           path="/dashboard/admin"
           element={<ProtectedRoute allowedRoles={['admin']}><DashboardLayout><MainAdminDashboard /></DashboardLayout></ProtectedRoute>}
+        />
+        <Route
+          path="/dashboard/sub-admin"
+          element={<ProtectedRoute allowedRoles={['sub-admin']}><DashboardLayout><SubAdminDashboard /></DashboardLayout></ProtectedRoute>}
+        />
+        <Route
+          path="/dashboard/creator"
+          element={<ProtectedRoute allowedRoles={['creator']}><DashboardLayout><CreatorDashboard /></DashboardLayout></ProtectedRoute>}
         />
         <Route
           path="/admin/settings"
@@ -101,29 +120,33 @@ function App() {
           element={<ProtectedRoute allowedRoles={['teacher']}><TeacherDashboard /></ProtectedRoute>}
         />
         <Route
+          path="/teacher/classroom"
+          element={<ProtectedRoute allowedRoles={['teacher']}><TeacherClassroomPage /></ProtectedRoute>}
+        />
+        <Route
           path="/create-challenge"
           element={<ProtectedRoute allowedRoles={['teacher']}><CreateChallengePage /></ProtectedRoute>}
         />
         <Route
           path="/create-physical-challenge"
-          element={<ProtectedRoute allowedRoles={['teacher']}><CreatePhysicalChallengePage /></ProtectedRoute>}
+          element={<ProtectedRoute allowedRoles={['teacher', 'hod', 'admin', 'creator']}><CreatePhysicalChallengePage /></ProtectedRoute>}
         />
         <Route
           path="/create-auto-quiz"
-          element={<ProtectedRoute allowedRoles={['teacher']}><CreateAutoQuizPage /></ProtectedRoute>}
+          element={<ProtectedRoute allowedRoles={['teacher', 'hod', 'admin', 'creator']}><CreateAutoQuizPage /></ProtectedRoute>}
         />
         <Route
           path="/create-manual-quiz"
-          element={<ProtectedRoute allowedRoles={['teacher']}><CreateManualQuizPage /></ProtectedRoute>}
+          element={<ProtectedRoute allowedRoles={['teacher', 'hod', 'admin', 'creator']}><CreateManualQuizPage /></ProtectedRoute>}
         />
         <Route
           path="/create-video-challenge"
-          element={<ProtectedRoute allowedRoles={['teacher']}><CreateVideoChallengePage /></ProtectedRoute>}
+          element={<ProtectedRoute allowedRoles={['teacher', 'hod', 'admin', 'creator']}><CreateVideoChallengePage /></ProtectedRoute>}
         />
         <Route
           path="/challenges"
           element={
-            <ProtectedRoute allowedRoles={['student', 'teacher']}>
+            <ProtectedRoute allowedRoles={['student', 'teacher', 'global']}>
               <DashboardLayout>
                 <ChallengePage />
               </DashboardLayout>
@@ -141,7 +164,7 @@ function App() {
         <Route
           path="/menu"
           element={
-            <ProtectedRoute allowedRoles={['student', 'teacher', 'hod']}>
+            <ProtectedRoute allowedRoles={['student', 'teacher', 'hod', 'global']}>
               <MobileDashboardPage />
             </ProtectedRoute>
           }
@@ -157,7 +180,7 @@ function App() {
         <Route
           path="/store"
           element={
-            <ProtectedRoute allowedRoles={['student', 'teacher', 'hod']}>
+            <ProtectedRoute allowedRoles={['student', 'teacher', 'hod', 'global']}>
               <StorePage />
             </ProtectedRoute>
           }
@@ -165,7 +188,7 @@ function App() {
         <Route
           path="/green-feed"
           element={
-            <ProtectedRoute allowedRoles={['student', 'teacher', 'hod']}>
+            <ProtectedRoute allowedRoles={['student', 'teacher', 'hod', 'global']}>
               <GreenFeedPage />
             </ProtectedRoute>
           }
@@ -177,13 +200,18 @@ function App() {
 
         <Route
           path="/quiz/:challengeId"
-          element={<ProtectedRoute allowedRoles={['student']}><QuizPage /></ProtectedRoute>}
+          element={<ProtectedRoute allowedRoles={['student', 'global', 'creator', 'teacher', 'hod', 'admin']}><QuizPage /></ProtectedRoute>}
+        />
+
+        <Route
+          path="/challenge/:challengeId"
+          element={<ProtectedRoute allowedRoles={['student', 'global']}><ChallengeDetailPage /></ProtectedRoute>}
         />
 
         <Route // <--- NEW PROFILE ROUTE
           path="/profile"
           element={
-            <ProtectedRoute allowedRoles={['student', 'teacher', 'hod']}> {/* All logged-in users can access */}
+            <ProtectedRoute allowedRoles={['student', 'teacher', 'hod', 'global']}> {/* All logged-in users can access */}
               <ProfilePage />
             </ProtectedRoute>
           }
@@ -193,7 +221,7 @@ function App() {
           <Route
             index
             element={
-              <ProtectedRoute allowedRoles={['student', 'teacher', 'hod']}> 
+              <ProtectedRoute allowedRoles={['student', 'teacher', 'hod', 'global']}> 
                 <DashboardLayout><GamesPage /></DashboardLayout>
               </ProtectedRoute>
             }
@@ -201,7 +229,7 @@ function App() {
           <Route
             path="waste-segregator"
             element={
-              <ProtectedRoute allowedRoles={['student', 'teacher', 'hod']}>
+              <ProtectedRoute allowedRoles={['student', 'teacher', 'hod', 'global']}>
                 <WasteSegregatorGame />
               </ProtectedRoute>
             }
@@ -209,7 +237,7 @@ function App() {
           <Route
             path="quiz"
             element={
-              <ProtectedRoute allowedRoles={['student', 'teacher', 'hod']}>
+              <ProtectedRoute allowedRoles={['student', 'teacher', 'hod', 'global']}>
                 <QuizGame />
               </ProtectedRoute>
             }

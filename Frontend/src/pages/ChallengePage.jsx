@@ -10,6 +10,97 @@ import ChallengeCreatorFAB from '../components/ChallengeCreatorFAB';
 import ChallengeTypeModal from '../components/ChallengeTypeModal';
 import LoginPromptModal from '../components/LoginPromptModal';
 import { leaderboardAPI } from '../services/api';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '../services/firebase';
+
+// Component for students to view both institute and global challenges
+const StudentChallengesView = () => {
+    const { currentUser } = useAuth();
+    const [challengeTab, setChallengeTab] = useState('institute');
+    const [instituteChallenges, setInstituteChallenges] = useState([]);
+    const [globalChallenges, setGlobalChallenges] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchAllChallenges();
+    }, [currentUser]);
+
+    const fetchAllChallenges = async () => {
+        if (!currentUser) return;
+        
+        setLoading(true);
+        try {
+            // Fetch institute challenges (from ChallengeContext)
+            const userDoc = await getDocs(query(collection(db, 'users'), where('__name__', '==', currentUser.uid)));
+            if (!userDoc.empty) {
+                const userData = userDoc.docs[0].data();
+                const instituteId = userData.instituteId;
+                
+                if (instituteId) {
+                    const instituteQuery = query(collection(db, 'challenges'), where('instituteId', '==', instituteId));
+                    const instituteSnapshot = await getDocs(instituteQuery);
+                    setInstituteChallenges(instituteSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                }
+            }
+
+            // Fetch global challenges
+            const globalQuery = query(collection(db, 'challenges'), where('isGlobal', '==', true));
+            const globalSnapshot = await getDocs(globalQuery);
+            setGlobalChallenges(globalSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        } catch (error) {
+            console.error('Error fetching challenges:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const challengeTabs = [
+        { id: 'institute', label: 'Institute' },
+        { id: 'global', label: 'Global' },
+    ];
+
+    return (
+        <div className="bg-white rounded-xl p-4 shadow-soft">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">Available Challenges</h2>
+            
+            {/* Challenge Type Tabs */}
+            <div className="mb-6">
+                <SegmentedControl
+                    segments={challengeTabs}
+                    activeSegment={challengeTab}
+                    onSegmentChange={setChallengeTab}
+                />
+            </div>
+
+            {loading ? (
+                <div className="flex justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+            ) : (
+                <div>
+                    {challengeTab === 'institute' && (
+                        <div>
+                            {instituteChallenges.length === 0 ? (
+                                <p className="text-gray-500 text-center py-8">No institute challenges available</p>
+                            ) : (
+                                <ChallengesList challenges={instituteChallenges} />
+                            )}
+                        </div>
+                    )}
+                    {challengeTab === 'global' && (
+                        <div>
+                            {globalChallenges.length === 0 ? (
+                                <p className="text-gray-500 text-center py-8">No global challenges available</p>
+                            ) : (
+                                <ChallengesList challenges={globalChallenges} />
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+};
 
 const ChallengePage = () => {
     const { currentUser, userRole } = useAuth();
@@ -153,13 +244,19 @@ const ChallengePage = () => {
                         transition={{ duration: 0.4 }}
                         className="pt-4"
                     >
-                        <div className="bg-white rounded-xl p-4 shadow-soft">
-                            <h2 className="text-xl font-bold text-gray-800 mb-4">
-                                {currentUser ? (userRole === 'teacher' ? 'Created Challenges' : 'Available Challenges') : 'Eco Challenges'}
-                            </h2>
-                            {currentUser ? (
-                                <ChallengesList />
+                        {currentUser ? (
+                            userRole === 'student' ? (
+                                <StudentChallengesView />
                             ) : (
+                                <div className="bg-white rounded-xl p-4 shadow-soft">
+                                    <h2 className="text-xl font-bold text-gray-800 mb-4">
+                                        {userRole === 'teacher' ? 'Created Challenges' : userRole === 'global' ? 'Global Challenges' : 'Available Challenges'}
+                                    </h2>
+                                    <ChallengesList />
+                                </div>
+                            )
+                        ) : (
+                            <div className="bg-white rounded-xl p-4 shadow-soft">
                                 <div className="text-center py-8">
                                     <div className="w-16 h-16 bg-gray-100 rounded-full mx-auto mb-4 flex items-center justify-center">
                                         <span className="material-symbols-outlined text-2xl text-gray-400">emoji_events</span>
@@ -172,8 +269,8 @@ const ChallengePage = () => {
                                         Login to Continue
                                     </button>
                                 </div>
-                            )}
-                        </div>
+                            </div>
+                        )}
                     </motion.div>
                 )}
             </main>

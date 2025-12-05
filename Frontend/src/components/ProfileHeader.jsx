@@ -7,22 +7,43 @@ import EcoPointsDisplay from './EcoPointsDisplay';
 
 const ProfileHeader = ({ user, role }) => {
     const [ecoPoints, setEcoPoints] = useState(0);
+    const [instituteName, setInstituteName] = useState('');
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchEcoPoints = async () => {
+        const fetchUserData = async () => {
             if (user.uid) {
                 try {
                     const userDoc = await getDoc(doc(db, 'users', user.uid));
                     if (userDoc.exists()) {
-                        setEcoPoints(userDoc.data().ecoPoints || 0);
+                        const userData = userDoc.data();
+                        console.log('ProfileHeader: User data:', userData);
+                        setEcoPoints(userData.ecoPoints || 0);
+                        
+                        // Fetch institute name if user has instituteId
+                        if (userData.instituteId) {
+                            console.log('ProfileHeader: Fetching institute:', userData.instituteId);
+                            const instituteDoc = await getDoc(doc(db, 'institutes', userData.instituteId));
+                            if (instituteDoc.exists()) {
+                                const instituteName = instituteDoc.data().name || '';
+                                console.log('ProfileHeader: Institute name:', instituteName);
+                                setInstituteName(instituteName);
+                            } else {
+                                console.log('ProfileHeader: Institute document not found');
+                            }
+                        } else {
+                            console.log('ProfileHeader: No instituteId found for user');
+                        }
                     }
                 } catch (error) {
-                    console.error('Error fetching eco points:', error);
+                    console.error('ProfileHeader: Error fetching user data:', error);
+                } finally {
+                    setLoading(false);
                 }
             }
         };
 
-        fetchEcoPoints();
+        fetchUserData();
     }, [user.uid]);
     const getRoleBadgeColor = () => {
         switch (role) {
@@ -49,25 +70,43 @@ const ProfileHeader = ({ user, role }) => {
                 src={user.photoURL || `https://i.pravatar.cc/150?u=${user.uid}`}
                 alt="Profile Avatar"
             />
-            <div>
+            <div className="flex-1">
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{user.displayName || 'Anonymous User'}</h1>
                 <p className="text-gray-600 dark:text-gray-400">{user.email}</p>
-                {role && (
-                    <span className={`mt-2 inline-block px-3 py-1 text-sm font-semibold text-white rounded-full ${getRoleBadgeColor()}`}>
-                        {role.charAt(0).toUpperCase() + role.slice(1)}
-                    </span>
+                
+                {/* Institute Name or Join Message */}
+                {(role === 'student' || role === 'teacher' || role === 'hod') && !loading && (
+                    <div className="flex items-center mt-2">
+                        {instituteName ? (
+                            <div className="flex items-center text-gray-700 dark:text-gray-300">
+                                <span className="material-symbols-outlined text-sm mr-1">school</span>
+                                <span className="text-sm font-medium">{instituteName}</span>
+                            </div>
+                        ) : role === 'student' && (
+                            <div className="flex items-center text-orange-600 dark:text-orange-400">
+                                <span className="material-symbols-outlined text-sm mr-1">info</span>
+                                <span className="text-sm font-medium">Not joined any institute</span>
+                            </div>
+                        )}
+                    </div>
                 )}
-                {role === 'student' && (
-                    <div className="mt-2">
+                
+                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                    {role && (
+                        <span className={`inline-block px-3 py-1 text-sm font-semibold text-white rounded-full ${getRoleBadgeColor()}`}>
+                            {role.charAt(0).toUpperCase() + role.slice(1)}
+                        </span>
+                    )}
+                    {role === 'student' && (
                         <EcoPointsDisplay 
                             points={ecoPoints} 
                             size="small" 
                             showLabel={false} 
                             animate={false}
-                            className="inline-block ml-2"
+                            className="inline-block"
                         />
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
         </motion.div>
     );

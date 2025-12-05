@@ -9,21 +9,37 @@ import { useNavigate } from 'react-router-dom';
 import { doc, deleteDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
 
-const ChallengesList = () => {
-    const { challenges, isLoading, error, setChallenges, clearError } = useChallenges();
+const ChallengesList = ({ challenges: propChallenges }) => {
+    const { challenges: contextChallenges, isLoading, error, setChallenges, clearError } = useChallenges();
     const { userRole } = useAuth();
     const [expandedChallenge, setExpandedChallenge] = useState(null);
     const navigate = useNavigate();
+    
+    // Use prop challenges if provided, otherwise use context challenges
+    const challenges = propChallenges || contextChallenges;
 
     const toggleChallenge = (id) => {
         setExpandedChallenge(expandedChallenge === id ? null : id);
     };
 
     const handleStartChallenge = (challenge) => {
-        if (challenge.type.toLowerCase() === 'quiz_auto' || challenge.type.toLowerCase() === 'quiz_manual') {
+        console.log('Starting challenge:', challenge);
+        console.log('Challenge type:', challenge.type);
+        console.log('Challenge ID:', challenge.id);
+        
+        if (!challenge.id) {
+            console.error('Challenge ID is missing!');
+            alert('Error: Challenge ID is missing. Please refresh and try again.');
+            return;
+        }
+        
+        const challengeType = challenge.type?.toLowerCase() || '';
+        
+        if (challengeType === 'quiz_auto' || challengeType === 'quiz_manual') {
+            console.log('Navigating to quiz page:', `/quiz/${challenge.id}`);
             navigate(`/quiz/${challenge.id}`);
         } else {
-            // For physical or video challenges, navigate to a different route or show instructions
+            console.log('Navigating to challenge detail page:', `/challenge/${challenge.id}`);
             navigate(`/challenge/${challenge.id}`);
         }
     };
@@ -130,21 +146,39 @@ const ChallengesList = () => {
                                     <div className="flex items-center justify-end space-x-4">
                                         {canEdit ? (
                                             <>
-                                                <button className="flex items-center space-x-2 px-4 py-2 rounded-lg text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 font-semibold transition-all">
+                                                <button 
+                                                    onClick={(e) => e.stopPropagation()} 
+                                                    className="flex items-center space-x-2 px-4 py-2 rounded-lg text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 font-semibold transition-all"
+                                                >
                                                     <Edit size={16} />
                                                     <span>Edit</span>
                                                 </button>
-                                                <button className="flex items-center space-x-2 px-4 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700 font-semibold shadow-sm hover:shadow-md transition-all">
+                                                <button 
+                                                    onClick={(e) => e.stopPropagation()} 
+                                                    className="flex items-center space-x-2 px-4 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700 font-semibold shadow-sm hover:shadow-md transition-all"
+                                                >
                                                     <Eye size={16} />
                                                     <span>View Submissions</span>
                                                 </button>
-                                                <button onClick={() => handleDeleteChallenge(challenge.id)} className="flex items-center space-x-2 px-4 py-2 rounded-lg text-white bg-red-600 hover:bg-red-700 font-semibold shadow-sm hover:shadow-md transition-all">
+                                                <button 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDeleteChallenge(challenge.id);
+                                                    }} 
+                                                    className="flex items-center space-x-2 px-4 py-2 rounded-lg text-white bg-red-600 hover:bg-red-700 font-semibold shadow-sm hover:shadow-md transition-all"
+                                                >
                                                     <Trash2 size={16} />
                                                     <span>Delete</span>
                                                 </button>
                                             </>
                                         ) : (
-                                            <button onClick={() => handleStartChallenge(challenge)} className="flex items-center space-x-2 px-4 py-2 rounded-lg text-white bg-green-600 hover:bg-green-700 font-semibold shadow-sm hover:shadow-md transition-all">
+                                            <button 
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleStartChallenge(challenge);
+                                                }} 
+                                                className="flex items-center space-x-2 px-4 py-2 rounded-lg text-white bg-green-600 hover:bg-green-700 font-semibold shadow-sm hover:shadow-md transition-all"
+                                            >
                                                 <span>Start Challenge</span>
                                             </button>
                                         )}
