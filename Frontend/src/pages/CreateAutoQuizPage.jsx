@@ -26,6 +26,7 @@ const CreateAutoQuizPage = () => {
     const [generationMethod, setGenerationMethod] = useState('topic');
     const [paragraph, setParagraph] = useState('');
     const [generateParagraph, setGenerateParagraph] = useState(false);
+    const [paragraphLength, setParagraphLength] = useState('medium'); // short, medium, long
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [rewardEcoPoints, setRewardEcoPoints] = useState(100);
@@ -88,6 +89,7 @@ const CreateAutoQuizPage = () => {
                 generationMethod,
                 paragraph: generationMethod === 'paragraph' ? paragraph : undefined,
                 generateParagraph: generationMethod === 'topic' ? generateParagraph : false,
+                paragraphLength: generateParagraph ? paragraphLength : undefined,
             };
 
             logApiRequest('POST', '/api/quiz/generate', payload);
@@ -316,17 +318,71 @@ const CreateAutoQuizPage = () => {
                                     placeholder="e.g., Photosynthesis, World War II"
                                     required
                                 />
-                                <div className="flex items-center mt-4">
-                                    <input
-                                        id="generate-paragraph"
-                                        type="checkbox"
-                                        checked={generateParagraph}
-                                        onChange={(e) => setGenerateParagraph(e.target.checked)}
-                                        className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                    />
-                                    <label htmlFor="generate-paragraph" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">
-                                        Generate paragraph for students
-                                    </label>
+                                <div className="mt-4 space-y-3">
+                                    <div className="flex items-center">
+                                        <input
+                                            id="generate-paragraph"
+                                            type="checkbox"
+                                            checked={generateParagraph}
+                                            onChange={(e) => setGenerateParagraph(e.target.checked)}
+                                            className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                        />
+                                        <label htmlFor="generate-paragraph" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">
+                                            Generate paragraph for students
+                                        </label>
+                                    </div>
+                                    
+                                    {generateParagraph && (
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                Paragraph Length
+                                            </label>
+                                            <div className="grid grid-cols-3 gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setParagraphLength('short')}
+                                                    className={`px-4 py-3 rounded-lg font-medium text-sm transition-all ${
+                                                        paragraphLength === 'short'
+                                                            ? 'bg-blue-600 text-white shadow-md'
+                                                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                                    }`}
+                                                >
+                                                    <div className="text-center">
+                                                        <div className="font-bold">Short</div>
+                                                        <div className="text-xs opacity-80">100-150 words</div>
+                                                    </div>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setParagraphLength('medium')}
+                                                    className={`px-4 py-3 rounded-lg font-medium text-sm transition-all ${
+                                                        paragraphLength === 'medium'
+                                                            ? 'bg-blue-600 text-white shadow-md'
+                                                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                                    }`}
+                                                >
+                                                    <div className="text-center">
+                                                        <div className="font-bold">Medium</div>
+                                                        <div className="text-xs opacity-80">200-300 words</div>
+                                                    </div>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setParagraphLength('long')}
+                                                    className={`px-4 py-3 rounded-lg font-medium text-sm transition-all ${
+                                                        paragraphLength === 'long'
+                                                            ? 'bg-blue-600 text-white shadow-md'
+                                                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                                    }`}
+                                                >
+                                                    <div className="text-center">
+                                                        <div className="font-bold">Long</div>
+                                                        <div className="text-xs opacity-80">400-500 words</div>
+                                                    </div>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         ) : (

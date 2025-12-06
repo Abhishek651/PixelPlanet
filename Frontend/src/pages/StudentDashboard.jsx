@@ -19,6 +19,7 @@ import LoginPromptModal from '../components/LoginPromptModal';
 
 // Shared Components
 import EcoBot from '../components/EcoBot';
+import RecentChallenges from '../components/RecentChallenges';
 
 const MobileStudentDashboard = () => {
     const { currentUser } = useAuth();
@@ -340,6 +341,13 @@ const MobileStudentDashboard = () => {
                 </div>
             </div>
 
+            {/* Recent Challenges */}
+            {currentUser && (
+                <div className="px-4 mb-6">
+                    <RecentChallenges limit={3} />
+                </div>
+            )}
+
             {/* Leaderboard */}
             <div className="px-4 mb-6">
                 {currentUser ? (
@@ -426,13 +434,7 @@ const DesktopStudentDashboard = () => {
         { id: 4, title: 'Sustainable Fashion', category: 'Consumerism', image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=400', rating: 4.9 }
     ];
 
-    const leaderboard = [
-        { rank: 1, name: 'Emma Wilson', points: 2850 },
-        { rank: 2, name: 'Liam Chen', points: 2720 },
-        { rank: 3, name: 'Sophia Kumar', points: 2650 },
-        { rank: 4, name: 'Noah Patel', points: 2580 },
-        { rank: 5, name: 'You', points: 2490 }
-    ];
+
 
     const achievements = [
         { id: 1, name: 'First Steps', icon: 'footprint', color: 'text-green-500 bg-green-100' },
@@ -564,6 +566,11 @@ const DesktopStudentDashboard = () => {
                             </div>
                         </section>
 
+                        {/* Recent Challenges Section */}
+                        <section>
+                            <RecentChallenges limit={3} showInMainArea={true} />
+                        </section>
+
                         {/* Recommended Section */}
                         <section>
                             <div className="flex items-center justify-between mb-4">
@@ -642,29 +649,7 @@ const DesktopStudentDashboard = () => {
                         </div>
 
                         {/* Leaderboard Widget */}
-                        <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-                            <h3 className="font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-                                <span className="material-icons text-yellow-500">leaderboard</span>
-                                Top Students
-                            </h3>
-                            <div className="space-y-4">
-                                {leaderboard.map((user, idx) => (
-                                    <div key={idx} className="flex items-center gap-3">
-                                        <span className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold ${idx < 3 ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-500'}`}>
-                                            {user.rank}
-                                        </span>
-                                        <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden">
-                                            <img src={`https://ui-avatars.com/api/?name=${user.name}&background=random`} alt={user.name} className="w-full h-full object-cover" />
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="text-sm font-medium text-gray-800 dark:text-white">{user.name}</p>
-                                        </div>
-                                        <span className="text-xs font-bold text-primary">{user.points}</span>
-                                    </div>
-                                ))}
-                            </div>
-                            <Link to="/leaderboard" className="block text-center text-sm text-primary font-medium mt-4 hover:underline">View Full Leaderboard</Link>
-                        </div>
+                        <DashboardLeaderboard />
 
                         {/* Achievements Widget */}
                         <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">

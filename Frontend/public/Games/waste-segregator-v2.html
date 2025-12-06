@@ -33,6 +33,65 @@
 </head>
 <body>
     <div id="game-container"></div>
-    <script src="waste-segregator-game.js"></script>
+    <script src="game-config.js"></script>
+    <script src="game-manager.js"></script>
+    <script src="AdaptiveMenuScene.js"></script>
+    <script src="AdaptiveGameScene.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('userId') || 'demo_user';
+
+        function getGameDimensions() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            const aspectRatio = width / height;
+            
+            let gameWidth, gameHeight;
+            if (aspectRatio > 1.5) {
+                gameWidth = Math.min(1200, width);
+                gameHeight = Math.min(800, height);
+            } else if (aspectRatio > 1) {
+                gameWidth = Math.min(1000, width);
+                gameHeight = Math.min(700, height);
+            } else {
+                gameWidth = width;
+                gameHeight = height;
+            }
+            return { width: gameWidth, height: gameHeight };
+        }
+
+        async function initGame() {
+            const dims = getGameDimensions();
+            const gameManager = new GameManager(userId);
+            await gameManager.initialize();
+
+            const config = {
+                type: Phaser.AUTO,
+                width: dims.width,
+                height: dims.height,
+                parent: 'game-container',
+                backgroundColor: '#1a1a2e',
+                physics: {
+                    default: 'arcade',
+                    arcade: { gravity: { y: 0 }, debug: false }
+                },
+                scene: [AdaptiveMenuScene, AdaptiveGameScene],
+                scale: {
+                    mode: Phaser.Scale.FIT,
+                    autoCenter: Phaser.Scale.CENTER_BOTH
+                }
+            };
+
+            const game = new Phaser.Game(config);
+            game.scene.start('AdaptiveMenuScene', { gameManager: gameManager });
+
+            window.addEventListener('resize', () => {
+                const newDims = getGameDimensions();
+                game.scale.resize(newDims.width, newDims.height);
+            });
+        }
+
+        initGame();
+    </script>
 </body>
 </html>

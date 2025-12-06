@@ -9,7 +9,7 @@ export const games = [
     {
         id: 1,
         title: 'Recycle Rush',
-        description: 'Sort waste into the correct bins before time runs out.',
+        description: 'Sort waste into the correct bins and master eco-friendly practices through 10 challenging levels!',
         thumbnail: recycleRushImg,
         thumbnailSquare: recycleRushIcon,
         featured: true,

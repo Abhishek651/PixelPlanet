@@ -83,7 +83,8 @@ router.get('/global', [
     }
 
     try {
-        const { class: classValue, activityType, timeRange = 'all', limit = 50 } = req.query;
+        const { class: classValue, activityType, timeRange = 'all' } = req.query;
+        const limit = parseInt(req.query.limit) || 50;
         let users = [];
 
         if (activityType) {
@@ -164,7 +165,8 @@ router.get('/institute', verifyToken, [
     }
 
     try {
-        const { class: classValue, activityType, timeRange = 'all', limit = 50 } = req.query;
+        const { class: classValue, activityType, timeRange = 'all' } = req.query;
+        const limit = parseInt(req.query.limit) || 50;
         let users = [];
 
         // Check if user has instituteId or is a global user
@@ -240,23 +242,19 @@ router.get('/institute', verifyToken, [
                 });
             }
         } else {
-            let usersQuery = db.collection('users')
+            // Fetch all students from the institute and sort in memory
+            // This avoids needing a composite index
+            const usersQuery = db.collection('users')
                 .where('role', '==', 'student')
                 .where('instituteId', '==', req.instituteId);
 
-            if (classValue) {
-                usersQuery = usersQuery.where('class', '==', classValue);
-                const usersSnapshot = await usersQuery.get();
-                usersSnapshot.forEach(doc => {
-                    users.push(doc.data());
-                });
-            } else {
-                usersQuery = usersQuery.orderBy('ecoPoints', 'desc').limit(limit);
-                const usersSnapshot = await usersQuery.get();
-                usersSnapshot.forEach(doc => {
-                    users.push(doc.data());
-                });
-            }
+            const usersSnapshot = await usersQuery.get();
+            usersSnapshot.forEach(doc => {
+                const userData = doc.data();
+                if (!classValue || userData.class === classValue) {
+                    users.push(userData);
+                }
+            });
         }
 
         users.sort((a, b) => (b.ecoPoints || 0) - (a.ecoPoints || 0));

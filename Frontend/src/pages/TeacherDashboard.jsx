@@ -3,10 +3,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/useAuth';
 import { useChallenges } from '../context/useChallenges';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '../services/firebase';
 import DashboardLayout from '../components/DashboardLayout';
 import AnalyticsCard from '../components/AnalyticsCard';
 import EcoBot from '../components/EcoBot';
 import ChallengeTypeModal from '../components/ChallengeTypeModal';
+import DashboardLeaderboard from '../components/DashboardLeaderboard';
+import PendingApprovalScreen from '../components/PendingApprovalScreen';
 
 const TeacherDashboard = () => {
     const { currentUser } = useAuth();
@@ -14,12 +18,58 @@ const TeacherDashboard = () => {
     const navigate = useNavigate();
     const [showEcoBot, setShowEcoBot] = useState(false);
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [isApproved, setIsApproved] = useState(null); // null = loading, true/false = status
     const teacherName = currentUser?.displayName || 'Teacher';
+
+    // Check approval status
+    useEffect(() => {
+        if (!currentUser) return;
+
+        console.log('TeacherDashboard: Setting up approval listener for user:', currentUser.uid);
+
+        const unsubscribe = onSnapshot(
+            doc(db, 'users', currentUser.uid),
+            (doc) => {
+                if (doc.exists()) {
+                    const data = doc.data();
+                    console.log('TeacherDashboard: User data from Firestore:', data);
+                    console.log('TeacherDashboard: approved field value:', data.approved);
+                    console.log('TeacherDashboard: approved === true?', data.approved === true);
+                    setIsApproved(data.approved === true);
+                } else {
+                    console.log('TeacherDashboard: User document does not exist');
+                    setIsApproved(false);
+                }
+            },
+            (error) => {
+                console.error('TeacherDashboard: Error checking approval status:', error);
+                setIsApproved(false);
+            }
+        );
+
+        return () => unsubscribe();
+    }, [currentUser]);
 
     useEffect(() => {
         // Refresh challenges when dashboard loads
-        refreshChallenges();
-    }, []);
+        if (isApproved) {
+            refreshChallenges();
+        }
+    }, [isApproved]);
+
+    // Show pending approval screen if not approved
+    if (isApproved === false) {
+        return <PendingApprovalScreen />;
+    }
+
+    // Show loading while checking status
+    if (isApproved === null) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+            </div>
+        );
+    }
 
     // Get recent challenges (last 3)
     const recentChallenges = challenges.slice(0, 3).map(challenge => ({
@@ -40,13 +90,7 @@ const TeacherDashboard = () => {
         avgScore: 85
     };
 
-    const topPerformers = [
-        { name: 'Emma Wilson', points: 2850, challenges: 12, avatar: null },
-        { name: 'Liam Chen', points: 2720, challenges: 11, avatar: null },
-        { name: 'Sophia Kumar', points: 2650, challenges: 10, avatar: null },
-        { name: 'Noah Patel', points: 2580, challenges: 10, avatar: null },
-        { name: 'Olivia Martinez', points: 2490, challenges: 9, avatar: null }
-    ];
+    // Top performers will be fetched from the leaderboard component
 
     const performanceData = [
         { week: 'Week 1', value: 65 },
@@ -235,59 +279,7 @@ const TeacherDashboard = () => {
 
                     {/* Right Column - Top Performers */}
                     <div className="space-y-6">
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-bold text-gray-800 dark:text-white">
-                                    Top Performers
-                                </h3>
-                                <Link
-                                    to="/students"
-                                    className="text-sm font-medium text-primary hover:text-primary-light transition-colors"
-                                >
-                                    View All
-                                </Link>
-                            </div>
-
-                            <div className="space-y-3">
-                                {topPerformers.map((student, index) => (
-                                    <motion.div
-                                        key={student.name}
-                                        initial={{ opacity: 0, x: 20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: index * 0.05 }}
-                                        className="flex items-center gap-3"
-                                    >
-                                        {/* Rank */}
-                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${index === 0 ? 'bg-yellow-100 text-yellow-600' :
-                                                index === 1 ? 'bg-gray-100 text-gray-600' :
-                                                    index === 2 ? 'bg-orange-100 text-orange-600' :
-                                                        'bg-gray-50 text-gray-500'
-                                            }`}>
-                                            {index + 1}
-                                        </div>
-
-                                        {/* Avatar */}
-                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-green-600 flex items-center justify-center text-white font-semibold">
-                                            {student.name.charAt(0)}
-                                        </div>
-
-                                        {/* Info */}
-                                        <div className="flex-1">
-                                            <h4 className="text-sm font-semibold text-gray-800 dark:text-white">
-                                                {student.name}
-                                            </h4>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                {student.challenges} challenges • {student.points} pts
-                                            </p>
-                                        </div>
-
-                                        {index < 3 && (
-                                            <span className="material-icons text-yellow-500">emoji_events</span>
-                                        )}
-                                    </motion.div>
-                                ))}
-                            </div>
-                        </div>
+                        <DashboardLeaderboard />
 
                         {/* Quick Actions */}
                         <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg">

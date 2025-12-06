@@ -12,9 +12,10 @@ const WasteSegregatorGame = () => {
         const handleGameComplete = async (event) => {
             console.log('Received message:', event.data);
             
-            // Verify message is from our game
-            if (event.data.type === 'GAME_COMPLETE' && event.data.game === 'waste-segregator') {
-                const { ecoPoints, coins, xp, level, score, isSuccess } = event.data;
+            // Verify message is from our game (support both old and new versions)
+            if (event.data.type === 'GAME_COMPLETE' && 
+                (event.data.game === 'waste-segregator' || event.data.game === 'waste-segregator-adaptive')) {
+                const { ecoPoints, coins, xp, level, score, isSuccess, accuracy } = event.data;
                 
                 console.log('Game complete! Rewards:', { ecoPoints, coins, xp, level, score, isSuccess });
                 
@@ -59,9 +60,9 @@ const WasteSegregatorGame = () => {
     return (
         <div style={{ width: '100%', height: '100vh', position: 'relative' }}>
             <iframe
-                src="/Games/waste-segregator.html"
+                src={`/Games/waste-segregator-adaptive.html?userId=${currentUser?.uid || 'guest'}`}
                 style={{ width: '100%', height: '100%', border: 'none' }}
-                title="Waste Segregator Game"
+                title="Eco Sorting Factory"
             ></iframe>
             
             {/* Reward Notification */}

@@ -57,6 +57,7 @@ const ecobotRoutes = require('./routes/ecobot');
 const leaderboardRoutes = require('./routes/leaderboard');
 const adminManagementRoutes = require('./routes/admin-management');
 const creatorAnalyticsRoutes = require('./routes/creator-analytics');
+const gameProfileRoutes = require('./routes/game-profile');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/quiz', quizRoutes);
@@ -67,6 +68,7 @@ app.use('/api/ecobot', ecobotRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/admin', adminManagementRoutes);
 app.use('/api/creator', creatorAnalyticsRoutes);
+app.use('/api/game', gameProfileRoutes);
 
 console.log('📋 Registered routes:');
 console.log('  - /api/auth');
@@ -78,6 +80,7 @@ console.log('  - /api/ecobot');
 console.log('  - /api/leaderboard');
 console.log('  - /api/admin');
 console.log('  - /api/creator ✨ (Creator Analytics)');
+console.log('  - /api/game 🎮 (Game Profiles)');
 
 // Add a catch-all route to log 404s
 app.use((req, res, next) => {

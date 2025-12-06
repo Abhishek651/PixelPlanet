@@ -263,8 +263,12 @@ router.patch('/verify-teacher/:teacherId', verifyToken, async (req, res) => {
         const { approved } = req.body;
         
         if (approved) {
-            await db.collection('users').doc(teacherId).update({ isVerified: true });
-            res.json({ message: 'Teacher verified.' });
+            await db.collection('users').doc(teacherId).update({ 
+                isVerified: true, 
+                approved: true,
+                approvedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+            res.json({ message: 'Teacher approved successfully.' });
         } else {
             await db.collection('users').doc(teacherId).delete();
             await admin.auth().deleteUser(teacherId);

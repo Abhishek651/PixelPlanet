@@ -57,7 +57,7 @@ const JoinInstitutePage = () => {
 
             const response = await api.post(endpoint, payload);
 
-            alert('Registration successful! Please log in.');
+            // Redirect directly to login without alert
             navigate('/login');
         } catch (err) {
             console.error(err);
@@ -89,39 +89,54 @@ const JoinInstitutePage = () => {
                     </motion.p>
                 )}
 
-                <motion.div variants={inputVariants} transition={{ delay: 0.1 }}>
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                >
                     <input
                         type="text"
                         name="name"
                         placeholder="Full Name"
                         value={formData.name}
                         onChange={handleChange}
-                        className="w-full p-4 bg-gray-100 dark:bg-gray-800 border border-border-light dark:border-border-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+                        autoComplete="name"
+                        className="w-full p-4 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                         required
                     />
                 </motion.div>
 
-                <motion.div variants={inputVariants} transition={{ delay: 0.15 }}>
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15 }}
+                >
                     <input
                         type="email"
                         name="email"
                         placeholder="Email Address"
                         value={formData.email}
                         onChange={handleChange}
-                        className="w-full p-4 bg-gray-100 dark:bg-gray-800 border border-border-light dark:border-border-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+                        autoComplete="email"
+                        className="w-full p-4 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                         required
                     />
                 </motion.div>
 
                 {role === 'teacher' && (
-                    <motion.div variants={inputVariants} transition={{ delay: 0.2 }}>
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                    >
                         <input
                             type="text"
                             name="department"
                             placeholder="Department (e.g., Science, Math)"
                             value={formData.department}
                             onChange={handleChange}
-                            className="w-full p-4 bg-gray-100 dark:bg-gray-800 border border-border-light dark:border-border-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+                            autoComplete="organization-title"
+                            className="w-full p-4 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                             required
                         />
                     </motion.div>
@@ -129,72 +144,103 @@ const JoinInstitutePage = () => {
 
                 {role === 'student' && (
                     <>
-                        <motion.div variants={inputVariants} transition={{ delay: 0.2 }}>
+                        <motion.div 
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                        >
                             <input
                                 type="text"
                                 name="admissionNumber"
                                 placeholder="Admission Number"
                                 value={formData.admissionNumber}
                                 onChange={handleChange}
-                                className="w-full p-4 bg-gray-100 dark:bg-gray-800 border border-border-light dark:border-border-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+                                autoComplete="off"
+                                className="w-full p-4 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                                 required
                             />
                         </motion.div>
                         <div className="flex gap-4">
-                            <motion.div variants={inputVariants} transition={{ delay: 0.25 }} className="flex-1">
+                            <motion.div 
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.25 }}
+                                className="flex-1"
+                            >
                                 <input
                                     type="text"
                                     name="class"
                                     placeholder="Class (e.g., 10)"
                                     value={formData.class}
                                     onChange={handleChange}
-                                    className="w-full p-4 bg-gray-100 dark:bg-gray-800 border border-border-light dark:border-border-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+                                    autoComplete="off"
+                                    className="w-full p-4 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                                     required
                                 />
                             </motion.div>
-                            <motion.div variants={inputVariants} transition={{ delay: 0.25 }} className="flex-1">
+                            <motion.div 
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.25 }}
+                                className="flex-1"
+                            >
                                 <input
                                     type="text"
                                     name="section"
                                     placeholder="Section (e.g., A)"
                                     value={formData.section}
                                     onChange={handleChange}
-                                    className="w-full p-4 bg-gray-100 dark:bg-gray-800 border border-border-light dark:border-border-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+                                    autoComplete="off"
+                                    className="w-full p-4 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                                 />
                             </motion.div>
                         </div>
                     </>
                 )}
 
-                <motion.div variants={inputVariants} transition={{ delay: 0.3 }}>
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                >
                     <input
                         type="password"
                         name="password"
                         placeholder="Create a Password"
                         value={formData.password}
                         onChange={handleChange}
-                        className="w-full p-4 bg-gray-100 dark:bg-gray-800 border border-border-light dark:border-border-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+                        autoComplete="new-password"
+                        className="w-full p-4 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                         required
                     />
                 </motion.div>
 
-                <motion.div variants={inputVariants} transition={{ delay: 0.35 }}>
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.35 }}
+                >
                     <input
                         type="password"
                         name="confirmPassword"
                         placeholder="Confirm Password"
                         value={formData.confirmPassword}
                         onChange={handleChange}
-                        className="w-full p-4 bg-gray-100 dark:bg-gray-800 border border-border-light dark:border-border-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+                        autoComplete="new-password"
+                        className="w-full p-4 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                         required
                     />
                 </motion.div>
 
-                <motion.div variants={inputVariants} transition={{ delay: 0.4 }}>
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                >
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full p-4 font-bold text-white bg-primary rounded-xl hover:bg-primary-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
+                        className="w-full p-4 font-bold text-white bg-green-600 hover:bg-green-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                         {loading ? 'Creating Account...' : 'Join and Create Account'}
                     </button>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Eco Sorting Factory</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #0f0f1e;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: white;
+            font-size: 24px;
+            z-index: 1000;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #4ecca3;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        canvas {
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <div class="spinner"></div>
+        <div>Loading Game...</div>
+    </div>
+    <div id="game-container"></div>
+
+    <!-- Phaser 3 -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+    
+    <!-- Game Logic -->
+    <script src="waste-segregator-adaptive.js"></script>
+    
+    <!-- Game Scenes -->
+    <script src="waste-segregator-scenes.js"></script>
+    <script src="waste-segregator-gameplay.js"></script>
+    <script src="waste-segregator-results.js"></script>
+    
+    <!-- Game Initialization -->
+    <script>
+        // Get user ID from URL params
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('userId') || 'guest';
+        const authToken = urlParams.get('token') || null;
+        
+        // Determine API base URL
+        const apiBaseUrl = window.location.hostname === 'localhost' 
+            ? 'http://localhost:5001' 
+            : 'https://pixel-planet-backend.vercel.app';
+        
+        console.log('Initializing game for user:', userId);
+        console.log('API Base URL:', apiBaseUrl);
+        
+        // Initialize game logic
+        window.gameInstance = new WasteSegregatorGame(userId, apiBaseUrl);
+        if (authToken) {
+            window.gameInstance.setAuthToken(authToken);
+        }
+        
+        // Initialize profile
+        window.gameInstance.initialize().then(profile => {
+            console.log('Profile initialized:', profile);
+            
+            // Hide loading
+            document.getElementById('loading').style.display = 'none';
+            
+            // Calculate game dimensions
+            const dims = getGameDimensions();
+            
+            // Phaser configuration
+            const config = {
+                type: Phaser.AUTO,
+                width: dims.width,
+                height: dims.height,
+                parent: 'game-container',
+                backgroundColor: '#1a1a2e',
+                physics: {
+                    default: 'arcade',
+                    arcade: {
+                        gravity: { y: 0 },
+                        debug: false
+                    }
+                },
+                scene: [MenuScene, TutorialScene, IntroScene, GameScene, ResultsScene],
+                scale: {
+                    mode: Phaser.Scale.FIT,
+                    autoCenter: Phaser.Scale.CENTER_BOTH
+                }
+            };
+            
+            // Create game
+            const game = new Phaser.Game(config);
+            
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                const newDims = getGameDimensions();
+                game.scale.resize(newDims.width, newDims.height);
+            });
+            
+            console.log('Game initialized successfully!');
+        }).catch(error => {
+            console.error('Error initializing game:', error);
+            document.getElementById('loading').innerHTML = 
+                '<div style="color: #e74c3c;">Error loading game. Please refresh.</div>';
+        });
+    </script>
+</body>
+</html>

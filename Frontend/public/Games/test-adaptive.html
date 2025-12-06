@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Adaptive Game System</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .test-section {
+      background: white;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    button {
+      background: #27ae60;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+      font-size: 16px;
+    }
+    button:hover {
+      background: #229954;
+    }
+    .output {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 10px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    h1 { color: #27ae60; }
+    h2 { color: #2c3e50; }
+    .success { color: #27ae60; }
+    .error { color: #e74c3c; }
+  </style>
+</head>
+<body>
+  <h1>🧪 Adaptive Game System Test</h1>
+  
+  <div class="test-section">
+    <h2>1. Test Configuration Loading</h2>
+    <button onclick="testConfig()">Test Config</button>
+    <div id="config-output" class="output"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>2. Test Game Manager</h2>
+    <button onclick="testGameManager()">Test Manager</button>
+    <div id="manager-output" class="output"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>3. Test Profile Creation</h2>
+    <button onclick="testProfile()">Test Profile</button>
+    <div id="profile-output" class="output"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>4. Test Adaptive Difficulty</h2>
+    <button onclick="testAdaptive()">Test Adaptive Logic</button>
+    <div id="adaptive-output" class="output"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>5. Simulate Full Game</h2>
+    <button onclick="simulateGame(0.9)">Simulate 90% Accuracy</button>
+    <button onclick="simulateGame(0.7)">Simulate 70% Accuracy</button>
+    <button onclick="simulateGame(0.5)">Simulate 50% Accuracy</button>
+    <div id="simulate-output" class="output"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>6. View Saved Profile</h2>
+    <button onclick="viewProfile()">View Profile</button>
+    <button onclick="clearProfile()">Clear Profile</button>
+    <div id="view-output" class="output"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>7. Launch Game</h2>
+    <button onclick="launchGame()">🎮 Launch Adaptive Game</button>
+  </div>
+
+  <script src="game-config.js"></script>
+  <script src="game-manager.js"></script>
+
+  <script>
+    function log(elementId, message, isError = false) {
+      const output = document.getElementById(elementId);
+      const className = isError ? 'error' : 'success';
+      output.innerHTML += `<span class="${className}">${message}</span>\n`;
+    }
+
+    function testConfig() {
+      const output = document.getElementById('config-output');
+      output.innerHTML = '';
+      
+      try {
+        log('config-output', '✓ GAME_CONFIG loaded');
+        log('config-output', `✓ Levels: ${GAME_CONFIG.LEVEL_CONFIG.length}`);
+        log('config-output', `✓ Items: ${Object.keys(GAME_CONFIG.ITEM_DATABASE).length}`);
+        log('config-output', `✓ Bins: ${Object.keys(GAME_CONFIG.BIN_CONFIG).length}`);
+        
+        log('config-output', '\nLevel Details:');
+        GAME_CONFIG.LEVEL_CONFIG.forEach(level => {
+          log('config-output', `  Level ${level.id}: ${level.name} - ${level.bins.length} bins, ${level.itemCount} items`);
+        });
+      } catch (error) {
+        log('config-output', `✗ Error: ${error.message}`, true);
+      }
+    }
+
+    async function testGameManager() {
+      const output = document.getElementById('manager-output');
+      output.innerHTML = '';
+      
+      try {
+        const manager = new GameManager('test_user');
+        log('manager-output', '✓ GameManager created');
+        
+        await manager.initialize();
+        log('manager-output', '✓ Manager initialized');
+        log('manager-output', `✓ Profile loaded for user: ${manager.profile.userId}`);
+        log('manager-output', `✓ Current level: ${manager.profile.currentLevelId}`);
+      } catch (error) {
+        log('manager-output', `✗ Error: ${error.message}`, true);
+      }
+    }
+
+    async function testProfile() {
+      const output = document.getElementById('profile-output');
+      output.innerHTML = '';
+      
+      try {
+        const manager = new GameManager('test_user_' + Date.now());
+        await manager.initialize();
+        
+        log('profile-output', '✓ New profile created');
+        log('profile-output', JSON.stringify(manager.profile, null, 2));
+      } catch (error) {
+        log('profile-output', `✗ Error: ${error.message}`, true);
+      }
+    }
+
+    async function testAdaptive() {
+      const output = document.getElementById('adaptive-output');
+      output.innerHTML = '';
+      
+      try {
+        const manager = new GameManager('test_adaptive');
+        await manager.initialize();
+        
+        // Start level
+        const levelData = manager.startLevel(1);
+        log('adaptive-output', '✓ Level started');
+        
+        // Simulate some drops
+        manager.handleItemDrop('banana_peel', 'organic', 'organic', 2.5);
+        manager.handleItemDrop('plastic_bottle', 'recyclable', 'organic', 3.0);
+        log('adaptive-output', '✓ Items processed');
+        
+        // Evaluate
+        const performance = manager.evaluatePerformance();
+        log('adaptive-output', `✓ Accuracy: ${(performance.accuracy * 100).toFixed(0)}%`);
+        
+        // Decide next level
+        const decision = manager.decideNextLevel(performance);
+        log('adaptive-output', `✓ Decision: ${decision.action}`);
+        log('adaptive-output', `✓ Reason: ${decision.reason}`);
+        
+        if (decision.hints.length > 0) {
+          log('adaptive-output', '✓ Hints:');
+          decision.hints.forEach(hint => log('adaptive-output', `  - ${hint}`));
+        }
+      } catch (error) {
+        log('adaptive-output', `✗ Error: ${error.message}`, true);
+      }
+    }
+
+    async function simulateGame(targetAccuracy) {
+      const output = document.getElementById('simulate-output');
+      output.innerHTML = '';
+      
+      try {
+        const manager = new GameManager('sim_user_' + Date.now());
+        await manager.initialize();
+        
+        log('simulate-output', `🎮 Simulating game with ${(targetAccuracy * 100).toFixed(0)}% accuracy\n`);
+        
+        const levelData = manager.startLevel(1);
+        const itemCount = levelData.level.itemCount;
+        const correctCount = Math.floor(itemCount * targetAccuracy);
+        
+        log('simulate-output', `Level: ${levelData.level.name}`);
+        log('simulate-output', `Items: ${itemCount}, Target correct: ${correctCount}\n`);
+        
+        // Simulate drops
+        for (let i = 0; i < itemCount; i++) {
+          const isCorrect = i < correctCount;
+          const item = levelData.level.itemTypes[i % levelData.level.itemTypes.length];
+          const itemData = GAME_CONFIG.ITEM_DATABASE[item];
+          const correctBin = itemData.bin;
+          const selectedBin = isCorrect ? correctBin : 'organic';
+          
+          manager.handleItemDrop(item, correctBin, selectedBin, Math.random() * 3 + 1);
+        }
+        
+        // End game
+        const results = await manager.endGame();
+        
+        log('simulate-output', '📊 Results:');
+        log('simulate-output', `  Accuracy: ${(results.performance.accuracy * 100).toFixed(0)}%`);
+        log('simulate-output', `  Correct: ${results.performance.correct}/${results.performance.totalItems}`);
+        log('simulate-output', `  Decision: ${results.decision.action}`);
+        log('simulate-output', `  Reason: ${results.decision.reason}`);
+        
+        if (results.decision.hints.length > 0) {
+          log('simulate-output', '\n💡 Hints:');
+          results.decision.hints.forEach(hint => log('simulate-output', `  ${hint}`));
+        }
+        
+        log('simulate-output', '\n✓ Profile saved to localStorage');
+      } catch (error) {
+        log('simulate-output', `✗ Error: ${error.message}`, true);
+      }
+    }
+
+    function viewProfile() {
+      const output = document.getElementById('view-output');
+      output.innerHTML = '';
+      
+      try {
+        const keys = Object.keys(localStorage).filter(k => k.startsWith('wasteSegregator_'));
+        
+        if (keys.length === 0) {
+          log('view-output', 'No profiles found in localStorage');
+          return;
+        }
+        
+        log('view-output', `Found ${keys.length} profile(s):\n`);
+        
+        keys.forEach(key => {
+          const profile = JSON.parse(localStorage.getItem(key));
+          log('view-output', `User: ${profile.userId}`);
+          log('view-output', `  Level: ${profile.currentLevelId}`);
+          log('view-output', `  Best: ${profile.bestLevelUnlocked}`);
+          log('view-output', `  Games: ${profile.totalGamesPlayed}`);
+          log('view-output', `  Seen bins: ${profile.seenBins.join(', ')}`);
+          log('view-output', '');
+        });
+      } catch (error) {
+        log('view-output', `✗ Error: ${error.message}`, true);
+      }
+    }
+
+    function clearProfile() {
+      if (confirm('Clear all profiles from localStorage?')) {
+        const keys = Object.keys(localStorage).filter(k => k.startsWith('wasteSegregator_'));
+        keys.forEach(key => localStorage.removeItem(key));
+        log('view-output', `✓ Cleared ${keys.length} profile(s)`);
+      }
+    }
+
+    function launchGame() {
+      window.open('waste-segregator-adaptive.html?userId=test_user', '_blank');
+    }
+  </script>
+</body>
+</html>
