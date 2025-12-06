@@ -32,17 +32,17 @@ const HODDashboard = () => {
     const fetchData = async () => {
         try {
             const token = await currentUser.getIdToken();
-            const headers = { 'Authorization': `Bearer ${token}` };
+            const api = (await import('../services/api')).default;
 
             const [statsRes, teachersRes, analyticsRes] = await Promise.all([
-                fetch('/api/auth/institute-stats', { headers }),
-                fetch('/api/auth/pending-teachers', { headers }),
-                fetch('/api/analytics/institute-analytics', { headers })
+                api.get('/api/auth/institute-stats', token),
+                api.get('/api/auth/pending-teachers', token),
+                api.get('/api/analytics/institute-analytics', token)
             ]);
 
-            if (statsRes.ok) setStats(await statsRes.json());
-            if (teachersRes.ok) setPendingTeachers((await teachersRes.json()).teachers);
-            if (analyticsRes.ok) setAnalytics(await analyticsRes.json());
+            setStats(statsRes);
+            setPendingTeachers(teachersRes.teachers || []);
+            setAnalytics(analyticsRes);
         } catch (error) {
             console.error('Error fetching data:', error);
         }
@@ -57,11 +57,9 @@ const HODDashboard = () => {
     const verifyTeacher = async (teacherId, approved) => {
         try {
             const token = await currentUser.getIdToken();
-            await fetch(`/api/auth/verify-teacher/${teacherId}`, {
-                method: 'PATCH',
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ approved })
-            });
+            const api = (await import('../services/api')).default;
+            
+            await api.put(`/api/auth/verify-teacher/${teacherId}`, { approved }, token);
             setPendingTeachers(prev => prev.filter(t => t.uid !== teacherId));
             fetchData();
         } catch (error) {
