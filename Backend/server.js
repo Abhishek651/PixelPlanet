@@ -141,10 +141,11 @@ app.use((err, req, res, next) => {
 // --- 6. EXPORT THE APP FOR VERCEL ---
 module.exports = app;
 
-// --- 7. RUN THE SERVER LOCALLY (ONLY IF NOT IN PRODUCTION) ---
-if (process.env.NODE_ENV !== 'production') {
+// --- 7. START SERVER (only for local development) ---
+if (require.main === module) {
     const PORT = process.env.PORT || 5001;
     app.listen(PORT, () => {
-        console.log(`✅ Server is running for local development at http://localhost:${PORT}`);
+        console.log(`✅ Server is running on port ${PORT}`);
+        console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
     });
 }

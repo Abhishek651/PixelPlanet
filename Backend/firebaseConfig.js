@@ -19,9 +19,9 @@ else {
     if (fs.existsSync(serviceAccountKeyPath)) {
         serviceAccount = JSON.parse(fs.readFileSync(serviceAccountKeyPath, 'utf8'));
     } else {
-        console.error("Could not find service account key.");
-        console.error("Please set GOOGLE_APPLICATION_CREDENTIALS_JSON or place 'serviceAccountKey.json' in the backend root.");
-        process.exit(1); // Exit if no credentials found
+        console.error("⚠️ Could not find service account key.");
+        console.error("Please set GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable or place 'serviceAccountKey.json' in the backend root.");
+        throw new Error('Firebase credentials not found');
     }
 }
 
