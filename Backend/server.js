@@ -83,9 +83,20 @@ console.log('  - /api/creator ✨ (Creator Analytics)');
 console.log('  - /api/game 🎮 (Game Profiles)');
 
 // Add a catch-all route to log 404s
-app.use((req, res, next) => {
+app.use((req, res) => {
     console.log(`❌ 404 - Route not found: ${req.method} ${req.url}`);
     res.status(404).json({ message: 'Route not found', path: req.url });
+});
+
+// Global error handler - ensures JSON responses even on errors
+app.use((err, req, res, next) => {
+    console.error('❌ Global error handler:', err);
+    
+    // Ensure we always return JSON, never HTML
+    res.status(err.status || 500).json({
+        message: err.message || 'Internal server error',
+        error: process.env.NODE_ENV === 'production' ? {} : err.stack
+    });
 });
 
 // --- 6. EXPORT THE APP FOR VERCEL ---

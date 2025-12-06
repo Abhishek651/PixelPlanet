@@ -183,17 +183,22 @@ router.post('/verify-institute-code', [
 
 // 3. REGISTER TEACHER
 router.post('/register-teacher', [
-    body('name').notEmpty(),
-    body('email').isEmail(),
-    body('password').isLength({ min: 6 }),
-    body('instituteId').notEmpty(),
-    body('department').notEmpty()
+    body('name').notEmpty().withMessage('Name is required.'),
+    body('email').isEmail().withMessage('Valid email is required.'),
+    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters.'),
+    body('instituteId').notEmpty().withMessage('Institute ID is required.'),
+    body('department').notEmpty().withMessage('Department is required.')
 ], async (req, res) => {
     const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+    if (!errors.isEmpty()) {
+        const errorMessages = errors.array().map(err => err.msg).join(', ');
+        return res.status(400).json({ message: errorMessages, errors: errors.array() });
+    }
 
     const { name, email, password, instituteId, department } = req.body;
     let userRecord;
+
+    console.log('[register-teacher] Request received:', { name, email, instituteId, department });
 
     try {
         userRecord = await admin.auth().createUser({ email, password, displayName: name });
@@ -206,22 +211,29 @@ router.post('/register-teacher', [
 
         res.status(201).json({ message: 'Teacher registered. Awaiting verification.' });
     } catch (error) {
+        console.error('[register-teacher] Error:', error);
         if (userRecord?.uid) await admin.auth().deleteUser(userRecord.uid).catch(console.error);
-        res.status(500).json({ message: getFirebaseErrorMessage(error) });
+        res.status(500).json({ 
+            message: getFirebaseErrorMessage(error),
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
 });
 
 // 4. REGISTER STUDENT
 router.post('/register-student', [
-    body('name').notEmpty(),
-    body('email').isEmail(),
-    body('password').isLength({ min: 6 }),
-    body('instituteId').notEmpty(),
-    body('admissionNumber').notEmpty(),
-    body('class').notEmpty()
+    body('name').notEmpty().withMessage('Name is required.'),
+    body('email').isEmail().withMessage('Valid email is required.'),
+    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters.'),
+    body('instituteId').notEmpty().withMessage('Institute ID is required.'),
+    body('admissionNumber').notEmpty().withMessage('Admission number is required.'),
+    body('class').notEmpty().withMessage('Class is required.')
 ], async (req, res) => {
     const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+    if (!errors.isEmpty()) {
+        const errorMessages = errors.array().map(err => err.msg).join(', ');
+        return res.status(400).json({ message: errorMessages, errors: errors.array() });
+    }
 
     const { name, email, password, instituteId, admissionNumber, class: studentClass, section } = req.body;
     let userRecord;
