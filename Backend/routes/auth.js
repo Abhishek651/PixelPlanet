@@ -267,7 +267,7 @@ router.get('/profile', verifyToken, async (req, res) => {
 });
 
 // 6. VERIFY TEACHER (HOD only)
-router.patch('/verify-teacher/:teacherId', verifyToken, async (req, res) => {
+router.put('/verify-teacher/:teacherId', verifyToken, async (req, res) => {
     if (req.userRole !== 'hod') return res.status(403).json({ message: 'HOD access required.' });
     
     try {
