@@ -1,22 +1,11 @@
 const express = require('express');
 const router = express.Router();
+const { db, admin } = require('../firebaseConfig');
 const { verifyToken } = require('../middleware/auth');
-
-let db, admin;
-try {
-    const firebaseConfig = require('../firebaseConfig');
-    db = firebaseConfig.db;
-    admin = firebaseConfig.admin;
-} catch (error) {
-    console.error('Firebase not initialized in game-profile route:', error.message);
-}
 
 // Get player profile
 router.get('/profile/:userId', verifyToken, async (req, res) => {
     try {
-        if (!db) {
-            return res.status(503).json({ error: 'Database not available' });
-        }
         const { userId } = req.params;
         
         // Verify user can only access their own profile (unless admin)
@@ -43,9 +32,6 @@ router.get('/profile/:userId', verifyToken, async (req, res) => {
 // Save player profile
 router.post('/profile', verifyToken, async (req, res) => {
     try {
-        if (!db) {
-            return res.status(503).json({ error: 'Database not available' });
-        }
         const profile = req.body;
         
         // Verify user can only save their own profile
@@ -67,9 +53,6 @@ router.post('/profile', verifyToken, async (req, res) => {
 // Log game session for analytics
 router.post('/session', verifyToken, async (req, res) => {
     try {
-        if (!db) {
-            return res.status(503).json({ error: 'Database not available' });
-        }
         const { userId, levelId, performance, duration } = req.body;
         
         // Verify user
@@ -97,9 +80,6 @@ router.post('/session', verifyToken, async (req, res) => {
 // Get user's game statistics
 router.get('/stats/:userId', verifyToken, async (req, res) => {
     try {
-        if (!db) {
-            return res.status(503).json({ error: 'Database not available' });
-        }
         const { userId } = req.params;
         
         if (req.uid !== userId && req.userRole !== 'admin') {
