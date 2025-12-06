@@ -1,0 +1,13 @@
+# Don't deploy these files to Vercel
+serviceAccountKey.json
+.env
+.env.local
+.env.production
+node_modules
+*.log
+.DS_Store
+.vscode
+.kiro
+createAdminUser.js
+fixAdminUser.js
+migrations
