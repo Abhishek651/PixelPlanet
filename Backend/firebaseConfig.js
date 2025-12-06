@@ -21,7 +21,7 @@ else {
     } else {
         console.error("Could not find service account key.");
         console.error("Please set GOOGLE_APPLICATION_CREDENTIALS_JSON or place 'serviceAccountKey.json' in the backend root.");
-        process.exit(1); // Exit if no credentials found
+        throw new Error('Firebase credentials not found');
     }
 }
 
