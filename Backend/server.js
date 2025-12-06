@@ -20,12 +20,6 @@ try {
 // --- 3. INITIALIZE EXPRESS APP ---
 const app = express();
 
-// Add a logging middleware to see incoming requests
-app.use((req, res, next) => {
-    console.log(`➡️  Incoming Request: ${req.method} ${req.url}`);
-    next();
-});
-
 // --- 4. APPLY MIDDLEWARE (CORRECTED ORDER) ---
 
 // ** STEP 1: CONFIGURE AND USE CORS MIDDLEWARE FIRST **
@@ -105,16 +99,14 @@ console.log('  - /api/leaderboard');
 console.log('  - /api/admin');
 console.log('  - /api/creator ✨ (Creator Analytics)');
 console.log('  - /api/game 🎮 (Game Profiles)');
-console.log('  - /api ✨ (API Health Check)');
 
 // Root route for health check
-app.get('/api', (req, res) => {
+app.get('/', (req, res) => {
     res.json({ 
         status: 'ok', 
         message: 'Pixel Planet API is running',
         timestamp: new Date().toISOString(),
         routes: [
-            '/api',
             '/api/auth',
             '/api/quiz',
             '/api/challenges',
