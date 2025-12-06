@@ -4,7 +4,18 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { db, admin } = require('./firebaseConfig'); // Import db and admin
+
+// --- 2. INITIALIZE FIREBASE (with error handling) ---
+let db, admin;
+try {
+    const firebaseConfig = require('./firebaseConfig');
+    db = firebaseConfig.db;
+    admin = firebaseConfig.admin;
+    console.log('✅ Firebase initialized successfully');
+} catch (error) {
+    console.error('❌ Firebase initialization failed:', error.message);
+    // Continue anyway - routes will handle missing Firebase
+}
 
 // --- 3. INITIALIZE EXPRESS APP ---
 const app = express();
@@ -48,27 +59,34 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 // --- 5. IMPORT & USE ROUTES ---
-const authRoutes = require('./routes/auth');
-const quizRoutes = require('./routes/quiz');
-const challengeRoutes = require('./routes/challenges');
-const analyticsRoutes = require('./routes/analytics');
-const announcementRoutes = require('./routes/announcements');
-const ecobotRoutes = require('./routes/ecobot');
-const leaderboardRoutes = require('./routes/leaderboard');
-const adminManagementRoutes = require('./routes/admin-management');
-const creatorAnalyticsRoutes = require('./routes/creator-analytics');
-const gameProfileRoutes = require('./routes/game-profile');
+try {
+    const authRoutes = require('./routes/auth');
+    const quizRoutes = require('./routes/quiz');
+    const challengeRoutes = require('./routes/challenges');
+    const analyticsRoutes = require('./routes/analytics');
+    const announcementRoutes = require('./routes/announcements');
+    const ecobotRoutes = require('./routes/ecobot');
+    const leaderboardRoutes = require('./routes/leaderboard');
+    const adminManagementRoutes = require('./routes/admin-management');
+    const creatorAnalyticsRoutes = require('./routes/creator-analytics');
+    const gameProfileRoutes = require('./routes/game-profile');
 
-app.use('/api/auth', authRoutes);
-app.use('/api/quiz', quizRoutes);
-app.use('/api/challenges', challengeRoutes);
-app.use('/api/analytics', analyticsRoutes);
-app.use('/api/announcements', announcementRoutes);
-app.use('/api/ecobot', ecobotRoutes);
-app.use('/api/leaderboard', leaderboardRoutes);
-app.use('/api/admin', adminManagementRoutes);
-app.use('/api/creator', creatorAnalyticsRoutes);
-app.use('/api/game', gameProfileRoutes);
+    app.use('/api/auth', authRoutes);
+    app.use('/api/quiz', quizRoutes);
+    app.use('/api/challenges', challengeRoutes);
+    app.use('/api/analytics', analyticsRoutes);
+    app.use('/api/announcements', announcementRoutes);
+    app.use('/api/ecobot', ecobotRoutes);
+    app.use('/api/leaderboard', leaderboardRoutes);
+    app.use('/api/admin', adminManagementRoutes);
+    app.use('/api/creator', creatorAnalyticsRoutes);
+    app.use('/api/game', gameProfileRoutes);
+    
+    console.log('✅ All routes loaded successfully');
+} catch (error) {
+    console.error('❌ Error loading routes:', error.message);
+    console.error(error.stack);
+}
 
 console.log('📋 Registered routes:');
 console.log('  - /api/auth');
@@ -81,6 +99,27 @@ console.log('  - /api/leaderboard');
 console.log('  - /api/admin');
 console.log('  - /api/creator ✨ (Creator Analytics)');
 console.log('  - /api/game 🎮 (Game Profiles)');
+
+// Root route for health check
+app.get('/', (req, res) => {
+    res.json({ 
+        status: 'ok', 
+        message: 'Pixel Planet API is running',
+        timestamp: new Date().toISOString(),
+        routes: [
+            '/api/auth',
+            '/api/quiz',
+            '/api/challenges',
+            '/api/analytics',
+            '/api/announcements',
+            '/api/ecobot',
+            '/api/leaderboard',
+            '/api/admin',
+            '/api/creator',
+            '/api/game'
+        ]
+    });
+});
 
 // Add a catch-all route to log 404s
 app.use((req, res) => {
