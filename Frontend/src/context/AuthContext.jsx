@@ -16,12 +16,38 @@ export const AuthProvider = ({ children }) => {
         return signInWithEmailAndPassword(auth, email, password);
     };
 
-    const signup = async (email, password, displayName) => {
+    const signup = async (email, password, displayName, locationData = null) => {
         const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth');
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         if (displayName) {
             await updateProfile(userCredential.user, { displayName });
         }
+        
+        // If location data is provided, sync it with the backend
+        if (locationData && (locationData.city || locationData.country)) {
+            try {
+                const token = await userCredential.user.getIdToken();
+                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+                
+                await fetch(`${apiUrl}/api/auth/sync-user`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        name: displayName || email.split('@')[0],
+                        email: email,
+                        city: locationData.city || '',
+                        country: locationData.country || ''
+                    })
+                });
+            } catch (error) {
+                console.error('Error syncing location data:', error);
+                // Don't fail signup if location sync fails
+            }
+        }
+        
         return userCredential;
     };
 
@@ -53,7 +79,9 @@ export const AuthProvider = ({ children }) => {
                         },
                         body: JSON.stringify({
                             name: user.displayName || user.email.split('@')[0],
-                            email: user.email
+                            email: user.email,
+                            city: '',
+                            country: ''
                         })
                     });
                     

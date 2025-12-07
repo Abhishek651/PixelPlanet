@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/useAuth';
@@ -6,6 +6,7 @@ import { ChevronRight, ChevronLeft } from 'lucide-react';
 import { getUserFriendlyError, getValidationError } from '../utils/errorMessages';
 import { logAuthEvent, logError, logUserAction } from '../utils/logger';
 import { useNotification } from '../components/base/NotificationModal';
+import { getUserLocation } from '../utils/locationService';
 
 // ============================================
 // PAGE: RegisterPage
@@ -22,6 +23,8 @@ const RegisterPage = () => {
         password: '',
         confirmPassword: ''
     });
+    const [locationData, setLocationData] = useState(null);
+    const [detectingLocation, setDetectingLocation] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
@@ -29,6 +32,30 @@ const RegisterPage = () => {
     const { showNotification, NotificationComponent } = useNotification();
 
     const totalSteps = 4;
+
+    // Auto-detect location when component mounts
+    useEffect(() => {
+        const detectLocation = async () => {
+            setDetectingLocation(true);
+            try {
+                const location = await getUserLocation();
+                if (location) {
+                    setLocationData({
+                        city: location.city,
+                        country: location.country
+                    });
+                    console.log('Location detected:', location);
+                }
+            } catch (err) {
+                console.log('Location detection failed:', err.message);
+                // Silently fail - location is optional
+            } finally {
+                setDetectingLocation(false);
+            }
+        };
+        
+        detectLocation();
+    }, []);
 
     // Handle next step with validation
     const handleNext = () => {
@@ -82,9 +109,12 @@ const RegisterPage = () => {
 
         try {
             const fullName = `${formData.firstName} ${formData.lastName}`;
-            await signup(formData.email, formData.password, fullName);
+            await signup(formData.email, formData.password, fullName, locationData);
             
-            logAuthEvent('Registration successful', { email: formData.email });
+            logAuthEvent('Registration successful', { 
+                email: formData.email,
+                location: locationData ? `${locationData.city}, ${locationData.country}` : 'Not detected'
+            });
             
             // Show success notification
             showNotification({

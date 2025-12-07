@@ -510,6 +510,7 @@ router.post('/sync-user', async (req, res) => {
         
         console.log('[sync-user] Creating new user document');
         // Create new user document for direct signup (global user)
+        const { city, country } = req.body;
         const userData = {
             uid: uid,
             name: name || email.split('@')[0],
@@ -522,6 +523,8 @@ router.post('/sync-user', async (req, res) => {
             xp: 0,
             level: 1,
             badges: [],
+            city: city || '',
+            country: country || '',
             createdAt: admin.firestore.FieldValue.serverTimestamp()
         };
         

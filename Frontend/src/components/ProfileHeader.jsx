@@ -8,6 +8,7 @@ import EcoPointsDisplay from './EcoPointsDisplay';
 const ProfileHeader = ({ user, role }) => {
     const [ecoPoints, setEcoPoints] = useState(0);
     const [instituteName, setInstituteName] = useState('');
+    const [userLocation, setUserLocation] = useState('');
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -19,6 +20,15 @@ const ProfileHeader = ({ user, role }) => {
                         const userData = userDoc.data();
                         console.log('ProfileHeader: User data:', userData);
                         setEcoPoints(userData.ecoPoints || 0);
+                        
+                        // Set user location
+                        if (userData.city && userData.country) {
+                            setUserLocation(`${userData.city}, ${userData.country}`);
+                        } else if (userData.city) {
+                            setUserLocation(userData.city);
+                        } else if (userData.country) {
+                            setUserLocation(userData.country);
+                        }
                         
                         // Fetch institute name if user has instituteId
                         if (userData.instituteId) {
@@ -73,6 +83,14 @@ const ProfileHeader = ({ user, role }) => {
             <div className="flex-1">
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{user.displayName || 'Anonymous User'}</h1>
                 <p className="text-gray-600 dark:text-gray-400">{user.email}</p>
+                
+                {/* Location */}
+                {userLocation && !loading && (
+                    <div className="flex items-center mt-1">
+                        <span className="material-symbols-outlined text-sm mr-1 text-gray-500 dark:text-gray-400">location_on</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">{userLocation}</span>
+                    </div>
+                )}
                 
                 {/* Institute Name or Join Message */}
                 {(role === 'student' || role === 'teacher' || role === 'hod') && !loading && (

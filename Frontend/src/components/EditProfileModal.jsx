@@ -5,6 +5,7 @@ import { updateProfile, updateEmail, updatePassword, EmailAuthProvider, reauthen
 import { auth, db, storage } from '../services/firebase';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { getUserLocation } from '../utils/locationService';
 
 const EditProfileModal = ({ isOpen, onClose }) => {
     const { currentUser, refreshAuth } = useAuth();
@@ -17,6 +18,8 @@ const EditProfileModal = ({ isOpen, onClose }) => {
         displayName: '',
         email: '',
         gender: '',
+        city: '',
+        country: '',
         photoURL: '',
         currentPassword: '',
         newPassword: '',
@@ -25,6 +28,7 @@ const EditProfileModal = ({ isOpen, onClose }) => {
     
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState('');
+    const [detectingLocation, setDetectingLocation] = useState(false);
 
     useEffect(() => {
         if (currentUser && isOpen) {
@@ -41,6 +45,8 @@ const EditProfileModal = ({ isOpen, onClose }) => {
                 displayName: currentUser.displayName || '',
                 email: currentUser.email || '',
                 gender: userData?.gender || '',
+                city: userData?.city || '',
+                country: userData?.country || '',
                 photoURL: currentUser.photoURL || '',
                 currentPassword: '',
                 newPassword: '',
@@ -49,6 +55,28 @@ const EditProfileModal = ({ isOpen, onClose }) => {
             setImagePreview(currentUser.photoURL || '');
         } catch (err) {
             console.error('Error loading user data:', err);
+        }
+    };
+
+    const handleDetectLocation = async () => {
+        setDetectingLocation(true);
+        setError('');
+        
+        try {
+            const location = await getUserLocation();
+            if (location) {
+                setFormData({
+                    ...formData,
+                    city: location.city,
+                    country: location.country
+                });
+                setSuccess('Location detected successfully!');
+                setTimeout(() => setSuccess(''), 2000);
+            }
+        } catch (err) {
+            setError(err.message || 'Failed to detect location. Please enter manually.');
+        } finally {
+            setDetectingLocation(false);
         }
     };
 
@@ -100,6 +128,8 @@ const EditProfileModal = ({ isOpen, onClose }) => {
             await updateDoc(doc(db, 'users', currentUser.uid), {
                 name: formData.displayName,
                 gender: formData.gender,
+                city: formData.city,
+                country: formData.country,
                 photoURL: photoURL,
                 updatedAt: new Date().toISOString()
             });
@@ -325,6 +355,38 @@ const EditProfileModal = ({ isOpen, onClose }) => {
                                         <option value="other">Other</option>
                                         <option value="prefer-not-to-say">Prefer not to say</option>
                                     </select>
+                                </div>
+
+                                {/* Location */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Location
+                                    </label>
+                                    <div className="flex gap-2 mb-2">
+                                        <input
+                                            type="text"
+                                            value={formData.city}
+                                            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                                            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white text-gray-900"
+                                            placeholder="City"
+                                        />
+                                        <input
+                                            type="text"
+                                            value={formData.country}
+                                            onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                                            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white text-gray-900"
+                                            placeholder="Country"
+                                        />
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={handleDetectLocation}
+                                        disabled={detectingLocation}
+                                        className="w-full py-2 px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <span className="material-symbols-outlined text-sm">location_on</span>
+                                        {detectingLocation ? 'Detecting...' : 'Auto-Detect My Location'}
+                                    </button>
                                 </div>
 
                                 <button
