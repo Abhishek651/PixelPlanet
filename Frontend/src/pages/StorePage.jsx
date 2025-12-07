@@ -73,12 +73,12 @@ const StorePage = () => {
     };
 
     return (
-        <div className="flex h-screen bg-gray-50 overflow-hidden">
+        <div className="flex min-h-screen bg-gray-50 w-full overflow-hidden">
             <SideNavbar />
-            <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 flex flex-col pb-20 lg:pb-0 min-w-0">
                 {/* Header */}
-                <header className="bg-white shadow-sm border-b sticky top-0 z-30">
-                <div className="max-w-7xl mx-auto px-4 lg:px-6 py-4">
+                <header className="bg-white shadow-sm border-b sticky top-0 z-30 w-full">
+                <div className="w-full px-4 lg:px-6 py-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
                             <button className="lg:hidden" onClick={() => window.history.back()}>
@@ -95,10 +95,11 @@ const StorePage = () => {
                 </div>
             </header>
 
-            <main className="max-w-7xl mx-auto px-4 lg:px-6 py-6">
+            <main className="flex-1 w-full overflow-y-auto overflow-x-hidden">
+                <div className="w-full px-4 lg:px-6 py-6">
                 {/* Categories */}
-                <div className="mb-8">
-                    <div className="flex space-x-2 overflow-x-auto pb-2">
+                <div className="mb-8 w-full">
+                    <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
                         {categories.map((category) => (
                             <button
                                 key={category.id}
@@ -117,7 +118,7 @@ const StorePage = () => {
                 </div>
 
                 {/* Store Items Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 gap-4 w-full">
                     {storeItems[selectedCategory]?.map((item) => (
                         <div
                             key={item.id}
@@ -150,23 +151,23 @@ const StorePage = () => {
                             </div>
 
                             {/* Price and Action */}
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between gap-2">
                                 <div className="flex items-center space-x-1">
                                     <span className="material-symbols-outlined text-green-600 text-lg">eco</span>
                                     <span className="font-bold text-gray-800">{item.price}</span>
                                 </div>
                                 
                                 {item.owned ? (
-                                    <button className="px-4 py-2 bg-gray-200 text-gray-500 rounded-lg font-medium cursor-not-allowed">
+                                    <button className="px-3 py-2 bg-gray-200 text-gray-500 rounded-lg font-medium cursor-not-allowed text-sm">
                                         Owned
                                     </button>
                                 ) : userPoints >= item.price ? (
-                                    <button className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors">
+                                    <button className="px-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors text-sm">
                                         Buy
                                     </button>
                                 ) : (
-                                    <button className="px-4 py-2 bg-gray-200 text-gray-500 rounded-lg font-medium cursor-not-allowed">
-                                        Not enough points
+                                    <button className="px-3 py-2 bg-gray-200 text-gray-500 rounded-lg font-medium cursor-not-allowed text-sm whitespace-nowrap">
+                                        Not enough
                                     </button>
                                 )}
                             </div>
@@ -186,7 +187,7 @@ const StorePage = () => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 gap-4 w-full">
                         <div className="bg-white rounded-xl shadow-sm border-2 border-purple-300 bg-purple-50 p-6 relative overflow-hidden">
                             <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
                                 50% OFF
@@ -242,6 +243,7 @@ const StorePage = () => {
                         </div>
                     </div>
                 </section>
+                </div>
                 </main>
                 <BottomNavbar />
             </div>

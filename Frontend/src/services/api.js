@@ -41,10 +41,10 @@ export const apiRequest = async (endpoint, options = {}) => {
  * EcoBot API
  */
 export const ecoBotAPI = {
-    sendMessage: async (message) => {
+    sendMessage: async (message, conversationHistory = []) => {
         return apiRequest('/api/ecobot/chat', {
             method: 'POST',
-            body: JSON.stringify({ message }),
+            body: JSON.stringify({ message, conversationHistory }),
         });
     },
 };

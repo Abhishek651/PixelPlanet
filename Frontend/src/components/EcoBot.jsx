@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ecoBotAPI } from '../services/api';
 
 const EcoBot = ({ isOpen, onClose }) => {
@@ -13,11 +13,12 @@ const EcoBot = ({ isOpen, onClose }) => {
 
         const userMessage = { id: Date.now(), type: 'user', content: inputMessage, timestamp: new Date() };
         setMessages(prev => [...prev, userMessage]);
+        const currentInput = inputMessage;
         setInputMessage('');
         setIsLoading(true);
 
         try {
-            const data = await ecoBotAPI.sendMessage(inputMessage);
+            const data = await ecoBotAPI.sendMessage(currentInput, messages);
             setMessages(prev => [...prev, {
                 id: Date.now() + 1,
                 type: 'bot',
@@ -59,7 +60,7 @@ const EcoBot = ({ isOpen, onClose }) => {
                     </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={messagesEndRef => messagesEndRef?.scrollIntoView({ behavior: 'smooth' })}>
                     {messages.map((message) => (
                         <div key={message.id} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
                             <div className={`max-w-xs px-4 py-2 rounded-2xl ${

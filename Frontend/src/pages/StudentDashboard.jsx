@@ -29,6 +29,7 @@ const MobileStudentDashboard = () => {
     const [showLoginModal, setShowLoginModal] = useState(false);
     const [ecoPoints, setEcoPoints] = useState(0);
     const [coins, setCoins] = useState(0);
+    const [userLocation, setUserLocation] = useState('Loading...');
 
     const categories = [
         { label: 'All', icon: 'apps', to: '/challenges' },
@@ -51,7 +52,10 @@ const MobileStudentDashboard = () => {
 
     // Real-time listener for user data
     useEffect(() => {
-        if (!currentUser) return;
+        if (!currentUser) {
+            setUserLocation('Eco Explorer');
+            return;
+        }
 
         const unsubscribe = onSnapshot(
             doc(db, 'users', currentUser.uid),
@@ -60,10 +64,29 @@ const MobileStudentDashboard = () => {
                     const data = doc.data();
                     setEcoPoints(data.ecoPoints || 0);
                     setCoins(data.coins || 0);
+                    
+                    // Set user location from Firestore with multiple fallback options
+                    if (data.city && data.country) {
+                        setUserLocation(`${data.city}, ${data.country}`);
+                    } else if (data.city) {
+                        setUserLocation(data.city);
+                    } else if (data.country) {
+                        setUserLocation(data.country);
+                    } else if (data.location) {
+                        // Check if there's a location field
+                        setUserLocation(data.location);
+                    } else {
+                        // Default to a friendly message
+                        setUserLocation('Global Explorer');
+                    }
+                } else {
+                    // Document doesn't exist yet
+                    setUserLocation('Global Explorer');
                 }
             },
             (error) => {
                 console.error('Error fetching user data:', error);
+                setUserLocation('Global Explorer');
             }
         );
 
@@ -81,7 +104,7 @@ const MobileStudentDashboard = () => {
                     <div>
                         <p className="text-xs text-gray-500">{currentUser ? 'Your Location' : 'Welcome'}</p>
                         <p className="text-sm font-semibold text-gray-800 flex items-center">
-                            {currentUser ? 'Islamabad, Pakistan' : 'Eco Explorer'}
+                            {currentUser ? userLocation : 'Eco Explorer'}
                             {currentUser && <span className="material-symbols-outlined text-sm ml-1">expand_more</span>}
                         </p>
                     </div>
@@ -139,17 +162,42 @@ const MobileStudentDashboard = () => {
                 </div>
             )}
 
-            {/* Search Bar */}
-            <div className="p-4">
-                <div className="flex items-center bg-gray-100 rounded-xl p-3">
-                    <span className="material-symbols-outlined text-gray-400 mr-2">search</span>
-                    <input
-                        type="text"
-                        placeholder="Search Quests, Eco-Activities..."
-                        className="flex-grow bg-transparent text-gray-800 focus:outline-none placeholder-gray-400"
-                    />
-                    <span className="material-symbols-outlined text-gray-400 ml-2">mic</span>
+            {/* Recent Challenges */}
+            {currentUser && (
+                <div className="px-4 pb-4">
+                    <RecentChallenges limit={3} />
                 </div>
+            )}
+
+            {/* Leaderboard */}
+            <div className="px-4 mb-6">
+                {currentUser ? (
+                    <DashboardLeaderboard />
+                ) : (
+                    <div className="bg-white rounded-xl p-4 shadow-sm">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-bold text-gray-800">Top Eco-Warriors</h3>
+                            <button
+                                onClick={() => setShowLoginModal(true)}
+                                className="text-green-500 text-sm font-medium"
+                            >
+                                Login to View
+                            </button>
+                        </div>
+                        <div className="text-center py-8">
+                            <div className="w-16 h-16 bg-gray-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                                <span className="material-symbols-outlined text-2xl text-gray-400">leaderboard</span>
+                            </div>
+                            <p className="text-gray-600 mb-4">Join the community to see rankings!</p>
+                            <button
+                                onClick={() => setShowLoginModal(true)}
+                                className="bg-primary text-white px-6 py-2 rounded-lg font-semibold"
+                            >
+                                Get Started
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Continue Learning Section */}
@@ -339,44 +387,6 @@ const MobileStudentDashboard = () => {
                         </div>
                     ))}
                 </div>
-            </div>
-
-            {/* Recent Challenges */}
-            {currentUser && (
-                <div className="px-4 mb-6">
-                    <RecentChallenges limit={3} />
-                </div>
-            )}
-
-            {/* Leaderboard */}
-            <div className="px-4 mb-6">
-                {currentUser ? (
-                    <DashboardLeaderboard />
-                ) : (
-                    <div className="bg-white rounded-xl p-4 shadow-sm">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-bold text-gray-800">Top Eco-Warriors</h3>
-                            <button
-                                onClick={() => setShowLoginModal(true)}
-                                className="text-green-500 text-sm font-medium"
-                            >
-                                Login to View
-                            </button>
-                        </div>
-                        <div className="text-center py-8">
-                            <div className="w-16 h-16 bg-gray-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-                                <span className="material-symbols-outlined text-2xl text-gray-400">leaderboard</span>
-                            </div>
-                            <p className="text-gray-600 mb-4">Join the community to see rankings!</p>
-                            <button
-                                onClick={() => setShowLoginModal(true)}
-                                className="bg-primary text-white px-6 py-2 rounded-lg font-semibold"
-                            >
-                                Get Started
-                            </button>
-                        </div>
-                    </div>
-                )}
             </div>
 
             <BottomNavbar />

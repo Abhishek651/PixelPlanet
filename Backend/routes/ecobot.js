@@ -68,10 +68,22 @@ const parseResponse = async (provider, response) => {
 
 // EcoBot Chat
 router.post('/chat', async (req, res) => {
-    const { message } = req.body;
+    const { message, conversationHistory } = req.body;
     if (!message) return res.status(400).json({ error: 'Message required.' });
 
-    const prompt = `You are EcoBot, an environmental education assistant. Answer this question about environmental topics in under 200 words: "${message}"`;
+    // Build conversation context from history
+    let contextPrompt = 'You are EcoBot, an environmental education assistant. Answer questions about environmental topics in under 200 words.\n\n';
+    
+    if (conversationHistory && conversationHistory.length > 1) {
+        contextPrompt += 'Previous conversation:\n';
+        conversationHistory.slice(-6).forEach(msg => {
+            if (msg.type === 'user') contextPrompt += `User: ${msg.content}\n`;
+            else if (msg.type === 'bot') contextPrompt += `EcoBot: ${msg.content}\n`;
+        });
+        contextPrompt += '\n';
+    }
+    
+    contextPrompt += `User: ${message}\nEcoBot:`;
 
     try {
         const { defaultProvider, keys } = await getApiSettings();
@@ -81,7 +93,7 @@ router.post('/chat', async (req, res) => {
             const apiKey = keys[provider];
             if (!apiKey) continue;
 
-            const config = getProviderConfig(provider, apiKey, prompt);
+            const config = getProviderConfig(provider, apiKey, contextPrompt);
             if (!config) continue;
 
             try {
