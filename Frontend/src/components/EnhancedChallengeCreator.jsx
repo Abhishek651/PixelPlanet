@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/useAuth';
+import { DateTimePicker } from './base/DatePicker';
 
 const EnhancedChallengeCreator = () => {
     const { currentUser } = useAuth();
@@ -287,25 +288,17 @@ const EnhancedChallengeCreator = () => {
                         {challengeType.includes('quiz') && (
                             <>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-                                        <input
-                                            type="datetime-local"
-                                            value={formData.startDate}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
-                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Expiry Date</label>
-                                        <input
-                                            type="datetime-local"
-                                            value={formData.expiryDate}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, expiryDate: e.target.value }))}
-                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                                            required
-                                        />
-                                    </div>
+                                    <DateTimePicker
+                                        label="Start Date"
+                                        value={formData.startDate}
+                                        onChange={(value) => setFormData(prev => ({ ...prev, startDate: value }))}
+                                    />
+                                    <DateTimePicker
+                                        label="Expiry Date"
+                                        value={formData.expiryDate}
+                                        onChange={(value) => setFormData(prev => ({ ...prev, expiryDate: value }))}
+                                        required
+                                    />
                                 </div>
 
                                 {challengeType === 'quiz-auto' && (
@@ -415,15 +408,11 @@ const EnhancedChallengeCreator = () => {
                                         required
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Expiry Date</label>
-                                    <input
-                                        type="datetime-local"
-                                        value={formData.expiryDate}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, expiryDate: e.target.value }))}
-                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                                    />
-                                </div>
+                                <DateTimePicker
+                                    label="Expiry Date"
+                                    value={formData.expiryDate}
+                                    onChange={(value) => setFormData(prev => ({ ...prev, expiryDate: value }))}
+                                />
                                 <div className="flex items-center">
                                     <input
                                         type="checkbox"
@@ -441,16 +430,12 @@ const EnhancedChallengeCreator = () => {
 
                         {/* Physical challenge specific */}
                         {challengeType === 'physical' && (
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Expiry Date</label>
-                                <input
-                                    type="datetime-local"
-                                    value={formData.expiryDate}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, expiryDate: e.target.value }))}
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                                    required
-                                />
-                            </div>
+                            <DateTimePicker
+                                label="Expiry Date"
+                                value={formData.expiryDate}
+                                onChange={(value) => setFormData(prev => ({ ...prev, expiryDate: value }))}
+                                required
+                            />
                         )}
 
                         <div className="flex space-x-3 pt-4">

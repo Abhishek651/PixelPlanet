@@ -203,19 +203,41 @@ const AdminManagement = () => {
             )}
 
             {/* Tabs */}
-            <div className="flex space-x-2 border-b">
-                <TabButton active={activeTab === 'list'} onClick={() => setActiveTab('list')}>
-                    Admin List
-                </TabButton>
-                <TabButton active={activeTab === 'create'} onClick={() => setActiveTab('create')}>
-                    Create New
-                </TabButton>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b pb-4">
+                <div className="flex space-x-2">
+                    <TabButton active={activeTab === 'list'} onClick={() => setActiveTab('list')}>
+                        Admin List
+                    </TabButton>
+                    <TabButton active={activeTab === 'create'} onClick={() => setActiveTab('create')}>
+                        Create New
+                    </TabButton>
+                </div>
+                {activeTab === 'list' && (
+                    <button
+                        onClick={() => setActiveTab('create')}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium text-sm flex items-center gap-2"
+                    >
+                        <span className="material-symbols-outlined text-lg">add</span>
+                        Create Sub-Admin / Creator
+                    </button>
+                )}
             </div>
 
             {/* List Tab */}
             {activeTab === 'list' && (
                 <div className="space-y-4">
-                    <h3 className="text-xl font-semibold">Admins & Creators</h3>
+                    <div className="flex items-start justify-between gap-4">
+                        <h3 className="text-xl font-semibold">Admins & Creators</h3>
+                    </div>
+                    
+                    {/* Info Box */}
+                    <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                        <p className="text-sm text-blue-800 dark:text-blue-200">
+                            <strong>Sub-Admins</strong> can manage users and content with custom permissions. 
+                            <strong className="ml-2">Global Creators</strong> can create challenges visible to all users across institutes.
+                            Click "Create New" tab or the button above to add new admins or creators.
+                        </p>
+                    </div>
                     
                     {/* Main Admins */}
                     <Section title="Main Admins">

@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 import { getUserFriendlyError, getValidationError } from '../utils/errorMessages';
 import { logUserAction, logError, logApiRequest, logApiResponse } from '../utils/logger';
+import { DateTimePicker } from '../components/base/DatePicker';
 
 const CreatePhysicalChallengePage = () => {
     const navigate = useNavigate();
@@ -166,17 +167,12 @@ const CreatePhysicalChallengePage = () => {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Expiry Date</label>
-                                <input
-                                    type="datetime-local"
-                                    id="expiryDate"
-                                    value={expiryDate}
-                                    onChange={(e) => setExpiryDate(e.target.value)}
-                                    className="mt-1 block w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
-                                    required
-                                />
-                            </div>
+                            <DateTimePicker
+                                label="Expiry Date"
+                                value={expiryDate}
+                                onChange={setExpiryDate}
+                                required
+                            />
                             <div>
                                 <label htmlFor="rewardPoints" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Reward Points</label>
                                 <input

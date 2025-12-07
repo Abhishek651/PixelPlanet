@@ -5,6 +5,7 @@ import { useAuth } from '../context/useAuth';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 import { getUserFriendlyError, getValidationError } from '../utils/errorMessages';
 import { logAuthEvent, logError, logUserAction } from '../utils/logger';
+import { useNotification } from '../components/base/NotificationModal';
 
 // ============================================
 // PAGE: RegisterPage
@@ -25,6 +26,7 @@ const RegisterPage = () => {
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
     const { signup } = useAuth();
+    const { showNotification, NotificationComponent } = useNotification();
 
     const totalSteps = 4;
 
@@ -84,13 +86,32 @@ const RegisterPage = () => {
             
             logAuthEvent('Registration successful', { email: formData.email });
             
+            // Show success notification
+            showNotification({
+                title: 'Welcome to EcoLearn!',
+                message: `Your account has been created successfully. Start your eco-journey now, ${formData.firstName}!`,
+                type: 'success',
+                confirmText: 'Get Started',
+                onConfirm: () => {
+                    navigate('/');
+                }
+            });
+            
             // Wait for auth state to update, then redirect
             setTimeout(() => {
                 navigate('/');
-            }, 1000);
+            }, 2000);
         } catch (err) {
             logError('RegisterPage', 'Registration failed', err);
             setError(getUserFriendlyError(err, 'register'));
+            
+            // Show error notification
+            showNotification({
+                title: 'Registration Failed',
+                message: getUserFriendlyError(err, 'register'),
+                type: 'error',
+                confirmText: 'Try Again'
+            });
         } finally {
             setLoading(false);
         }
@@ -123,7 +144,9 @@ const RegisterPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-600 flex items-center justify-center p-4 relative overflow-hidden">
+        <>
+            {NotificationComponent}
+            <div className="min-h-screen bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-600 flex items-center justify-center p-4 relative overflow-hidden">
             <style>{`
                 input:-webkit-autofill,
                 input:-webkit-autofill:hover, 
@@ -370,6 +393,7 @@ const RegisterPage = () => {
                 </div>
             </motion.div>
         </div>
+        </>
     );
 };
 

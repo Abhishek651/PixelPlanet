@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/useAuth';
+import { DatePicker } from './base/DatePicker';
 
 const AnnouncementsPanel = () => {
     const { currentUser, userRole } = useAuth();
@@ -169,15 +170,11 @@ const AnnouncementsPanel = () => {
                                     <option value="high">High</option>
                                 </select>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Expiry Date (Optional)</label>
-                                <input
-                                    type="date"
-                                    value={newAnnouncement.expiryDate}
-                                    onChange={(e) => setNewAnnouncement(prev => ({ ...prev, expiryDate: e.target.value }))}
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                                />
-                            </div>
+                            <DatePicker
+                                label="Expiry Date (Optional)"
+                                value={newAnnouncement.expiryDate}
+                                onChange={(value) => setNewAnnouncement(prev => ({ ...prev, expiryDate: value }))}
+                            />
                         </div>
                         <div className="flex space-x-2">
                             <button

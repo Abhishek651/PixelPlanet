@@ -29,7 +29,7 @@ function MainAdminDashboard() {
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
             }`}
           >
-            Admins
+            Sub-Admins & Creators
           </button>
           <button
             onClick={() => setActiveSection('settings')}

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/useAuth';
+import { DateTimePicker } from './base/DatePicker';
 
 const ChallengeCreatorFAB = () => {
     const { currentUser } = useAuth();
@@ -92,7 +93,12 @@ const ChallengeCreatorFAB = () => {
                                 <input type="text" placeholder="Target Class" value={formData.targetClass} onChange={(e) => setFormData(prev => ({ ...prev, targetClass: e.target.value }))} className="border rounded-lg px-3 py-2" required />
                                 <input type="number" placeholder="Reward Points" value={formData.rewardPoints} onChange={(e) => setFormData(prev => ({ ...prev, rewardPoints: parseInt(e.target.value) }))} className="border rounded-lg px-3 py-2" min="1" required />
                             </div>
-                            <input type="datetime-local" value={formData.expiryDate} onChange={(e) => setFormData(prev => ({ ...prev, expiryDate: e.target.value }))} className="w-full border rounded-lg px-3 py-2" required />
+                            <DateTimePicker
+                                label="Expiry Date"
+                                value={formData.expiryDate}
+                                onChange={(value) => setFormData(prev => ({ ...prev, expiryDate: value }))}
+                                required
+                            />
                             
                             {challengeType === 'quiz-auto' && (
                                 <div className="grid grid-cols-2 gap-4">

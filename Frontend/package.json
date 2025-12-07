@@ -10,11 +10,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@internationalized/date": "^3.10.0",
     "axios": "^1.12.2",
     "firebase": "^12.3.0",
     "framer-motion": "^12.23.22",
     "lucide-react": "^0.544.0",
     "react": "^19.1.1",
+    "react-aria-components": "^1.13.0",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.3",
     "recharts": "^3.2.1",
