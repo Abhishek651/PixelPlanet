@@ -244,9 +244,13 @@ class IntroScene extends Phaser.Scene {
             repeat: -1
         });
         
-        continueBtn.on('pointerdown', () => {
+        const startGame = () => {
             this.scene.start('GameScene', { level: this.levelId, skipIntro: true });
-        });
+        };
+        
+        continueBtn.on('pointerdown', startGame);
+        continueBtn.on('pointerup', startGame);
+        overlay.setInteractive().on('pointerdown', startGame);
     }
 }
 
@@ -377,9 +381,12 @@ class TutorialScene extends Phaser.Scene {
             this.tweens.add({ targets: backBtn, scale: 1, duration: 200 });
         });
         
-        backBtn.on('pointerdown', () => {
+        const goToMenu = () => {
             this.scene.start('MenuScene');
-        });
+        };
+        
+        backBtn.on('pointerdown', goToMenu);
+        backBtn.on('pointerup', goToMenu);
     }
 }
 

@@ -8,6 +8,11 @@ const sharp = require('sharp');
  */
 async function extractMetadata(imageBuffer) {
     try {
+        // Validate buffer is large enough for EXIF parsing
+        if (!imageBuffer || imageBuffer.length < 100) {
+            throw new Error('Buffer too small for EXIF data');
+        }
+        
         const parser = exifParser.create(imageBuffer);
         const result = parser.parse();
         
@@ -29,14 +34,30 @@ async function extractMetadata(imageBuffer) {
             }
         };
     } catch (error) {
-        console.error('Error extracting EXIF data:', error);
-        return {
-            hasExif: false,
-            timestamp: null,
-            gps: null,
-            camera: {},
-            imageInfo: {}
-        };
+        // EXIF parsing failed - this is common for screenshots, edited images, etc.
+        // Use sharp to get basic image info instead
+        try {
+            const image = sharp(imageBuffer);
+            const metadata = await image.metadata();
+            return {
+                hasExif: false,
+                timestamp: null,
+                gps: null,
+                camera: {},
+                imageInfo: {
+                    width: metadata.width,
+                    height: metadata.height
+                }
+            };
+        } catch (sharpError) {
+            return {
+                hasExif: false,
+                timestamp: null,
+                gps: null,
+                camera: {},
+                imageInfo: {}
+            };
+        }
     }
 }
 

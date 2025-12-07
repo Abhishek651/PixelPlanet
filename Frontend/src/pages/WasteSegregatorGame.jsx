@@ -1,12 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/useAuth';
 import { doc, updateDoc, increment } from 'firebase/firestore';
-import { db } from '../services/firebase';
+import { db, auth } from '../services/firebase';
 
 const WasteSegregatorGame = () => {
     const { currentUser } = useAuth();
     const [showReward, setShowReward] = useState(false);
     const [rewardData, setRewardData] = useState(null);
+    const [authToken, setAuthToken] = useState(null);
+
+    useEffect(() => {
+        if (currentUser) {
+            auth.currentUser?.getIdToken().then(setAuthToken);
+        }
+    }, [currentUser]);
 
     useEffect(() => {
         const handleGameComplete = async (event) => {
@@ -60,7 +67,7 @@ const WasteSegregatorGame = () => {
     return (
         <div style={{ width: '100%', height: '100vh', position: 'relative' }}>
             <iframe
-                src={`/Games/waste-segregator-adaptive.html?userId=${currentUser?.uid || 'guest'}`}
+                src={`/Games/waste-segregator-adaptive.html?userId=${currentUser?.uid || 'guest'}${authToken ? `&token=${authToken}` : ''}`}
                 style={{ width: '100%', height: '100%', border: 'none' }}
                 title="Eco Sorting Factory"
             ></iframe>

@@ -1,7 +1,7 @@
 // Backend/utils/novaVerification.js
 const fetch = require('node-fetch');
 
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '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';
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 const MODEL = 'amazon/nova-2-lite-v1:free';
 
 /**
@@ -43,7 +43,9 @@ async function callNova(prompt, imageBuffer) {
         method: 'POST',
         headers: {
             'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'HTTP-Referer': 'https://pixelplanet.app',
+            'X-Title': 'PixelPlanet Environmental Education'
         },
         body: JSON.stringify({
             model: MODEL,
@@ -66,6 +68,9 @@ async function callNova(prompt, imageBuffer) {
 
     if (!response.ok) {
         const errorText = await response.text();
+        if (response.status === 401) {
+            throw new Error('Invalid OpenRouter API key. Please get a valid key from https://openrouter.ai/keys');
+        }
         throw new Error(`Nova API error: ${response.status} - ${errorText}`);
     }
 
@@ -126,6 +131,14 @@ Provide your analysis in JSON format:
         };
     } catch (error) {
         console.error('Error detecting AI-generated image:', error);
+        if (error.message.includes('Invalid OpenRouter API key')) {
+            return {
+                success: false,
+                error: 'AI verification unavailable - Invalid API key',
+                isReal: true,
+                skipVerification: true
+            };
+        }
         return {
             success: false,
             error: error.message,
@@ -185,6 +198,16 @@ Provide your analysis in JSON format:
         };
     } catch (error) {
         console.error('Error verifying challenge completion:', error);
+        if (error.message.includes('Invalid OpenRouter API key')) {
+            return {
+                success: false,
+                error: 'AI verification unavailable - Invalid API key',
+                completed: true,
+                confidence: 0,
+                reasoning: 'Manual review required - AI verification unavailable',
+                skipVerification: true
+            };
+        }
         return {
             success: false,
             error: error.message,
@@ -214,6 +237,9 @@ Be specific and objective.`;
         return text;
     } catch (error) {
         console.error('Error getting image description:', error);
+        if (error.message.includes('Invalid OpenRouter API key')) {
+            return 'AI description unavailable - Invalid API key';
+        }
         return 'Could not generate image description';
     }
 }
