@@ -1,29 +1,55 @@
- // backend/server.js
+// backend/server.js
+
+console.log('🚀 Starting server initialization...');
+console.log('📦 Node version:', process.version);
+console.log('🌍 Environment:', process.env.NODE_ENV || 'development');
 
 // --- 1. IMPORT DEPENDENCIES ---
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
+try {
+    console.log('📥 Loading dotenv...');
+    require('dotenv').config();
+    console.log('✅ dotenv loaded');
+} catch (error) {
+    console.error('❌ Failed to load dotenv:', error.message);
+}
+
+try {
+    console.log('📥 Loading express...');
+    var express = require('express');
+    console.log('✅ express loaded');
+} catch (error) {
+    console.error('❌ Failed to load express:', error.message);
+    throw error;
+}
+
+try {
+    console.log('📥 Loading cors...');
+    var cors = require('cors');
+    console.log('✅ cors loaded');
+} catch (error) {
+    console.error('❌ Failed to load cors:', error.message);
+    throw error;
+}
 
 // --- 2. INITIALIZE FIREBASE (with error handling) ---
 let db, admin;
 try {
+    console.log('🔥 Initializing Firebase...');
     const firebaseConfig = require('./firebaseConfig');
     db = firebaseConfig.db;
     admin = firebaseConfig.admin;
     console.log('✅ Firebase initialized successfully');
 } catch (error) {
     console.error('❌ Firebase initialization failed:', error.message);
-    // Continue anyway - routes will handle missing Firebase
+    console.error('Stack:', error.stack);
 }
 
 // --- 3. INITIALIZE EXPRESS APP ---
+console.log('🎯 Creating Express app...');
 const app = express();
+console.log('✅ Express app created');
 
-// --- 4. APPLY MIDDLEWARE (CORRECTED ORDER) ---
-
-// ** STEP 1: CONFIGURE AND USE CORS MIDDLEWARE FIRST **
-// Support both local development and production
+// --- 4. APPLY MIDDLEWARE ---
 const allowedOrigins = [
     'https://pixel-planet-frontend.vercel.app',
     'http://localhost:5173',
@@ -32,21 +58,18 @@ const allowedOrigins = [
     'http://localhost:5001'
 ];
 
-// Add CORS_ORIGIN from env if it exists
 if (process.env.CORS_ORIGIN) {
     allowedOrigins.push(process.env.CORS_ORIGIN);
 }
 
 const corsOptions = {
     origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps, curl, or Postman)
         if (!origin) return callback(null, true);
         
         if (allowedOrigins.indexOf(origin) !== -1) {
             callback(null, true);
         } else {
             console.log(`⚠️ CORS blocked origin: ${origin}`);
-            console.log(`✅ Allowed origins:`, allowedOrigins);
             callback(new Error('Not allowed by CORS'));
         }
     },
@@ -56,28 +79,36 @@ const corsOptions = {
 };
 
 console.log(`🌐 CORS enabled for origins:`, allowedOrigins);
-
 app.use(cors(corsOptions));
-
-// Handle preflight requests explicitly
 app.options('*', cors(corsOptions));
-
-// ** STEP 2: USE OTHER MIDDLEWARE LIKE BODY PARSERS **
 app.use(express.json());
 
 // --- 5. IMPORT & USE ROUTES ---
+console.log('📂 Loading routes...');
 try {
+    console.log('  Loading auth routes...');
     const authRoutes = require('./routes/auth');
+    console.log('  Loading quiz routes...');
     const quizRoutes = require('./routes/quiz');
+    console.log('  Loading challenge routes...');
     const challengeRoutes = require('./routes/challenges');
+    console.log('  Loading analytics routes...');
     const analyticsRoutes = require('./routes/analytics');
+    console.log('  Loading announcement routes...');
     const announcementRoutes = require('./routes/announcements');
+    console.log('  Loading ecobot routes...');
     const ecobotRoutes = require('./routes/ecobot');
+    console.log('  Loading leaderboard routes...');
     const leaderboardRoutes = require('./routes/leaderboard');
+    console.log('  Loading admin management routes...');
     const adminManagementRoutes = require('./routes/admin-management');
+    console.log('  Loading creator analytics routes...');
     const creatorAnalyticsRoutes = require('./routes/creator-analytics');
+    console.log('  Loading game profile routes...');
     const gameProfileRoutes = require('./routes/game-profile');
+    console.log('  Loading green feed routes...');
     const greenFeedRoutes = require('./routes/green-feed');
+    console.log('  Loading physical challenge routes...');
     const physicalChallengeRoutes = require('./routes/physical-challenge');
 
     app.use('/api/auth', authRoutes);
@@ -96,62 +127,49 @@ try {
     console.log('✅ All routes loaded successfully');
 } catch (error) {
     console.error('❌ Error loading routes:', error.message);
-    console.error(error.stack);
+    console.error('Stack:', error.stack);
 }
 
-console.log('📋 Registered routes:');
-console.log('  - /api/auth');
-console.log('  - /api/quiz');
-console.log('  - /api/challenges');
-console.log('  - /api/analytics');
-console.log('  - /api/announcements');
-console.log('  - /api/ecobot');
-console.log('  - /api/leaderboard');
-console.log('  - /api/admin');
-console.log('  - /api/creator ✨ (Creator Analytics)');
-console.log('  - /api/game 🎮 (Game Profiles)');
-console.log('  - /api/green-feed 🌱 (Green Feed)');
-console.log('  - /api/physical-challenge 📸 (Physical Challenge Verification)');
-
-// Root route for health check
+// Root route
 app.get('/', (req, res) => {
     res.json({ 
         status: 'ok', 
         message: 'Pixel Planet API is running',
         version: '1.0.0',
-        timestamp: new Date().toISOString(),
-        routes: [
-            '/api/auth',
-            '/api/quiz',
-            '/api/challenges',
-            '/api/analytics',
-            '/api/announcements',
-            '/api/ecobot',
-            '/api/leaderboard',
-            '/api/admin',
-            '/api/creator',
-            '/api/game',
-            '/api/green-feed',
-            '/api/physical-challenge'
-        ]
+        timestamp: new Date().toISOString()
     });
 });
 
-// Add a catch-all route to log 404s
+// 404 handler
 app.use((req, res) => {
     console.log(`❌ 404 - Route not found: ${req.method} ${req.url}`);
     res.status(404).json({ message: 'Route not found', path: req.url });
 });
 
-// Global error handler - ensures JSON responses even on errors
+// Global error handler
 app.use((err, req, res, next) => {
-    console.error('❌ Global error handler:', err);
+    console.error('❌ Global error handler triggered');
+    console.error('Error:', err.message);
+    console.error('Stack:', err.stack);
+    console.error('Request:', req.method, req.url);
     
-    // Ensure we always return JSON, never HTML
     res.status(err.status || 500).json({
         message: err.message || 'Internal server error',
         error: process.env.NODE_ENV === 'production' ? {} : err.stack
     });
+});
+
+// Catch unhandled rejections
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('❌ Unhandled Rejection at:', promise);
+    console.error('Reason:', reason);
+});
+
+// Catch uncaught exceptions
+process.on('uncaughtException', (error) => {
+    console.error('❌ Uncaught Exception:', error.message);
+    console.error('Stack:', error.stack);
+    process.exit(1);
 });
 
 // --- 6. EXPORT THE APP FOR VERCEL ---
@@ -161,7 +179,13 @@ module.exports = app;
 if (require.main === module) {
     const PORT = process.env.PORT || 5001;
     app.listen(PORT, () => {
+        console.log('\n' + '='.repeat(50));
         console.log(`✅ Server is running on port ${PORT}`);
         console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+        console.log(`🚀 Server ready to accept requests`);
+        console.log('='.repeat(50) + '\n');
     });
 }
+
+console.log('✅ Server initialization complete');
+console.log('📤 Exporting app for Vercel...');
