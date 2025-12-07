@@ -28,9 +28,15 @@ async function callNova(prompt, imageBuffer) {
     
     // Nova only supports JPEG and PNG, convert WebP to JPEG
     if (mimeType === 'image/webp') {
-        const sharp = require('sharp');
-        imageBuffer = await sharp(imageBuffer).jpeg().toBuffer();
-        mimeType = 'image/jpeg';
+        try {
+            const sharp = require('sharp');
+            imageBuffer = await sharp(imageBuffer).jpeg().toBuffer();
+            mimeType = 'image/jpeg';
+        } catch (error) {
+            console.error('Sharp conversion error:', error);
+            // If sharp fails, try to use the image as-is
+            mimeType = 'image/jpeg';
+        }
     }
     
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
