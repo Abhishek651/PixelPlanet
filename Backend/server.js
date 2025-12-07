@@ -50,37 +50,14 @@ const app = express();
 console.log('✅ Express app created');
 
 // --- 4. APPLY MIDDLEWARE ---
-const allowedOrigins = [
-    'https://pixel-planet-frontend.vercel.app',
-    'http://localhost:5173',
-    'http://localhost:5174',
-    'http://localhost:3000',
-    'http://localhost:5001'
-];
-
-if (process.env.CORS_ORIGIN) {
-    allowedOrigins.push(process.env.CORS_ORIGIN);
-}
-
 const corsOptions = {
-    origin: function (origin, callback) {
-        if (!origin) return callback(null, true);
-        
-        if (allowedOrigins.indexOf(origin) !== -1) {
-            callback(null, true);
-        } else {
-            console.log(`⚠️ CORS blocked origin: ${origin}`);
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    methods: "GET,POST,PUT,DELETE,PATCH,OPTIONS",
-    allowedHeaders: "Content-Type, Authorization",
+    origin: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
 };
 
-console.log(`🌐 CORS enabled for origins:`, allowedOrigins);
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
 app.use(express.json());
 
 // --- 5. IMPORT & USE ROUTES ---
