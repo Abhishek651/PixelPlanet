@@ -25,13 +25,17 @@ const app = express();
 // ** STEP 1: CONFIGURE AND USE CORS MIDDLEWARE FIRST **
 // Support both local development and production
 const allowedOrigins = [
-    process.env.CORS_ORIGIN,
     'https://pixel-planet-frontend.vercel.app',
     'http://localhost:5173',
     'http://localhost:5174',
     'http://localhost:3000',
     'http://localhost:5001'
-].filter(Boolean);
+];
+
+// Add CORS_ORIGIN from env if it exists
+if (process.env.CORS_ORIGIN) {
+    allowedOrigins.push(process.env.CORS_ORIGIN);
+}
 
 const corsOptions = {
     origin: function (origin, callback) {
@@ -54,6 +58,9 @@ const corsOptions = {
 console.log(`🌐 CORS enabled for origins:`, allowedOrigins);
 
 app.use(cors(corsOptions));
+
+// Handle preflight requests explicitly
+app.options('*', cors(corsOptions));
 
 // ** STEP 2: USE OTHER MIDDLEWARE LIKE BODY PARSERS **
 app.use(express.json());
