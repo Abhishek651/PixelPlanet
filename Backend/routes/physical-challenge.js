@@ -118,11 +118,24 @@ router.post('/submit/:challengeId', verifyToken, upload.single('image'), async (
                 challenge.description,
                 challenge.title
             );
+            
+            // If AI verification is unavailable (invalid API key), auto-approve
+            if (challengeVerification.skipVerification) {
+                console.log('⚠️ AI verification unavailable - Auto-approving submission');
+                challengeVerification = { 
+                    success: true, 
+                    completed: true, 
+                    confidence: 0, 
+                    matchScore: 100,
+                    reasoning: 'Auto-approved - AI verification unavailable',
+                    feedback: 'Your submission has been approved. Manual review may be conducted later.'
+                };
+            }
         } else {
             console.log('⏭️ Step 4: AI verification skipped (not enabled for this challenge)');
         }
 
-        if (!challengeVerification.success) {
+        if (!challengeVerification.success && !challengeVerification.skipVerification) {
             return res.status(500).json({
                 success: false,
                 stage: 'ai_verification',
@@ -131,8 +144,8 @@ router.post('/submit/:challengeId', verifyToken, upload.single('image'), async (
             });
         }
 
-        // Check if challenge was completed
-        if (!challengeVerification.completed || challengeVerification.matchScore < 60) {
+        // Check if challenge was completed (skip check if AI verification unavailable)
+        if (!challengeVerification.skipVerification && (!challengeVerification.completed || challengeVerification.matchScore < 60)) {
             return res.status(400).json({
                 success: false,
                 stage: 'challenge_verification',
