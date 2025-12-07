@@ -68,7 +68,7 @@ export function NotificationModal({
         `}
       >
         <Dialog
-          className="max-w-md w-full max-h-full overflow-hidden rounded-2xl bg-white dark:bg-gray-800 p-6 text-left shadow-xl outline-none relative"
+          className="max-w-lg w-full max-h-[90vh] overflow-hidden rounded-2xl bg-white dark:bg-gray-800 p-6 text-left shadow-xl outline-none relative"
         >
           {({ close }) => (
             <>
@@ -81,9 +81,29 @@ export function NotificationModal({
               <div className={`w-6 h-6 ${color} absolute right-6 top-6 stroke-2`}>
                 <Icon className="w-6 h-6" />
               </div>
-              <p className="mt-3 text-gray-600 dark:text-gray-300">
-                {message}
-              </p>
+              <div className="mt-3 text-gray-600 dark:text-gray-300 max-h-96 overflow-y-auto">
+                {typeof message === 'string' && message.includes('\n') ? (
+                  <div className="space-y-3">
+                    {message.split('\n\n').map((section, idx) => (
+                      <div key={idx}>
+                        {section.split('\n').map((line, lineIdx) => {
+                          if (line.startsWith('•')) {
+                            return (
+                              <div key={lineIdx} className="flex items-start gap-2 ml-2 mb-1">
+                                <span className="text-green-500 mt-0.5">✓</span>
+                                <span className="text-sm">{line.substring(1).trim()}</span>
+                              </div>
+                            );
+                          }
+                          return <p key={lineIdx} className={line ? 'mb-2' : 'mb-1'}>{line}</p>;
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p>{message}</p>
+                )}
+              </div>
               <div className="mt-6 flex justify-end gap-2">
                 {cancelText && (
                   <DialogButton

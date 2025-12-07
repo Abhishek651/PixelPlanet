@@ -84,6 +84,61 @@ export const adminAPI = {
 };
 
 /**
+ * Green Feed API
+ */
+export const greenFeedAPI = {
+    getPosts: async (token, limit = 10, lastPostId = null) => {
+        const params = new URLSearchParams({ limit });
+        if (lastPostId) params.append('lastPostId', lastPostId);
+        return apiRequest(`/api/green-feed/posts?${params}`, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+    },
+    createPost: async (token, formData) => {
+        const url = `${API_URL}/api/green-feed/posts`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+            body: formData, // FormData handles its own Content-Type
+        });
+        if (!response.ok) {
+            throw new Error(`Failed to create post: ${response.statusText}`);
+        }
+        return response.json();
+    },
+    likePost: async (token, postId) => {
+        return apiRequest(`/api/green-feed/posts/${postId}/like`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+        });
+    },
+    getComments: async (token, postId, limit = 20) => {
+        return apiRequest(`/api/green-feed/posts/${postId}/comments?limit=${limit}`, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+    },
+    deletePost: async (token, postId) => {
+        return apiRequest(`/api/green-feed/posts/${postId}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` },
+        });
+    },
+    addComment: async (token, postId, text) => {
+        return apiRequest(`/api/green-feed/posts/${postId}/comments`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ text }),
+        });
+    },
+    deletePost: async (token, postId) => {
+        return apiRequest(`/api/green-feed/posts/${postId}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` },
+        });
+    },
+};
+
+/**
  * Generic HTTP methods
  */
 const api = {
@@ -148,6 +203,7 @@ const api = {
     ecoBotAPI,
     leaderboardAPI,
     adminAPI,
+    greenFeedAPI,
 };
 
 export default api;

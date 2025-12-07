@@ -70,6 +70,8 @@ try {
     const adminManagementRoutes = require('./routes/admin-management');
     const creatorAnalyticsRoutes = require('./routes/creator-analytics');
     const gameProfileRoutes = require('./routes/game-profile');
+    const greenFeedRoutes = require('./routes/green-feed');
+    const physicalChallengeRoutes = require('./routes/physical-challenge');
 
     app.use('/api/auth', authRoutes);
     app.use('/api/quiz', quizRoutes);
@@ -81,6 +83,8 @@ try {
     app.use('/api/admin', adminManagementRoutes);
     app.use('/api/creator', creatorAnalyticsRoutes);
     app.use('/api/game', gameProfileRoutes);
+    app.use('/api/green-feed', greenFeedRoutes);
+    app.use('/api/physical-challenge', physicalChallengeRoutes);
     
     console.log('✅ All routes loaded successfully');
 } catch (error) {
@@ -99,6 +103,8 @@ console.log('  - /api/leaderboard');
 console.log('  - /api/admin');
 console.log('  - /api/creator ✨ (Creator Analytics)');
 console.log('  - /api/game 🎮 (Game Profiles)');
+console.log('  - /api/green-feed 🌱 (Green Feed)');
+console.log('  - /api/physical-challenge 📸 (Physical Challenge Verification)');
 
 // Root route for health check
 app.get('/', (req, res) => {
@@ -116,7 +122,9 @@ app.get('/', (req, res) => {
             '/api/leaderboard',
             '/api/admin',
             '/api/creator',
-            '/api/game'
+            '/api/game',
+            '/api/green-feed',
+            '/api/physical-challenge'
         ]
     });
 });

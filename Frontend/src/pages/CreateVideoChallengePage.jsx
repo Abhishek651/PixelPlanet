@@ -196,7 +196,7 @@ const CreateVideoChallengePage = () => {
 
             if (res.ok) {
                 setSuccess('Video challenge created successfully! Redirecting...');
-                setTimeout(() => navigate('/challenges'), 1500);
+                setTimeout(() => navigate('/challenges', { state: { refresh: true } }), 1500);
             } else {
                 const errorData = await res.json();
                 throw new Error(errorData.message || 'Failed to create challenge');

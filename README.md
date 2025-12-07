@@ -114,7 +114,11 @@ A comprehensive environmental education platform that gamifies learning about su
 #### 4. Physical Challenge
 - Real-world environmental activities
 - Photo/video submission
-- Teacher verification and grading
+- **AI-Powered Verification** with Amazon Nova 2 Lite (Free)
+- Toggle AI verification on/off per challenge
+- Automatic image authenticity detection
+- Challenge completion verification
+- Instant feedback and approval
 
 ### 🎯 Quiz Features
 
@@ -270,6 +274,16 @@ A comprehensive environmental education platform that gamifies learning about su
 - Paragraph expansion capability
 - Strict paragraph-based questions (when paragraph provided)
 
+#### AI Physical Challenge Verification (Amazon Nova 2 Lite)
+- **100% Free** - No API costs via OpenRouter
+- **Toggle Control** - Enable/disable per challenge
+- **Multi-format Support** - JPEG, PNG, WebP (auto-converted)
+- **AI-Generated Detection** - Identifies fake/AI images
+- **Challenge Completion Verification** - Matches photo to requirements
+- **Detailed Feedback** - Reasoning, suggestions, and concerns
+- **Metadata Verification** - EXIF data and GPS location (optional)
+- **Instant Results** - Real-time verification and approval
+
 ### 🎨 UI/UX Features
 
 #### Responsive Design
@@ -408,6 +422,9 @@ A comprehensive environmental education platform that gamifies learning about su
 - Firebase Admin SDK
 - Firestore Database
 - Google Gemini AI API
+- Amazon Nova 2 Lite (via OpenRouter)
+- Backblaze B2 Storage
+- Sharp (Image processing)
 - RESTful API architecture
 - Vercel deployment
 
@@ -430,7 +447,9 @@ A comprehensive environmental education platform that gamifies learning about su
 - Node.js (v20 or higher)
 - npm or yarn
 - Firebase project
-- Google Gemini API key
+- Google Gemini API key (for quiz generation)
+- OpenRouter API key (for physical challenge verification - free)
+- Backblaze B2 account (for image storage)
 
 ### Installation
 
@@ -470,6 +489,11 @@ PORT=5001
 FIREBASE_PROJECT_ID=your_project_id
 CORS_ORIGIN=http://localhost:5173
 GOOGLE_APPLICATION_CREDENTIALS_JSON=<service_account_json>
+OPENROUTER_API_KEY=your_openrouter_api_key
+B2_KEY_ID=your_b2_key_id
+B2_APPLICATION_KEY=your_b2_app_key
+B2_BUCKET_NAME=your_bucket_name
+B2_ENDPOINT=your_b2_endpoint
 ```
 
 4. Add Firebase Service Account

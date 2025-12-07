@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 import { apiRequest } from '../services/api';
 
-const RecentChallenges = ({ limit = 3, className = '', showInMainArea = false }) => {
+const RecentChallenges = ({ limit = 3, className = '', showInMainArea = false, refreshTrigger = 0 }) => {
     const { currentUser, userRole } = useAuth();
+    const location = useLocation();
     const [challenges, setChallenges] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchRecentChallenges();
-    }, [currentUser]);
+    }, [currentUser, refreshTrigger, location.state?.refresh]);
 
     const fetchRecentChallenges = async () => {
         if (!currentUser) {

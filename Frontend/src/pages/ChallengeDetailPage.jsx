@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/useAuth';
-import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { Upload, CheckCircle, AlertCircle } from 'lucide-react';
+import { NotificationModal } from '../components/base/NotificationModal';
 
 const ChallengeDetailPage = () => {
     const { challengeId } = useParams();
@@ -17,6 +18,7 @@ const ChallengeDetailPage = () => {
     const [submitted, setSubmitted] = useState(false);
     const [submissionContent, setSubmissionContent] = useState('');
     const [submissionFile, setSubmissionFile] = useState(null);
+    const [notification, setNotification] = useState({ show: false, type: 'success', title: '', message: '' });
 
     useEffect(() => {
         fetchChallenge();
@@ -48,44 +50,177 @@ const ChallengeDetailPage = () => {
 
     const handleEnroll = async () => {
         try {
-            await updateDoc(doc(db, 'challenges', challengeId), {
-                enrolledStudents: arrayUnion(currentUser.uid)
+            const token = await currentUser.getIdToken();
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+            
+            const response = await fetch(`${apiUrl}/api/challenges/enroll/${challengeId}`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
             });
-            setEnrolled(true);
+
+            if (response.ok) {
+                setEnrolled(true);
+                setNotification({
+                    show: true,
+                    type: 'success',
+                    title: '✅ Enrolled Successfully!',
+                    message: 'You can now submit your work for this challenge.'
+                });
+            } else {
+                const errorData = await response.json();
+                setNotification({
+                    show: true,
+                    type: 'error',
+                    title: 'Enrollment Failed',
+                    message: errorData.message || 'Failed to enroll in challenge'
+                });
+            }
         } catch (error) {
             console.error('Error enrolling:', error);
-            alert('Failed to enroll in challenge');
+            setNotification({
+                show: true,
+                type: 'error',
+                title: 'Error',
+                message: 'Failed to enroll in challenge'
+            });
         }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        if (!submissionContent.trim()) {
-            alert('Please provide submission details');
+        // For physical challenges, require image upload
+        if (challenge.type === 'physical') {
+            if (!submissionFile) {
+                setNotification({
+                    show: true,
+                    type: 'error',
+                    title: 'Photo Required',
+                    message: 'Please upload a photo of your completed challenge'
+                });
+                return;
+            }
+        } else if (!submissionContent.trim()) {
+            setNotification({
+                show: true,
+                type: 'error',
+                title: 'Content Required',
+                message: 'Please provide submission details'
+            });
             return;
         }
 
         setSubmitting(true);
         try {
-            const submission = {
-                studentId: currentUser.uid,
-                submissionType: challenge.type === 'video' ? 'video' : 'text',
-                content: submissionContent,
-                submittedAt: new Date(),
-                isVerified: false,
-                approved: false
-            };
+            const token = await currentUser.getIdToken();
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+            
+            // Physical challenges use different endpoint with AI verification
+            if (challenge.type === 'physical') {
+                const formData = new FormData();
+                formData.append('image', submissionFile);
+                
+                const response = await fetch(`${apiUrl}/api/physical-challenge/submit/${challengeId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
 
-            await updateDoc(doc(db, 'challenges', challengeId), {
-                submissions: arrayUnion(submission)
-            });
+                const result = await response.json();
+                console.log('Submission response:', result);
+                
+                if (response.ok && result.success) {
+                    setSubmitted(true);
+                    const feedback = result.feedback || {};
+                    let message = feedback.message || 'Your submission has been verified and approved!';
+                    if (result.points) message += `\n\n🎁 Points earned: ${result.points}`;
+                    if (feedback.observedAction) message += `\n\n✓ ${feedback.observedAction}`;
+                    
+                    setNotification({
+                        show: true,
+                        type: 'success',
+                        title: feedback.title || '🎉 Challenge Completed!',
+                        message: message
+                    });
+                } else {
+                    // Show detailed feedback for rejection
+                    const feedback = result.feedback || {};
+                    const details = result.details || {};
+                    
+                    let message = feedback.message || result.error || 'Your submission could not be verified.';
+                    
+                    // Add reasoning if available
+                    if (details.reasoning) {
+                        message += `\n\n${details.reasoning}`;
+                    }
+                    
+                    // Add reasons
+                    if (feedback.reasons && feedback.reasons.length > 0) {
+                        message += '\n\nReasons:\n' + feedback.reasons.map(r => `• ${r}`).join('\n');
+                    }
+                    
+                    // Add concerns
+                    if (details.concerns && details.concerns.length > 0) {
+                        message += '\n\nConcerns:\n' + details.concerns.map(c => `• ${c}`).join('\n');
+                    }
+                    
+                    // Add suggestions
+                    if (feedback.suggestions && feedback.suggestions.length > 0) {
+                        message += '\n\nSuggestions:\n' + feedback.suggestions.map(s => `• ${s}`).join('\n');
+                    }
+                    
+                    setNotification({
+                        show: true,
+                        type: 'error',
+                        title: feedback.title || '❌ Verification Failed',
+                        message: message
+                    });
+                }
+            } else {
+                // Regular challenges (quiz, video, etc.)
+                const response = await fetch(`${apiUrl}/api/challenges/submit/${challengeId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        submissionType: challenge.type === 'video' ? 'video' : 'text',
+                        content: submissionContent
+                    })
+                });
 
-            setSubmitted(true);
-            alert('Submission successful! Your teacher will review it soon.');
+                if (response.ok) {
+                    setSubmitted(true);
+                    setNotification({
+                        show: true,
+                        type: 'success',
+                        title: '✅ Submission Successful!',
+                        message: 'Your teacher will review it soon.'
+                    });
+                } else {
+                    const errorData = await response.json();
+                    setNotification({
+                        show: true,
+                        type: 'error',
+                        title: 'Submission Failed',
+                        message: errorData.message || 'Failed to submit. Please try again.'
+                    });
+                }
+            }
         } catch (error) {
             console.error('Error submitting:', error);
-            alert('Failed to submit. Please try again.');
+            setNotification({
+                show: true,
+                type: 'error',
+                title: 'Error',
+                message: 'Failed to submit. Please try again.'
+            });
         } finally {
             setSubmitting(false);
         }
@@ -118,6 +253,15 @@ const ChallengeDetailPage = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 pb-20">
+            {/* Notification Modal */}
+            <NotificationModal
+                isOpen={notification.show}
+                onClose={() => setNotification({ ...notification, show: false })}
+                type={notification.type}
+                title={notification.title}
+                message={notification.message}
+            />
+            
             {/* Header */}
             <motion.div
                 initial={{ opacity: 0, y: -30 }}
@@ -184,22 +328,45 @@ const ChallengeDetailPage = () => {
                     {/* Submission Form */}
                     {enrolled && !submitted && (
                         <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    {challenge.type === 'video' ? 'Video URL or Description' : 'Submission Details'}
-                                </label>
-                                <textarea
-                                    value={submissionContent}
-                                    onChange={(e) => setSubmissionContent(e.target.value)}
-                                    placeholder={challenge.type === 'video' 
-                                        ? 'Paste your video URL (YouTube, Drive, etc.) or describe your submission'
-                                        : 'Describe what you did for this challenge'
-                                    }
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
-                                    rows="6"
-                                    required
-                                />
-                            </div>
+                            {challenge.type === 'physical' ? (
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        📸 Upload Photo of Completed Challenge
+                                    </label>
+                                    <p className="text-sm text-gray-600 mb-3">
+                                        AI will verify your submission automatically. Make sure your photo clearly shows the completed challenge.
+                                    </p>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => setSubmissionFile(e.target.files[0])}
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                        required
+                                    />
+                                    {submissionFile && (
+                                        <div className="mt-2 text-sm text-green-600">
+                                            ✓ {submissionFile.name} selected
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        {challenge.type === 'video' ? 'Video URL or Description' : 'Submission Details'}
+                                    </label>
+                                    <textarea
+                                        value={submissionContent}
+                                        onChange={(e) => setSubmissionContent(e.target.value)}
+                                        placeholder={challenge.type === 'video' 
+                                            ? 'Paste your video URL (YouTube, Drive, etc.) or describe your submission'
+                                            : 'Describe what you did for this challenge'
+                                        }
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+                                        rows="6"
+                                        required
+                                    />
+                                </div>
+                            )}
 
                             <button
                                 type="submit"
