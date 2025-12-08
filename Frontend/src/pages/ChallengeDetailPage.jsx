@@ -8,6 +8,7 @@ import { Upload, CheckCircle, AlertCircle } from 'lucide-react';
 import { NotificationModal } from '../components/base/NotificationModal';
 import SideNavbar from '../components/SideNavbar';
 import BottomNavbar from '../components/BottomNavbar';
+import AIVerificationLoader from '../components/AIVerificationLoader';
 
 const ChallengeDetailPage = () => {
     const { challengeId } = useParams();
@@ -258,6 +259,9 @@ const ChallengeDetailPage = () => {
             <SideNavbar />
             
             <div className="flex-1 overflow-y-auto pb-20 lg:pb-0 h-full">
+                {/* AI Verification Loader */}
+                <AIVerificationLoader isOpen={submitting && challenge?.type === 'physical'} />
+                
                 {/* Notification Modal */}
                 <NotificationModal
                     isOpen={notification.show}
@@ -378,17 +382,8 @@ const ChallengeDetailPage = () => {
                                 disabled={submitting}
                                 className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
-                                {submitting ? (
-                                    <>
-                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                                        Submitting...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Upload className="w-5 h-5" />
-                                        Submit Challenge
-                                    </>
-                                )}
+                                <Upload className="w-5 h-5" />
+                                Submit Challenge
                             </button>
                         </form>
                     )}
