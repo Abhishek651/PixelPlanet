@@ -36,7 +36,11 @@ const StudentProfileSpecifics = ({ variants }) => {
                     // If user has completed challenges, fetch their details
                     const completedChallenges = userDoc.data().completedChallenges || [];
                     const challengeDetailsPromises = completedChallenges.map(async (challengeId) => {
-                        const challengeDoc = await getDoc(doc(db, 'quizzes', challengeId));
+                        // Try challenges collection first, then quizzes
+                        let challengeDoc = await getDoc(doc(db, 'challenges', challengeId));
+                        if (!challengeDoc.exists()) {
+                            challengeDoc = await getDoc(doc(db, 'quizzes', challengeId));
+                        }
                         return challengeDoc.exists() ? {
                             id: challengeDoc.id,
                             ...challengeDoc.data(),
@@ -81,6 +85,68 @@ const StudentProfileSpecifics = ({ variants }) => {
     const completedCount = challengeDetails.length;
 
     return (
+        <>
+        {/* User Stats Card */}
+        <ProfileCard title="Profile Stats" variants={variants}>
+            <div className="grid grid-cols-2 gap-4">
+                {/* XP */}
+                <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 text-center">
+                    <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+                        {userData?.xp || 0}
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Total XP</div>
+                </div>
+                
+                {/* Level */}
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 text-center">
+                    <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                        {userData?.level || 1}
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Level</div>
+                </div>
+                
+                {/* Coins */}
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4 text-center">
+                    <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
+                        {userData?.coins || 0}
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Coins</div>
+                </div>
+                
+                {/* Completed Challenges */}
+                <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 text-center">
+                    <div className="text-3xl font-bold text-green-600 dark:text-green-400">
+                        {completedCount}
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Challenges</div>
+                </div>
+            </div>
+            
+            {/* Additional Info */}
+            {userData && (
+                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
+                    {userData.class && (
+                        <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600 dark:text-gray-400">Class:</span>
+                            <span className="font-medium text-gray-900 dark:text-white">{userData.class}</span>
+                        </div>
+                    )}
+                    {userData.gender && (
+                        <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600 dark:text-gray-400">Gender:</span>
+                            <span className="font-medium text-gray-900 dark:text-white capitalize">{userData.gender}</span>
+                        </div>
+                    )}
+                    <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600 dark:text-gray-400">Member Since:</span>
+                        <span className="font-medium text-gray-900 dark:text-white">
+                            {userData.createdAt?.toDate?.().toLocaleDateString() || 'N/A'}
+                        </span>
+                    </div>
+                </div>
+            )}
+        </ProfileCard>
+        
         <ProfileCard title="Eco-Points Breakdown" variants={variants}>
             <div className="space-y-6">
                 {/* Total Points Summary */}
@@ -160,6 +226,7 @@ const StudentProfileSpecifics = ({ variants }) => {
                 </div>
             </div>
         </ProfileCard>
+        </>
     );
 };
 
