@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/useAuth';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { getLevelFromXP, getLevelTitle } from '../utils/xpSystem';
 
@@ -45,10 +45,73 @@ const MobileStudentDashboard = () => {
         { id: '2', title: 'Beach Cleanup Challenge', date: '15 July', participants: '50+', image: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?q=80&w=2940&auto=format&fit=crop' }
     ];
 
-    const upcomingChallenges = [
-        { id: '3', title: 'Community Tree Planting', date: '10 July, 2025', location: 'Lahore, Pakistan', participants: '30+', image: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=2940&auto=format&fit=crop' },
-        { id: '4', title: 'DIY Solar Panel Workshop', date: '20 July, 2025', location: 'Karachi, Pakistan', participants: '25+', image: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?q=80&w=2940&auto=format&fit=crop' }
-    ];
+    const [upcomingChallenges, setUpcomingChallenges] = useState([]);
+
+    // Fetch upcoming challenges
+    useEffect(() => {
+        const fetchUpcoming = async () => {
+            if (!currentUser) return;
+            
+            try {
+                const now = new Date();
+                console.log('🔍 Fetching upcoming challenges. Current time:', now);
+                
+                const userDocSnap = await getDocs(query(collection(db, 'users'), where('__name__', '==', currentUser.uid)));
+                const userData = userDocSnap.docs[0]?.data();
+                const instituteId = userData?.instituteId;
+                
+                console.log('📍 User institute ID:', instituteId);
+                
+                const challengesRef = collection(db, 'challenges');
+                
+                // Fetch global challenges
+                const globalQuery = query(challengesRef, where('isGlobal', '==', true), limit(50));
+                const globalSnapshot = await getDocs(globalQuery);
+                
+                // Fetch institute challenges if user has an institute
+                let instituteSnapshot = { docs: [] };
+                if (instituteId) {
+                    const instituteQuery = query(challengesRef, where('instituteId', '==', instituteId), limit(50));
+                    instituteSnapshot = await getDocs(instituteQuery);
+                }
+                
+                console.log('📊 Found challenges - Global:', globalSnapshot.docs.length, 'Institute:', instituteSnapshot.docs.length);
+                
+                // Combine and process challenges
+                const allDocs = [...globalSnapshot.docs, ...instituteSnapshot.docs];
+                const challenges = allDocs
+                    .map(doc => {
+                        const data = doc.data();
+                        const startDate = data.startDate 
+                            ? (data.startDate?.toDate?.() || new Date(data.startDate))
+                            : null;
+                        return {
+                            id: doc.id,
+                            ...data,
+                            startDate,
+                            date: startDate ? startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'TBA'
+                        };
+                    })
+                    .filter(challenge => {
+                        const isFuture = challenge.startDate && challenge.startDate > now;
+                        if (isFuture) {
+                            console.log('✅ Upcoming challenge found:', challenge.title, 'starts:', challenge.startDate);
+                        }
+                        return isFuture;
+                    })
+                    .sort((a, b) => a.startDate - b.startDate)
+                    .slice(0, 3);
+                
+                console.log('🎯 Total upcoming challenges:', challenges.length);
+                setUpcomingChallenges(challenges);
+            } catch (error) {
+                console.error('❌ Error fetching upcoming challenges:', error);
+            }
+        };
+        fetchUpcoming();
+    }, [currentUser]);
+
+
 
     // Real-time listener for user data
     useEffect(() => {
@@ -166,6 +229,94 @@ const MobileStudentDashboard = () => {
             {currentUser && (
                 <div className="px-4 pb-4">
                     <RecentChallenges limit={3} />
+                </div>
+            )}
+
+            {/* Upcoming Challenges */}
+            {currentUser && (
+                <div className="px-4 pb-4">
+                    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                        <div className="flex items-center justify-between p-4 border-b border-gray-100">
+                            <div className="flex items-center space-x-2">
+                                <span className="material-symbols-outlined text-purple-600">schedule</span>
+                                <h3 className="text-lg font-bold text-gray-800">Upcoming Challenges</h3>
+                                <span className="text-xs bg-purple-100 text-purple-600 px-2 py-1 rounded-full font-medium">
+                                    {upcomingChallenges.length}
+                                </span>
+                            </div>
+                            <Link to="/challenges" className="text-purple-600 text-sm font-medium hover:underline">
+                                View All
+                            </Link>
+                        </div>
+                        {upcomingChallenges.length === 0 ? (
+                            <div className="p-8 text-center">
+                                <div className="w-16 h-16 bg-purple-100 rounded-full mx-auto mb-3 flex items-center justify-center">
+                                    <span className="material-symbols-outlined text-3xl text-purple-600">event_upcoming</span>
+                                </div>
+                                <p className="text-gray-600 text-sm">No upcoming challenges yet</p>
+                                <p className="text-gray-500 text-xs mt-1">Check back later for new challenges!</p>
+                            </div>
+                        ) : (
+                        <div className="divide-y divide-gray-100">
+                            {upcomingChallenges.map((challenge) => {
+                                const startDate = new Date(challenge.startDate);
+                                const daysUntil = Math.ceil((startDate - new Date()) / (1000 * 60 * 60 * 24));
+                                
+                                return (
+                                    <div key={challenge.id} className="p-4 hover:bg-gray-50 transition-colors">
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1">
+                                                <div className="flex items-center space-x-2 mb-1">
+                                                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                                                        challenge.type === 'physical' ? 'bg-green-100 text-green-700' :
+                                                        challenge.type === 'quiz_auto' ? 'bg-blue-100 text-blue-700' :
+                                                        challenge.type === 'quiz_manual' ? 'bg-purple-100 text-purple-700' :
+                                                        'bg-orange-100 text-orange-700'
+                                                    }`}>
+                                                        {challenge.type === 'physical' ? '📸 Physical' :
+                                                         challenge.type === 'quiz_auto' ? '📝 Quiz' :
+                                                         challenge.type === 'quiz_manual' ? '📝 Quiz' :
+                                                         '🎥 Video'}
+                                                    </span>
+                                                    {daysUntil <= 2 && (
+                                                        <span className="text-xs px-2 py-1 rounded-full font-medium bg-red-100 text-red-700 animate-pulse">
+                                                            Starting Soon!
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <h4 className="font-semibold text-gray-800 mb-1">{challenge.title}</h4>
+                                                <p className="text-sm text-gray-600 line-clamp-2 mb-2">{challenge.description}</p>
+                                                <div className="flex items-center space-x-4 text-xs text-gray-500">
+                                                    <div className="flex items-center space-x-1">
+                                                        <span className="material-symbols-outlined text-sm">calendar_today</span>
+                                                        <span>Starts {startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                                                    </div>
+                                                    <div className="flex items-center space-x-1">
+                                                        <span className="material-symbols-outlined text-sm">schedule</span>
+                                                        <span>{daysUntil} {daysUntil === 1 ? 'day' : 'days'} left</span>
+                                                    </div>
+                                                    {challenge.rewardPoints && (
+                                                        <div className="flex items-center space-x-1">
+                                                            <span className="text-green-600">🌱</span>
+                                                            <span className="text-green-600 font-medium">{challenge.rewardPoints} pts</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="ml-3 flex-shrink-0">
+                                                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl">
+                                                    {challenge.type === 'physical' ? '📸' :
+                                                     challenge.type === 'quiz_auto' ? '📝' :
+                                                     challenge.type === 'quiz_manual' ? '📝' : '🎥'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        )}
+                    </div>
                 </div>
             )}
 
@@ -329,6 +480,39 @@ const MobileStudentDashboard = () => {
                 </div>
             </div>
 
+            {/* Upcoming Challenges */}
+            {upcomingChallenges.length > 0 && (
+                <div className="px-4 mb-6">
+                    <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-lg font-bold text-gray-800">Upcoming Challenges</h3>
+                        <Link to="/challenges/upcoming" className="text-green-500 text-sm font-medium">See all</Link>
+                    </div>
+                    <div className="space-y-4">
+                        {upcomingChallenges.map((challenge) => (
+                            <div key={challenge.id} className="flex bg-white rounded-xl shadow-sm overflow-hidden h-24">
+                                <div className="w-24 h-full relative">
+                                    <img src={challenge.imageUrl || 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=400'} alt={challenge.title} className="w-full h-full object-cover" />
+                                    <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-black/50 text-white text-xs rounded">
+                                        {challenge.date}
+                                    </div>
+                                </div>
+                                <div className="flex-grow p-3 flex flex-col justify-center">
+                                    <h4 className="text-sm font-semibold text-gray-800">{challenge.title}</h4>
+                                    <p className="text-xs text-gray-500 line-clamp-1">{challenge.description}</p>
+                                    <p className="text-xs text-gray-400">Starts: {challenge.date}</p>
+                                </div>
+                                <button
+                                    onClick={() => !currentUser && setShowLoginModal(true)}
+                                    className="px-4 py-2 bg-green-500 text-white text-sm font-medium rounded-lg m-3"
+                                >
+                                    {currentUser ? 'Remind' : 'Login'}
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             {/* Featured Challenges */}
             <div className="px-4 mb-6">
                 <div className="flex items-center justify-between mb-3">
@@ -358,36 +542,7 @@ const MobileStudentDashboard = () => {
                 </div>
             </div>
 
-            {/* Upcoming Challenges */}
-            <div className="px-4 mb-6">
-                <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-lg font-bold text-gray-800">Upcoming Challenges</h3>
-                    <Link to="/challenges/upcoming" className="text-green-500 text-sm font-medium">See all</Link>
-                </div>
-                <div className="space-y-4">
-                    {upcomingChallenges.map((challenge) => (
-                        <div key={challenge.id} className="flex bg-white rounded-xl shadow-sm overflow-hidden h-24">
-                            <div className="w-24 h-full relative">
-                                <img src={challenge.image} alt={challenge.title} className="w-full h-full object-cover" />
-                                <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-black/50 text-white text-xs rounded">
-                                    {challenge.date.split(',')[0]}
-                                </div>
-                            </div>
-                            <div className="flex-grow p-3 flex flex-col justify-center">
-                                <h4 className="text-sm font-semibold text-gray-800">{challenge.title}</h4>
-                                <p className="text-xs text-gray-500">{challenge.location}</p>
-                                <p className="text-xs text-gray-400">{challenge.participants} members</p>
-                            </div>
-                            <button
-                                onClick={() => !currentUser && setShowLoginModal(true)}
-                                className="px-4 py-2 bg-green-500 text-white text-sm font-medium rounded-lg m-3"
-                            >
-                                {currentUser ? 'Join' : 'Login'}
-                            </button>
-                        </div>
-                    ))}
-                </div>
-            </div>
+
 
             <BottomNavbar />
             {currentUser && <EcoBot isOpen={showEcoBot} onClose={() => setShowEcoBot(false)} />}
@@ -410,6 +565,71 @@ const DesktopStudentDashboard = () => {
         xpForNextLevel: 100,
         progress: 0
     });
+    const [upcomingChallenges, setUpcomingChallenges] = useState([]);
+
+    // Fetch upcoming challenges
+    useEffect(() => {
+        const fetchUpcoming = async () => {
+            if (!currentUser) return;
+            
+            try {
+                const now = new Date();
+                console.log('🖥️ [Desktop] Fetching upcoming challenges. Current time:', now);
+                
+                const userDocSnap = await getDocs(query(collection(db, 'users'), where('__name__', '==', currentUser.uid)));
+                const userData = userDocSnap.docs[0]?.data();
+                const instituteId = userData?.instituteId;
+                
+                console.log('📍 [Desktop] User institute ID:', instituteId);
+                
+                const challengesRef = collection(db, 'challenges');
+                
+                // Fetch global challenges
+                const globalQuery = query(challengesRef, where('isGlobal', '==', true), limit(50));
+                const globalSnapshot = await getDocs(globalQuery);
+                
+                // Fetch institute challenges if user has an institute
+                let instituteSnapshot = { docs: [] };
+                if (instituteId) {
+                    const instituteQuery = query(challengesRef, where('instituteId', '==', instituteId), limit(50));
+                    instituteSnapshot = await getDocs(instituteQuery);
+                }
+                
+                console.log('📊 [Desktop] Found challenges - Global:', globalSnapshot.docs.length, 'Institute:', instituteSnapshot.docs.length);
+                
+                // Combine and process challenges
+                const allDocs = [...globalSnapshot.docs, ...instituteSnapshot.docs];
+                const challenges = allDocs
+                    .map(doc => {
+                        const data = doc.data();
+                        const startDate = data.startDate 
+                            ? (data.startDate?.toDate?.() || new Date(data.startDate))
+                            : null;
+                        return {
+                            id: doc.id,
+                            ...data,
+                            startDate,
+                            date: startDate ? startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'TBA'
+                        };
+                    })
+                    .filter(challenge => {
+                        const isFuture = challenge.startDate && challenge.startDate > now;
+                        if (isFuture) {
+                            console.log('✅ [Desktop] Upcoming challenge found:', challenge.title, 'starts:', challenge.startDate);
+                        }
+                        return isFuture;
+                    })
+                    .sort((a, b) => a.startDate - b.startDate)
+                    .slice(0, 3);
+                
+                console.log('🎯 [Desktop] Total upcoming challenges:', challenges.length);
+                setUpcomingChallenges(challenges);
+            } catch (error) {
+                console.error('❌ [Desktop] Error fetching upcoming challenges:', error);
+            }
+        };
+        fetchUpcoming();
+    }, [currentUser]);
 
     // Mock Data
     const activeChallenges = [
@@ -504,6 +724,98 @@ const DesktopStudentDashboard = () => {
                     {/* Main Content - 3 Columns */}
                     <div className="xl:col-span-3 space-y-8">
 
+                        {/* Recent Challenges Section */}
+                        <section>
+                            <RecentChallenges limit={3} showInMainArea={true} />
+                        </section>
+
+                        {/* Upcoming Challenges Section */}
+                        <section>
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-purple-600">schedule</span>
+                                    Upcoming Challenges
+                                    <span className="text-xs bg-purple-100 text-purple-600 px-2 py-1 rounded-full font-medium">
+                                        {upcomingChallenges.length}
+                                    </span>
+                                </h2>
+                                <Link to="/challenges" className="text-sm font-medium text-purple-600 hover:underline">View All</Link>
+                            </div>
+                            {upcomingChallenges.length === 0 ? (
+                                <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 text-center border border-gray-100 dark:border-gray-700">
+                                    <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-full mx-auto mb-3 flex items-center justify-center">
+                                        <span className="material-symbols-outlined text-3xl text-purple-600">event_upcoming</span>
+                                    </div>
+                                    <p className="text-gray-600 dark:text-gray-400 text-sm">No upcoming challenges yet</p>
+                                    <p className="text-gray-500 dark:text-gray-500 text-xs mt-1">Check back later for new challenges!</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {upcomingChallenges.map((challenge) => {
+                                        const startDate = challenge.startDate;
+                                        const daysUntil = Math.ceil((startDate - new Date()) / (1000 * 60 * 60 * 24));
+                                        
+                                        return (
+                                            <motion.div
+                                                whileHover={{ y: -4 }}
+                                                key={challenge.id}
+                                                className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700"
+                                            >
+                                                <div className="flex items-start justify-between mb-3">
+                                                    <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl">
+                                                        {challenge.type === 'physical' ? '📸' :
+                                                         challenge.type === 'quiz_auto' ? '📝' :
+                                                         challenge.type === 'quiz_manual' ? '📝' : '🎥'}
+                                                    </div>
+                                                    <div className="flex flex-col items-end gap-1">
+                                                        <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                                                            challenge.type === 'physical' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                                                            challenge.type === 'quiz_auto' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
+                                                            challenge.type === 'quiz_manual' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' :
+                                                            'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                                                        }`}>
+                                                            {challenge.type === 'physical' ? 'Physical' :
+                                                             challenge.type === 'quiz_auto' ? 'Quiz' :
+                                                             challenge.type === 'quiz_manual' ? 'Quiz' :
+                                                             'Video'}
+                                                        </span>
+                                                        {daysUntil <= 2 && (
+                                                            <span className="text-xs px-2 py-1 rounded-full font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 animate-pulse">
+                                                                Soon!
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <h3 className="font-bold text-gray-800 dark:text-white mb-2 line-clamp-2">{challenge.title}</h3>
+                                                <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-3">{challenge.description}</p>
+                                                <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-3">
+                                                    <div className="flex items-center gap-1">
+                                                        <span className="material-symbols-outlined text-sm">calendar_today</span>
+                                                        <span>{challenge.date}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1">
+                                                        <span className="material-symbols-outlined text-sm">schedule</span>
+                                                        <span>{daysUntil}d left</span>
+                                                    </div>
+                                                </div>
+                                                {challenge.rewardPoints && (
+                                                    <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-700">
+                                                        <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
+                                                            <span>🌱</span>
+                                                            <span className="text-sm font-bold">{challenge.rewardPoints} pts</span>
+                                                        </div>
+                                                        <button className="text-xs px-3 py-1.5 bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 rounded-lg font-medium hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors">
+                                                            Set Reminder
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </motion.div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </section>
+
                         {/* Continue Learning Section */}
                         <section>
                             <div className="flex items-center justify-between mb-4">
@@ -574,11 +886,6 @@ const DesktopStudentDashboard = () => {
                                     </div>
                                 ))}
                             </div>
-                        </section>
-
-                        {/* Recent Challenges Section */}
-                        <section>
-                            <RecentChallenges limit={3} showInMainArea={true} />
                         </section>
 
                         {/* Recommended Section */}

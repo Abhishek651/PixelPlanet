@@ -34,6 +34,8 @@ const CreateAutoQuizPage = () => {
     const [rewardXP, setRewardXP] = useState(30);
     const [editingQuestion, setEditingQuestion] = useState(null);
     const [regeneratingQuestion, setRegeneratingQuestion] = useState(null);
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
 
 
     useEffect(() => {
@@ -182,10 +184,15 @@ const CreateAutoQuizPage = () => {
             const token = await currentUser.getIdToken();
             const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
             
-            // Calculate expiry date (7 days from now by default)
-            const DEFAULT_EXPIRY_DAYS = 7;
-            const expiryDate = new Date();
-            expiryDate.setDate(expiryDate.getDate() + DEFAULT_EXPIRY_DAYS);
+            // Calculate expiry date
+            let expiryDate;
+            if (endDate) {
+                expiryDate = new Date(endDate);
+            } else {
+                const DEFAULT_EXPIRY_DAYS = 7;
+                expiryDate = new Date();
+                expiryDate.setDate(expiryDate.getDate() + DEFAULT_EXPIRY_DAYS);
+            }
             
             const payload = {
                 title,
@@ -198,6 +205,7 @@ const CreateAutoQuizPage = () => {
                 rewardXP: rewardXP,
                 questions: generatedQuiz.questions,
                 paragraph: paragraph || null,
+                startDate: startDate ? new Date(startDate).toISOString() : new Date().toISOString(),
                 expiryDate: expiryDate.toISOString(),
                 isGlobal: isGlobal
             };
@@ -494,6 +502,40 @@ const CreateAutoQuizPage = () => {
                             <p className="text-xs text-gray-600 dark:text-gray-400 mt-3">
                                 Students will receive these rewards upon completing the quiz successfully
                             </p>
+                        </div>
+
+                        {/* Schedule Challenge */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Start Date (Optional)
+                                </label>
+                                <input
+                                    type="datetime-local"
+                                    id="startDate"
+                                    value={startDate}
+                                    onChange={(e) => setStartDate(e.target.value)}
+                                    className="mt-1 block w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
+                                />
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    Leave empty to start immediately
+                                </p>
+                            </div>
+                            <div>
+                                <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    End Date (Optional)
+                                </label>
+                                <input
+                                    type="datetime-local"
+                                    id="endDate"
+                                    value={endDate}
+                                    onChange={(e) => setEndDate(e.target.value)}
+                                    className="mt-1 block w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
+                                />
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    Defaults to 7 days from now
+                                </p>
+                            </div>
                         </div>
 
                         {/* Challenge Visibility Info */}

@@ -57,6 +57,17 @@ router.post('/create-physical', verifyToken, [
             }
         }
         
+        const startDate = req.body.startDate ? new Date(req.body.startDate) : new Date();
+        const expiryDate = new Date(req.body.expiryDate);
+        
+        console.log('🔵 Creating Physical Challenge:');
+        console.log('  Title:', req.body.title);
+        console.log('  Start Date (input):', req.body.startDate);
+        console.log('  Start Date (parsed):', startDate);
+        console.log('  Expiry Date (input):', req.body.expiryDate);
+        console.log('  Expiry Date (parsed):', expiryDate);
+        console.log('  Current Time:', new Date());
+        
         const challengeRef = db.collection('challenges').doc();
         await challengeRef.set({
             id: challengeRef.id,
@@ -65,7 +76,8 @@ router.post('/create-physical', verifyToken, [
             rewardPoints: req.body.rewardPoints || 100,
             rewardCoins: req.body.rewardCoins || 50,
             rewardXP: req.body.rewardXP || 30,
-            expiryDate: new Date(req.body.expiryDate),
+            startDate: startDate,
+            expiryDate: expiryDate,
             createdBy: req.uid,
             creatorRole: req.userRole,
             instituteId: isGlobal ? null : req.instituteId,
@@ -75,6 +87,8 @@ router.post('/create-physical', verifyToken, [
             submissions: [],
             createdAt: admin.firestore.FieldValue.serverTimestamp()
         });
+        
+        console.log('✅ Challenge created with ID:', challengeRef.id);
         
         res.status(201).json({ 
             message: `${isGlobal ? 'Global' : 'Institute'} physical challenge created.`, 
@@ -105,6 +119,17 @@ router.post('/create-auto-quiz', verifyToken, [
     try {
         const isGlobal = req.body.isGlobal === true && (req.userRole === 'admin' || req.userRole === 'creator');
         
+        const startDate = req.body.startDate ? new Date(req.body.startDate) : new Date();
+        const expiryDate = new Date(req.body.expiryDate);
+        
+        console.log('🔵 Creating Auto Quiz:');
+        console.log('  Title:', req.body.title);
+        console.log('  Start Date (input):', req.body.startDate);
+        console.log('  Start Date (parsed):', startDate);
+        console.log('  Expiry Date (input):', req.body.expiryDate);
+        console.log('  Expiry Date (parsed):', expiryDate);
+        console.log('  Current Time:', new Date());
+        
         const challengeRef = db.collection('challenges').doc();
         await challengeRef.set({
             id: challengeRef.id,
@@ -119,8 +144,8 @@ router.post('/create-auto-quiz', verifyToken, [
             rewardXP: req.body.rewardXP || 30,
             questions: req.body.questions || [],
             paragraph: req.body.paragraph || null,
-            startDate: req.body.startDate ? new Date(req.body.startDate) : new Date(),
-            expiryDate: new Date(req.body.expiryDate),
+            startDate: startDate,
+            expiryDate: expiryDate,
             createdBy: req.uid,
             creatorRole: req.userRole,
             instituteId: isGlobal ? null : req.instituteId,
@@ -130,6 +155,8 @@ router.post('/create-auto-quiz', verifyToken, [
             submissions: [],
             createdAt: admin.firestore.FieldValue.serverTimestamp()
         });
+        
+        console.log('✅ Quiz created with ID:', challengeRef.id);
         
         res.status(201).json({ 
             message: `${isGlobal ? 'Global' : 'Institute'} auto quiz created.`, 
@@ -158,6 +185,17 @@ router.post('/create-manual-quiz', verifyToken, [
     try {
         const isGlobal = req.body.isGlobal === true && (req.userRole === 'admin' || req.userRole === 'creator');
         
+        const startDate = req.body.startDate ? new Date(req.body.startDate) : new Date();
+        const expiryDate = req.body.expiryDate ? new Date(req.body.expiryDate) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        
+        console.log('🔵 Creating Manual Quiz:');
+        console.log('  Title:', req.body.title);
+        console.log('  Start Date (input):', req.body.startDate);
+        console.log('  Start Date (parsed):', startDate);
+        console.log('  Expiry Date (input):', req.body.expiryDate);
+        console.log('  Expiry Date (parsed):', expiryDate);
+        console.log('  Current Time:', new Date());
+        
         const challengeRef = db.collection('challenges').doc();
         await challengeRef.set({
             id: challengeRef.id,
@@ -166,8 +204,8 @@ router.post('/create-manual-quiz', verifyToken, [
             rewardPoints: req.body.rewardPoints || 100,
             rewardCoins: req.body.rewardCoins || 50,
             rewardXP: req.body.rewardXP || 30,
-            startDate: req.body.startDate ? new Date(req.body.startDate) : new Date(),
-            expiryDate: req.body.expiryDate ? new Date(req.body.expiryDate) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+            startDate: startDate,
+            expiryDate: expiryDate,
             createdBy: req.uid,
             creatorRole: req.userRole,
             instituteId: isGlobal ? null : req.instituteId,
@@ -177,6 +215,8 @@ router.post('/create-manual-quiz', verifyToken, [
             submissions: [],
             createdAt: admin.firestore.FieldValue.serverTimestamp()
         });
+        
+        console.log('✅ Manual Quiz created with ID:', challengeRef.id);
         
         res.status(201).json({ 
             message: `${isGlobal ? 'Global' : 'Institute'} manual quiz created.`, 
@@ -191,6 +231,7 @@ router.post('/create-manual-quiz', verifyToken, [
 router.get('/list', verifyToken, async (req, res) => {
     try {
         let challenges = [];
+        const now = new Date();
         
         // Fetch global challenges (visible to everyone)
         const globalSnapshot = await db.collection('challenges')
@@ -219,6 +260,14 @@ router.get('/list', verifyToken, async (req, res) => {
             
             // Combine global and institute challenges
             challenges = [...challenges, ...instituteChallenges];
+        }
+        
+        // Filter out scheduled challenges (future start dates) for students
+        if (req.userRole === 'student' || req.userRole === 'global') {
+            challenges = challenges.filter(challenge => {
+                const startDate = challenge.startDate?.toDate?.() || new Date(challenge.startDate);
+                return startDate <= now;
+            });
         }
         
         // Sort by creation date

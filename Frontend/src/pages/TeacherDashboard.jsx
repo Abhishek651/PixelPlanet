@@ -19,6 +19,7 @@ const TeacherDashboard = () => {
     const [showEcoBot, setShowEcoBot] = useState(false);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [isApproved, setIsApproved] = useState(null); // null = loading, true/false = status
+    const [activeTab, setActiveTab] = useState('active'); // 'active' or 'archived'
     const teacherName = currentUser?.displayName || 'Teacher';
 
     // Check approval status
@@ -71,8 +72,21 @@ const TeacherDashboard = () => {
         );
     }
 
-    // Get recent challenges (last 3)
-    const recentChallenges = challenges.slice(0, 3).map(challenge => ({
+    // Filter challenges by active/archived status
+    const now = new Date();
+    const activeChallenges = challenges.filter(challenge => {
+        const endDate = challenge.expiryDate?.toDate?.() || new Date(challenge.expiryDate);
+        return endDate > now;
+    });
+    
+    const archivedChallenges = challenges.filter(challenge => {
+        const endDate = challenge.expiryDate?.toDate?.() || new Date(challenge.expiryDate);
+        return endDate <= now;
+    });
+    
+    // Get recent challenges based on active tab
+    const displayChallenges = activeTab === 'active' ? activeChallenges : archivedChallenges;
+    const recentChallenges = displayChallenges.slice(0, 3).map(challenge => ({
         id: challenge.id,
         title: challenge.title || 'Untitled Challenge',
         type: challenge.type || 'Unknown',
@@ -198,7 +212,7 @@ const TeacherDashboard = () => {
                         <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-xl font-bold text-gray-800 dark:text-white">
-                                    Recent Challenges
+                                    My Challenges
                                 </h3>
                                 <Link
                                     to="/challenges"
@@ -207,9 +221,37 @@ const TeacherDashboard = () => {
                                     View All
                                 </Link>
                             </div>
+                            
+                            {/* Tabs */}
+                            <div className="flex gap-2 mb-4">
+                                <button
+                                    onClick={() => setActiveTab('active')}
+                                    className={`flex-1 px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                                        activeTab === 'active'
+                                            ? 'bg-primary text-white'
+                                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                    }`}
+                                >
+                                    Active ({activeChallenges.length})
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('archived')}
+                                    className={`flex-1 px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                                        activeTab === 'archived'
+                                            ? 'bg-primary text-white'
+                                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                    }`}
+                                >
+                                    Archived ({archivedChallenges.length})
+                                </button>
+                            </div>
 
                             <div className="space-y-3">
-                                {recentChallenges.map((challenge, index) => {
+                                {recentChallenges.length === 0 ? (
+                                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                                        <p>No {activeTab} challenges found</p>
+                                    </div>
+                                ) : recentChallenges.map((challenge, index) => {
                                     const handleChallengeClick = () => {
                                         if (challenge.type === 'quiz_auto' || challenge.type === 'quiz_manual') {
                                             navigate(`/quiz/${challenge.id}`);

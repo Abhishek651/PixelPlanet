@@ -61,6 +61,19 @@ export const ChallengeProvider = ({ children }) => {
                 const querySnapshot = await getDocs(q);
                 const challengesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 
+                // Log challenge dates for debugging
+                console.log('📅 Challenge Dates:');
+                challengesData.forEach(challenge => {
+                    const startDate = challenge.startDate 
+                        ? (challenge.startDate?.toDate?.() || new Date(challenge.startDate))
+                        : challenge.createdAt?.toDate?.() || new Date();
+                    const expiryDate = challenge.expiryDate?.toDate?.() || new Date(challenge.expiryDate);
+                    console.log(`  ${challenge.title}:`);
+                    console.log(`    Start: ${startDate}`);
+                    console.log(`    Expiry: ${expiryDate}`);
+                    console.log(`    Type: ${challenge.type}`);
+                });
+                
                 if (userRole === 'student' && userData.class) {
                     const studentClass = userData.class;
                     console.log(`[ChallengeProvider] Filtering for student's class: ${studentClass}`);

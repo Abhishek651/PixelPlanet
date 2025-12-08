@@ -16,6 +16,7 @@ const CreatePhysicalChallengePage = () => {
     const [description, setDescription] = useState('');
     const [selectedClasses, setSelectedClasses] = useState([]);
     const [expiryDate, setExpiryDate] = useState('');
+    const [startDate, setStartDate] = useState('');
     const [rewardPoints, setRewardPoints] = useState(100);
     const [isGlobal, setIsGlobal] = useState(false);
     const [location, setLocation] = useState({
@@ -94,6 +95,7 @@ const CreatePhysicalChallengePage = () => {
                 title,
                 description,
                 targetClass: selectedClasses.join(',') || 'All',
+                startDate: startDate ? new Date(startDate).toISOString() : new Date().toISOString(),
                 expiryDate: new Date(expiryDate).toISOString(),
                 rewardPoints: Number(rewardPoints),
                 isGlobal: isGlobal && (userRole === 'admin' || userRole === 'creator'),
@@ -335,11 +337,20 @@ const CreatePhysicalChallengePage = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <DateTimePicker
-                                label="Expiry Date"
+                                label="Start Date (Optional)"
+                                value={startDate}
+                                onChange={setStartDate}
+                                helperText="Leave empty to start immediately"
+                            />
+                            <DateTimePicker
+                                label="Expiry Date *"
                                 value={expiryDate}
                                 onChange={setExpiryDate}
                                 required
                             />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label htmlFor="rewardPoints" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                     Reward Points

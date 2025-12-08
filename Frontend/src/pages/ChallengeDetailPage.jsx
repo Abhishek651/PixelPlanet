@@ -6,6 +6,8 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { Upload, CheckCircle, AlertCircle } from 'lucide-react';
 import { NotificationModal } from '../components/base/NotificationModal';
+import SideNavbar from '../components/SideNavbar';
+import BottomNavbar from '../components/BottomNavbar';
 
 const ChallengeDetailPage = () => {
     const { challengeId } = useParams();
@@ -252,22 +254,25 @@ const ChallengeDetailPage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-20">
-            {/* Notification Modal */}
-            <NotificationModal
-                isOpen={notification.show}
-                onClose={() => setNotification({ ...notification, show: false })}
-                type={notification.type}
-                title={notification.title}
-                message={notification.message}
-            />
+        <div className="flex h-screen bg-gray-50 overflow-hidden">
+            <SideNavbar />
             
-            {/* Header */}
-            <motion.div
-                initial={{ opacity: 0, y: -30 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-gradient-to-b from-primary to-primary-light p-6 pb-12 rounded-b-3xl shadow-lg"
-            >
+            <div className="flex-1 overflow-y-auto pb-20 lg:pb-0 h-full">
+                {/* Notification Modal */}
+                <NotificationModal
+                    isOpen={notification.show}
+                    onClose={() => setNotification({ ...notification, show: false })}
+                    type={notification.type}
+                    title={notification.title}
+                    message={notification.message}
+                />
+                
+                {/* Header */}
+                <motion.div
+                    initial={{ opacity: 0, y: -30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-gradient-to-b from-primary to-primary-light p-6 pb-12 rounded-b-3xl shadow-lg"
+                >
                 <button 
                     onClick={() => navigate('/challenges')}
                     className="material-symbols-outlined text-white text-2xl mb-4"
@@ -399,6 +404,9 @@ const ChallengeDetailPage = () => {
                         </div>
                     )}
                 </motion.div>
+            </div>
+            
+            <BottomNavbar />
             </div>
         </div>
     );

@@ -34,6 +34,7 @@ import StorePage from './pages/StorePage';
 import GreenFeedPage from './pages/GreenFeedPage';
 import AboutPage from './pages/AboutPage';
 import ChallengeDetailPage from './pages/ChallengeDetailPage';
+import ChallengeSubmissionsPage from './pages/ChallengeSubmissionsPage';
 
 function ProtectedRoute({ children, allowedRoles }) {
   const { currentUser, userRole, loading } = useAuth();
@@ -195,7 +196,7 @@ function App() {
         />
         <Route
           path="/challenges/:challengeId/submissions"
-          element={<ProtectedRoute allowedRoles={['teacher']}><SubmissionsPage /></ProtectedRoute>}
+          element={<ProtectedRoute allowedRoles={['teacher', 'hod', 'admin']}><ChallengeSubmissionsPage /></ProtectedRoute>}
         />
 
         <Route
