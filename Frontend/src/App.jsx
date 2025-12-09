@@ -34,12 +34,13 @@ import StorePage from './pages/StorePage';
 import GreenFeedPage from './pages/GreenFeedPage';
 import AboutPage from './pages/AboutPage';
 import ChallengeDetailPage from './pages/ChallengeDetailPage';
+import Loader from './components/Loader';
 import ChallengeSubmissionsPage from './pages/ChallengeSubmissionsPage';
 
 function ProtectedRoute({ children, allowedRoles }) {
   const { currentUser, userRole, loading } = useAuth();
 
-  if (loading) return <div className="flex justify-center items-center min-h-screen text-xl">Loading...</div>;
+  if (loading) return <Loader />;
   if (!currentUser) return <Navigate to="/login" replace />;
   if (allowedRoles && !allowedRoles.includes(userRole)) return <Navigate to="/" replace />;
   return children;
@@ -54,12 +55,12 @@ function ProtectedRoute({ children, allowedRoles }) {
 function MainRedirect() {
   const { currentUser, userRole, loading } = useAuth();
 
-  if (loading) return <div className="flex justify-center items-center min-h-screen text-xl">Loading...</div>;
+  if (loading) return <Loader />;
 
   if (currentUser) {
     // If user is logged in but role is still loading/null, wait a bit
     if (userRole === null || userRole === undefined) {
-      return <div className="flex justify-center items-center min-h-screen text-xl">Setting up your account...</div>;
+      return <Loader />;
     }
     
     switch (userRole) {

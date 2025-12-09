@@ -21,67 +21,95 @@ function getMimeType(buffer) {
 }
 
 /**
- * Call Amazon Nova 2 Lite via OpenRouter
+ * Call Amazon Nova 2 Lite via OpenRouter with retry logic
  */
-async function callNova(prompt, imageBuffer) {
+async function callNova(prompt, imageBuffer, retries = 2) {
+    console.log(`🔄 Calling Nova AI (attempt 1/${retries + 1})...`);
     let mimeType = getMimeType(imageBuffer);
+    console.log(`📷 Image MIME type: ${mimeType}`);
     
     // Nova only supports JPEG and PNG, convert WebP to JPEG
     if (mimeType === 'image/webp') {
         try {
+            console.log('🔄 Converting WebP to JPEG...');
             const sharp = require('sharp');
             imageBuffer = await sharp(imageBuffer).jpeg().toBuffer();
             mimeType = 'image/jpeg';
+            console.log('✅ WebP converted to JPEG');
         } catch (error) {
-            console.error('Sharp conversion error:', error);
-            // If sharp fails, try to use the image as-is
+            console.error('❌ Sharp conversion error:', error);
             mimeType = 'image/jpeg';
         }
     }
     
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-            'Content-Type': 'application/json',
-            'HTTP-Referer': 'https://pixelplanet.app',
-            'X-Title': 'PixelPlanet Environmental Education'
-        },
-        body: JSON.stringify({
-            model: MODEL,
-            messages: [
-                {
-                    role: 'user',
-                    content: [
-                        { type: 'text', text: prompt },
+    for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+            if (attempt > 0) {
+                console.log(`🔄 Retry attempt ${attempt + 1}/${retries + 1}...`);
+            }
+            
+            console.log('📤 Sending request to OpenRouter API...');
+            const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+                    'Content-Type': 'application/json',
+                    'HTTP-Referer': 'https://pixelplanet.app',
+                    'X-Title': 'PixelPlanet Environmental Education'
+                },
+                body: JSON.stringify({
+                    model: MODEL,
+                    messages: [
                         {
-                            type: 'image_url',
-                            image_url: {
-                                url: `data:${mimeType};base64,${imageBuffer.toString('base64')}`
-                            }
+                            role: 'user',
+                            content: [
+                                { type: 'text', text: prompt },
+                                {
+                                    type: 'image_url',
+                                    image_url: {
+                                        url: `data:${mimeType};base64,${imageBuffer.toString('base64')}`
+                                    }
+                                }
+                            ]
                         }
                     ]
+                })
+            });
+
+            console.log(`📥 Response status: ${response.status}`);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error(`❌ API error ${response.status}:`, errorText.substring(0, 200));
+                
+                if (response.status === 401) {
+                    throw new Error('Invalid OpenRouter API key. Please get a valid key from https://openrouter.ai/keys');
                 }
-            ]
-        })
-    });
+                if (response.status === 503 && attempt < retries) {
+                    const delay = Math.pow(2, attempt) * 1000;
+                    console.log(`⏳ OpenRouter unavailable (503), retrying in ${delay}ms...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    continue;
+                }
+                throw new Error(`SERVICE_UNAVAILABLE_${response.status}`);
+            }
 
-    if (!response.ok) {
-        const errorText = await response.text();
-        if (response.status === 401) {
-            throw new Error('Invalid OpenRouter API key. Please get a valid key from https://openrouter.ai/keys');
+            const data = await response.json();
+            
+            if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+                console.error('❌ Unexpected API response:', JSON.stringify(data, null, 2));
+                throw new Error('Invalid API response structure');
+            }
+            
+            console.log('✅ Nova AI response received successfully');
+            return data.choices[0].message.content;
+        } catch (error) {
+            console.error(`❌ Attempt ${attempt + 1} failed:`, error.message);
+            if (attempt === retries || error.message.includes('Invalid OpenRouter API key')) {
+                throw error;
+            }
         }
-        throw new Error(`Nova API error: ${response.status} - ${errorText}`);
     }
-
-    const data = await response.json();
-    
-    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-        console.error('Unexpected API response:', JSON.stringify(data, null, 2));
-        throw new Error('Invalid API response structure');
-    }
-    
-    return data.choices[0].message.content;
 }
 
 /**
@@ -130,13 +158,22 @@ Provide your analysis in JSON format:
             isReal: true
         };
     } catch (error) {
-        console.error('Error detecting AI-generated image:', error);
+        console.error('❌ Error detecting AI-generated image:', error);
         if (error.message.includes('Invalid OpenRouter API key')) {
             return {
                 success: false,
                 error: 'AI verification unavailable - Invalid API key',
                 isReal: true,
                 skipVerification: true
+            };
+        }
+        if (error.message.includes('SERVICE_UNAVAILABLE')) {
+            console.log('⚠️ AI service temporarily unavailable - returning service error');
+            return {
+                success: false,
+                error: 'AI_SERVICE_UNAVAILABLE',
+                isReal: false,
+                serviceDown: true
             };
         }
         return {
@@ -197,7 +234,7 @@ Provide your analysis in JSON format:
             completed: false
         };
     } catch (error) {
-        console.error('Error verifying challenge completion:', error);
+        console.error('❌ Error verifying challenge completion:', error);
         if (error.message.includes('Invalid OpenRouter API key')) {
             return {
                 success: false,
@@ -206,6 +243,15 @@ Provide your analysis in JSON format:
                 confidence: 0,
                 reasoning: 'Manual review required - AI verification unavailable',
                 skipVerification: true
+            };
+        }
+        if (error.message.includes('SERVICE_UNAVAILABLE')) {
+            console.log('⚠️ AI service temporarily unavailable - returning service error');
+            return {
+                success: false,
+                error: 'AI_SERVICE_UNAVAILABLE',
+                completed: false,
+                serviceDown: true
             };
         }
         return {
@@ -236,9 +282,13 @@ Be specific and objective.`;
         console.log('Nova AI response (description):', text);
         return text;
     } catch (error) {
-        console.error('Error getting image description:', error);
+        console.error('❌ Error getting image description:', error);
         if (error.message.includes('Invalid OpenRouter API key')) {
             return 'AI description unavailable - Invalid API key';
+        }
+        if (error.message.includes('SERVICE_UNAVAILABLE')) {
+            console.log('⚠️ AI service temporarily unavailable');
+            return 'AI service temporarily unavailable';
         }
         return 'Could not generate image description';
     }

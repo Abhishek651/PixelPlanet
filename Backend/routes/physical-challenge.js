@@ -119,6 +119,32 @@ router.post('/submit/:challengeId', verifyToken, upload.single('image'), async (
                 challenge.title
             );
             
+            console.log('📊 Verification result:', {
+                success: challengeVerification.success,
+                completed: challengeVerification.completed,
+                serviceDown: challengeVerification.serviceDown,
+                error: challengeVerification.error
+            });
+            
+            // If service is down, return error to user
+            if (challengeVerification.serviceDown) {
+                console.log('⚠️ AI service temporarily unavailable');
+                return res.status(503).json({
+                    success: false,
+                    stage: 'ai_verification',
+                    error: 'AI verification service is temporarily unavailable',
+                    feedback: {
+                        title: '⚠️ Service Temporarily Unavailable',
+                        message: 'The AI verification service is currently down. Please try again in a few minutes.',
+                        suggestions: [
+                            'Wait a few minutes and try again',
+                            'The service should be back online shortly',
+                            'Your submission has not been saved'
+                        ]
+                    }
+                });
+            }
+            
             // If AI verification is unavailable (invalid API key), auto-approve
             if (challengeVerification.skipVerification) {
                 console.log('⚠️ AI verification unavailable - Auto-approving submission');
@@ -135,7 +161,8 @@ router.post('/submit/:challengeId', verifyToken, upload.single('image'), async (
             console.log('⏭️ Step 4: AI verification skipped (not enabled for this challenge)');
         }
 
-        if (!challengeVerification.success && !challengeVerification.skipVerification) {
+        if (!challengeVerification.success && !challengeVerification.skipVerification && !challengeVerification.serviceDown) {
+            console.error('❌ AI verification failed:', challengeVerification.error);
             return res.status(500).json({
                 success: false,
                 stage: 'ai_verification',

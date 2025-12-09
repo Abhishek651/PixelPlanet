@@ -9,6 +9,7 @@ import { NotificationModal } from '../components/base/NotificationModal';
 import SideNavbar from '../components/SideNavbar';
 import BottomNavbar from '../components/BottomNavbar';
 import AIVerificationLoader from '../components/AIVerificationLoader';
+import FileUploadButton from '../components/FileUploadButton';
 
 const ChallengeDetailPage = () => {
     const { challengeId } = useParams();
@@ -345,12 +346,11 @@ const ChallengeDetailPage = () => {
                                     <p className="text-sm text-gray-600 mb-3">
                                         AI will verify your submission automatically. Make sure your photo clearly shows the completed challenge.
                                     </p>
-                                    <input
-                                        type="file"
+                                    <FileUploadButton
                                         accept="image/*"
                                         onChange={(e) => setSubmissionFile(e.target.files[0])}
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                                         required
+                                        id="challenge-photo"
                                     />
                                     {submissionFile && (
                                         <div className="mt-2 text-sm text-green-600">
