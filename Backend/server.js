@@ -51,9 +51,9 @@ console.log('✅ Express app created');
 
 // --- 4. APPLY MIDDLEWARE ---
 const corsOptions = {
-    origin: true,
+    origin: ['https://pixel-planet-frontend.vercel.app', 'http://localhost:5173'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     credentials: true
 };
 
