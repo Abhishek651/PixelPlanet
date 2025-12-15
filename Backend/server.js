@@ -60,6 +60,9 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
+// Handle OPTIONS preflight for all routes
+app.options('*', cors(corsOptions));
+
 // --- 5. IMPORT & USE ROUTES ---
 console.log('📂 Loading routes...');
 try {
