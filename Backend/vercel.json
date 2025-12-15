@@ -1,28 +1,31 @@
 {
   "version": 2,
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/server.js",
-      "headers": {
-        "Access-Control-Allow-Credentials": "true",
-        "Access-Control-Allow-Origin": "https://pixel-planet-frontend.vercel.app",
-        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With"
-      }
-    },
-    {
-      "src": "/",
-      "dest": "/api/index.js"
-    },
-    {
-      "src": "/(.*)",
-      "status": 404
-    }
-  ],
   "functions": {
-    "server.js": {
+    "api/**/*.js": {
       "maxDuration": 60
     }
-  }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Credentials",
+          "value": "true"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "https://pixel-planet-frontend.vercel.app"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization, X-Requested-With, X-CSRF-Token, Accept, Accept-Version, Content-Length, Content-MD5, Date, X-Api-Version"
+        }
+      ]
+    }
+  ]
 }
