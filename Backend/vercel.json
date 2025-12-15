@@ -1,14 +1,26 @@
 {
   "version": 2,
-  "rewrites": [
+  "routes": [
     {
-      "source": "/api/(.*)",
-      "destination": "/server.js"
+      "src": "/api/(.*)",
+      "dest": "/server.js"
+    },
+    {
+      "src": "/",
+      "dest": "/api/index.js"
+    },
+    {
+      "src": "/(.*)",
+      "status": 404,
+      "dest": "/api/404.js"
     }
   ],
   "functions": {
     "server.js": {
       "maxDuration": 60
+    },
+    "api/*.js": {
+      "maxDuration": 10
     }
   }
 }
