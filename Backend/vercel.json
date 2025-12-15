@@ -3,7 +3,12 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/server.js"
+      "dest": "/server.js",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization"
+      }
     },
     {
       "src": "/",
@@ -11,16 +16,12 @@
     },
     {
       "src": "/(.*)",
-      "status": 404,
-      "dest": "/api/404.js"
+      "status": 404
     }
   ],
   "functions": {
     "server.js": {
       "maxDuration": 60
-    },
-    "api/*.js": {
-      "maxDuration": 10
     }
   }
 }

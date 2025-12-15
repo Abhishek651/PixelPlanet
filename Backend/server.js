@@ -150,8 +150,13 @@ process.on('uncaughtException', (error) => {
 });
 
 // --- 6. EXPORT FOR VERCEL (Serverless) ---
-const serverless = require('serverless-http');
-module.exports = serverless(app);
+if (process.env.VERCEL) {
+    const serverless = require('serverless-http');
+    module.exports = serverless(app);
+    console.log('📤 Exporting serverless handler for Vercel...');
+} else {
+    module.exports = app;
+}
 
 // --- 7. START SERVER (only for local development) ---
 if (require.main === module) {
@@ -166,4 +171,3 @@ if (require.main === module) {
 }
 
 console.log('✅ Server initialization complete');
-console.log('📤 Exporting serverless handler for Vercel...');
