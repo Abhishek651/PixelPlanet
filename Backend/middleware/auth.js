@@ -1,6 +1,11 @@
 const { admin, db } = require('../firebaseConfig');
 
 const verifyToken = async (req, res, next) => {
+    // Skip auth for OPTIONS preflight requests
+    if (req.method === 'OPTIONS') {
+        return next();
+    }
+
     const header = req.headers.authorization;
     if (!header) {
         return res.status(401).send({ message: 'Authorization header missing.' });
