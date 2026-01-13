@@ -137,10 +137,9 @@ function SiteSettings() {
         });
         break;
       case 'gemini':
-        url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`;
+        url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
         headers = {
-          "Content-Type": "application/json",
-          "X-goog-api-key": apiKey
+          "Content-Type": "application/json"
         };
         body = JSON.stringify({
           "contents": [{ "parts": [{ "text": "Test prompt" }] }]
@@ -221,8 +220,8 @@ function SiteSettings() {
         body = JSON.stringify({ model: "openai/gpt-3.5-turbo", messages: [{ role: "user", content: prompt }] });
         break;
       case 'gemini':
-        url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`;
-        headers = { "Content-Type": "application/json", "X-goog-api-key": apiKey };
+        url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
+        headers = { "Content-Type": "application/json" };
         body = JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] });
         break;
       case 'openai':

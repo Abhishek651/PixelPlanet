@@ -108,7 +108,7 @@ export function NotificationModal({
                 {cancelText && (
                   <DialogButton
                     className="bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-                    onPress={() => {
+                    onClick={() => {
                       handleCancel();
                       close();
                     }}
@@ -118,7 +118,7 @@ export function NotificationModal({
                 )}
                 <DialogButton
                   className={getConfirmButtonClass(type)}
-                  onPress={() => {
+                  onClick={() => {
                     handleConfirm();
                     close();
                   }}
@@ -286,7 +286,7 @@ export function NotificationModalTrigger({
                   {cancelText && (
                     <DialogButton
                       className="bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-                      onPress={() => {
+                      onClick={() => {
                         if (onCancel) onCancel();
                         close();
                       }}
@@ -296,7 +296,7 @@ export function NotificationModalTrigger({
                   )}
                   <DialogButton
                     className={getConfirmButtonClass(type)}
-                    onPress={() => {
+                    onClick={() => {
                       if (onConfirm) onConfirm();
                       close();
                     }}

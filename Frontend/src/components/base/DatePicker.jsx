@@ -67,10 +67,10 @@ export const DatePicker = ({
         <AriaDialog className="outline-none">
           <Calendar />
           <div className="grid grid-cols-2 gap-3 border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
-            <Button size="md" color="secondary" onPress={() => onChange('')}>
+            <Button size="md" color="secondary" onClick={() => onChange('')}>
               Clear
             </Button>
-            <Button size="md" color="primary" onPress={(close) => close && close()}>
+            <Button size="md" color="primary" onClick={(close) => close && close()}>
               Apply
             </Button>
           </div>
@@ -141,10 +141,10 @@ export const DateTimePicker = ({
         <AriaDialog className="outline-none">
           <Calendar />
           <div className="grid grid-cols-2 gap-3 border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
-            <Button size="md" color="secondary" onPress={() => onChange('')}>
+            <Button size="md" color="secondary" onClick={() => onChange('')}>
               Clear
             </Button>
-            <Button size="md" color="primary" onPress={(close) => close && close()}>
+            <Button size="md" color="primary" onClick={(close) => close && close()}>
               Apply
             </Button>
           </div>

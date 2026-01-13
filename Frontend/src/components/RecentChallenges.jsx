@@ -25,8 +25,25 @@ const RecentChallenges = ({ limit = 3, className = '', showInMainArea = false, r
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             
+            console.log(`🔍 [RecentChallenges] Fetched ${data.challenges?.length || 0} challenges from API`);
+            
             // Sort by createdAt and take the most recent ones
+            const now = new Date();
             const sortedChallenges = (data.challenges || [])
+                .filter(challenge => {
+                    // Filter out expired challenges for students
+                    if (userRole === 'student') {
+                        const expiryDate = challenge.expiryDate?.toDate?.() || new Date(challenge.expiryDate);
+                        const isNotExpired = !challenge.expiryDate || expiryDate > now;
+                        
+                        if (!isNotExpired) {
+                            console.log(`⏰ [RecentChallenges] Filtering out expired challenge: ${challenge.title} (expired: ${expiryDate})`);
+                        }
+                        
+                        return isNotExpired;
+                    }
+                    return true; // Teachers/admins see all challenges
+                })
                 .sort((a, b) => {
                     const dateA = a.createdAt?.toDate?.() || new Date(a.createdAt);
                     const dateB = b.createdAt?.toDate?.() || new Date(b.createdAt);
@@ -34,6 +51,7 @@ const RecentChallenges = ({ limit = 3, className = '', showInMainArea = false, r
                 })
                 .slice(0, limit);
             
+            console.log(`✅ [RecentChallenges] After filtering: ${sortedChallenges.length} challenges for ${userRole}`);
             setChallenges(sortedChallenges);
         } catch (error) {
             console.error('Error fetching recent challenges:', error);
@@ -110,8 +128,67 @@ const RecentChallenges = ({ limit = 3, className = '', showInMainArea = false, r
         );
     }
 
-    if (!currentUser || challenges.length === 0) {
+    if (!currentUser) {
         return null;
+    }
+
+    // Show empty state message when no challenges
+    if (challenges.length === 0) {
+        // Main area layout (grid cards)
+        if (showInMainArea) {
+            return (
+                <div>
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                            <span className="material-icons text-blue-500">new_releases</span>
+                            Recent Challenges
+                        </h2>
+                        <Link to="/challenges" className="text-sm font-medium text-primary hover:underline">
+                            View All
+                        </Link>
+                    </div>
+
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 text-center">
+                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                            <span className="material-icons text-gray-400 text-2xl">assignment</span>
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">
+                            No challenges for now
+                        </h3>
+                        <p className="text-gray-500 dark:text-gray-400 text-sm">
+                            New challenges will appear here when they become available
+                        </p>
+                    </div>
+                </div>
+            );
+        }
+
+        // Sidebar layout (compact list)
+        return (
+            <div className={`bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm ${className}`}>
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                        <span className="material-symbols-outlined text-blue-500">new_releases</span>
+                        Recent Challenges
+                    </h3>
+                    <Link to="/challenges" className="text-green-500 text-sm font-medium hover:underline">
+                        View All
+                    </Link>
+                </div>
+
+                <div className="text-center py-6">
+                    <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                        <span className="material-icons text-gray-400">assignment</span>
+                    </div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                        No challenges for now
+                    </p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                        Check back later for new challenges
+                    </p>
+                </div>
+            </div>
+        );
     }
 
     // Main area layout (grid cards)

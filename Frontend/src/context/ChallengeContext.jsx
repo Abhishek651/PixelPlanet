@@ -78,13 +78,20 @@ export const ChallengeProvider = ({ children }) => {
                     const studentClass = userData.class;
                     console.log(`[ChallengeProvider] Filtering for student's class: ${studentClass}`);
                     const filteredChallenges = challengesData.filter(challenge => {
-                        if (!challenge.classes) {
-                            return true; // Challenge is for all classes
+                        // Filter by class
+                        const classMatch = !challenge.classes || 
+                            (Array.isArray(challenge.classes) ? challenge.classes.includes(studentClass) : challenge.classes === studentClass);
+                        
+                        // Filter out expired challenges for students
+                        const now = new Date();
+                        const expiryDate = challenge.expiryDate?.toDate?.() || new Date(challenge.expiryDate);
+                        const isNotExpired = !challenge.expiryDate || expiryDate > now;
+                        
+                        if (!isNotExpired) {
+                            console.log(`⏰ Filtering out expired challenge: ${challenge.title} (expired: ${expiryDate})`);
                         }
-                        if (Array.isArray(challenge.classes)) {
-                            return challenge.classes.includes(studentClass);
-                        }
-                        return challenge.classes === studentClass;
+                        
+                        return classMatch && isNotExpired;
                     });
                     setChallenges(filteredChallenges);
                     console.log('[ChallengeProvider] Filtered challenges for student:', filteredChallenges);

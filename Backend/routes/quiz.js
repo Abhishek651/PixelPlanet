@@ -5,20 +5,28 @@ const { db } = require('../firebaseConfig');
 
 const getApiSettings = async () => {
     const settingsDoc = await db.collection('settings').doc('site').get();
-    if (!settingsDoc.exists) {
-        throw new Error('API settings not configured by admin.');
+    
+    // Try to get from Firestore first, then fall back to environment variables
+    let settings = {};
+    if (settingsDoc.exists) {
+        settings = settingsDoc.data();
     }
-    const settings = settingsDoc.data();
-    if (!settings.openRouterApiKey && !settings.geminiApiKey && !settings.openaiApiKey) {
-        throw new Error('No API keys configured by admin.');
+    
+    const apiKeys = {
+        openrouter: settings.openRouterApiKey || process.env.OPENROUTER_API_KEY,
+        'openrouter-free': settings.openRouterApiKey || process.env.OPENROUTER_API_KEY, // Use same key for free model
+        gemini: settings.geminiApiKey || process.env.GEMINI_API_KEY,
+        openai: settings.openaiApiKey || process.env.OPENAI_API_KEY,
+    };
+    
+    // Check if at least one API key is available
+    if (!apiKeys.openrouter && !apiKeys['openrouter-free'] && !apiKeys.gemini && !apiKeys.openai) {
+        throw new Error('No API keys configured. Please set up API keys in admin settings or environment variables.');
     }
+    
     return {
-        defaultProvider: settings.defaultApiProvider || 'openrouter',
-        keys: {
-            openrouter: settings.openRouterApiKey,
-            gemini: settings.geminiApiKey,
-            openai: settings.openaiApiKey,
-        },
+        defaultProvider: settings.defaultApiProvider || process.env.DEFAULT_API_PROVIDER || 'openrouter',
+        keys: apiKeys,
     };
 };
 
@@ -31,6 +39,15 @@ const getProviderConfig = (provider, apiKey, prompt) => {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ model: 'openai/gpt-3.5-turbo', messages: [{ role: 'user', content: prompt }] }),
+                },
+            };
+        case 'openrouter-free':
+            return {
+                url: 'https://openrouter.ai/api/v1/chat/completions',
+                options: {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ model: 'openai/gpt-oss-120b:free', messages: [{ role: 'user', content: prompt }] }),
                 },
             };
         case 'gemini':
@@ -61,6 +78,7 @@ const parseProviderResponse = async (provider, response) => {
     let content;
     switch (provider) {
         case 'openrouter':
+        case 'openrouter-free':
         case 'openai':
             content = data.choices[0].message.content;
             break;
@@ -72,6 +90,111 @@ const parseProviderResponse = async (provider, response) => {
     }
     return JSON.parse(content.replace(/```json/g, '').replace(/```/g, '').trim());
 };
+
+router.post('/test-gemini', async (req, res) => {
+    try {
+        console.log('🧪 Testing Gemini API key...');
+        
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+            return res.status(400).json({ error: 'GEMINI_API_KEY not found in environment variables' });
+        }
+        
+        console.log('🔑 API Key found:', apiKey.substring(0, 10) + '...');
+        
+        // Test with a simple prompt
+        const testPrompt = 'Generate a simple JSON response with just {"test": "success", "message": "Gemini API is working"}';
+        
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                contents: [{ 
+                    parts: [{ text: testPrompt }] 
+                }] 
+            }),
+        });
+        
+        console.log('📊 Gemini Response Status:', response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ Gemini API Error:', errorText);
+            return res.status(response.status).json({ 
+                error: 'Gemini API failed', 
+                status: response.status,
+                details: errorText 
+            });
+        }
+        
+        const data = await response.json();
+        console.log('✅ Gemini API Response:', JSON.stringify(data, null, 2));
+        
+        const content = data.candidates[0].content.parts[0].text;
+        console.log('📝 Generated content:', content);
+        
+        res.json({
+            success: true,
+            message: 'Gemini API is working!',
+            generatedContent: content,
+            fullResponse: data
+        });
+        
+    } catch (error) {
+        console.error('💥 Gemini test error:', error);
+        res.status(500).json({ 
+            error: 'Test failed', 
+            message: error.message 
+        });
+    }
+});
+
+router.post('/test-api', async (req, res) => {
+    try {
+        const { defaultProvider, keys } = await getApiSettings();
+        
+        console.log('🔧 API Test - Available keys:', Object.keys(keys).filter(k => keys[k]).map(k => `${k}: ${keys[k] ? 'SET' : 'NOT SET'}`));
+        
+        // Test with a simple prompt
+        const testPrompt = 'Generate a simple JSON response with just {"test": "success"}';
+        
+        for (const provider of ['openrouter', 'gemini', 'openrouter-free', 'openai']) {
+            const apiKey = keys[provider];
+            if (!apiKey) continue;
+            
+            console.log(`🧪 Testing ${provider} API...`);
+            const config = getProviderConfig(provider, apiKey, testPrompt);
+            if (!config) continue;
+            
+            try {
+                const response = await fetch(config.url, config.options);
+                const responseText = await response.text();
+                
+                console.log(`📊 ${provider} Response Status:`, response.status);
+                console.log(`📊 ${provider} Response:`, responseText.substring(0, 200));
+                
+                if (response.ok) {
+                    return res.json({
+                        success: true,
+                        provider,
+                        status: response.status,
+                        message: 'API key is working!'
+                    });
+                } else {
+                    console.warn(`❌ ${provider} failed:`, responseText);
+                }
+            } catch (e) {
+                console.warn(`❌ ${provider} error:`, e.message);
+            }
+        }
+        
+        res.status(503).json({ error: 'All API providers failed' });
+        
+    } catch (error) {
+        console.error('API test error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
 
 router.post('/generate', async (req, res) => {
     const { title, numQuestions, difficulty, description, targetClass, generationMethod, paragraph, generateParagraph, existingQuestions } = req.body;
@@ -234,35 +357,46 @@ Return the JSON now:`;
 
     try {
         const { defaultProvider, keys } = await getApiSettings();
-        const providers = [defaultProvider, 'openrouter', 'gemini', 'openai'].filter((v, i, a) => a.indexOf(v) === i);
+        console.log(`🔧 Quiz generation - Available providers:`, Object.keys(keys).filter(k => keys[k]));
+        console.log(`🎯 Quiz generation - Using default provider: ${defaultProvider}`);
+        
+        const providers = ['openrouter', 'gemini', 'openrouter-free', 'openai'].filter((v, i, a) => a.indexOf(v) === i);
 
         for (const provider of providers) {
             const apiKey = keys[provider];
-            if (!apiKey) continue;
+            if (!apiKey) {
+                console.log(`⏭️ Skipping ${provider} - no API key available`);
+                continue;
+            }
 
-            console.log(`Attempting to generate quiz with ${provider}...`);
+            console.log(`🚀 Attempting to generate quiz with ${provider}...`);
             const config = getProviderConfig(provider, apiKey, prompt);
-            if (!config) continue;
+            if (!config) {
+                console.log(`❌ No config available for ${provider}`);
+                continue;
+            }
 
             try {
                 const response = await fetch(config.url, config.options);
                 if (!response.ok) {
                     const errorText = await response.text();
-                    console.warn(`API call to ${provider} failed with status ${response.status}:`, errorText);
+                    console.warn(`❌ API call to ${provider} failed with status ${response.status}:`, errorText);
                     continue; // Try next provider
                 }
                 const quizContent = await parseProviderResponse(provider, response);
+                console.log(`✅ Quiz generated successfully with ${provider}`);
                 return res.json(quizContent);
             } catch (e) {
-                console.warn(`Error during fetch or parsing for ${provider}:`, e.message);
+                console.warn(`❌ Error during fetch or parsing for ${provider}:`, e.message);
                 continue; // Try next provider
             }
         }
 
+        console.error('🚫 All providers failed - returning 503');
         res.status(503).json({ error: 'Quiz generation unavailable. Please contact admin to configure API settings.' });
 
     } catch (error) {
-        console.error('Failed to fetch API settings or an unexpected error occurred:', error);
+        console.error('💥 Failed to fetch API settings or an unexpected error occurred:', error);
         res.status(500).json({ error: 'Internal server error while generating quiz.' });
     }
 });

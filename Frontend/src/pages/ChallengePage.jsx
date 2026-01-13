@@ -7,7 +7,6 @@ import LeaderboardListItem from '../components/LeaderboardListItem';
 import DashboardLayout from '../components/DashboardLayout';
 import ChallengesList from '../components/ChallengesList';
 import ChallengeCreatorFAB from '../components/ChallengeCreatorFAB';
-import ChallengeTypeModal from '../components/ChallengeTypeModal';
 import LoginPromptModal from '../components/LoginPromptModal';
 import { leaderboardAPI } from '../services/api';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -107,7 +106,6 @@ const ChallengePage = () => {
     const [activeSegment, setActiveSegment] = useState('leaderboard');
     const [leaderboard, setLeaderboard] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [isModalOpen, setModalOpen] = useState(false);
     const [showLoginModal, setShowLoginModal] = useState(false);
 
     const segments = [
@@ -276,10 +274,7 @@ const ChallengePage = () => {
             </main>
 
             {userRole === 'teacher' && (
-                <>
-                    <ChallengeCreatorFAB onClick={() => setModalOpen(true)} />
-                    <ChallengeTypeModal isOpen={isModalOpen} onClose={() => setModalOpen(false)} />
-                </>
+                <ChallengeCreatorFAB />
             )}
 
             {/* Bottom navbar provided by DashboardLayout */}

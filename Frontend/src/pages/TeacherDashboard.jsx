@@ -72,29 +72,37 @@ const TeacherDashboard = () => {
         );
     }
 
-    // Filter challenges by active/archived status
+    // Filter challenges by active/expired status
     const now = new Date();
     const activeChallenges = challenges.filter(challenge => {
-        const endDate = challenge.expiryDate?.toDate?.() || new Date(challenge.expiryDate);
-        return endDate > now;
+        if (!challenge.expiryDate) return true; // No expiry date means always active
+        const expiryDate = challenge.expiryDate?.toDate?.() || new Date(challenge.expiryDate);
+        return expiryDate > now;
     });
     
     const archivedChallenges = challenges.filter(challenge => {
-        const endDate = challenge.expiryDate?.toDate?.() || new Date(challenge.expiryDate);
-        return endDate <= now;
+        if (!challenge.expiryDate) return false; // No expiry date means never expired
+        const expiryDate = challenge.expiryDate?.toDate?.() || new Date(challenge.expiryDate);
+        return expiryDate <= now;
     });
     
     // Get recent challenges based on active tab
     const displayChallenges = activeTab === 'active' ? activeChallenges : archivedChallenges;
-    const recentChallenges = displayChallenges.slice(0, 3).map(challenge => ({
-        id: challenge.id,
-        title: challenge.title || 'Untitled Challenge',
-        type: challenge.type || 'Unknown',
-        submissions: challenge.submissions?.length || 0,
-        totalStudents: 50, // You can calculate this based on classes
-        avgScore: 0, // Calculate from submissions
-        status: challenge.isActive ? 'active' : 'inactive'
-    }));
+    const recentChallenges = displayChallenges.slice(0, 3).map(challenge => {
+        const expiryDate = challenge.expiryDate?.toDate?.() || new Date(challenge.expiryDate);
+        const isExpired = expiryDate && expiryDate <= now;
+        
+        return {
+            id: challenge.id,
+            title: challenge.title || 'Untitled Challenge',
+            type: challenge.type || 'Unknown',
+            submissions: challenge.submissions?.length || 0,
+            totalStudents: 50, // You can calculate this based on classes
+            avgScore: 0, // Calculate from submissions
+            status: isExpired ? 'expired' : (challenge.isActive ? 'active' : 'inactive'),
+            expiryDate: expiryDate
+        };
+    });
 
     // Mock data - replace with real data from your backend
     const analytics = {
@@ -242,14 +250,17 @@ const TeacherDashboard = () => {
                                             : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                                     }`}
                                 >
-                                    Archived ({archivedChallenges.length})
+                                    Expired ({archivedChallenges.length})
                                 </button>
                             </div>
 
                             <div className="space-y-3">
                                 {recentChallenges.length === 0 ? (
                                     <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                                        <p>No {activeTab} challenges found</p>
+                                        <p>No {activeTab === 'active' ? 'active' : 'expired'} challenges found</p>
+                                        {activeTab === 'active' && (
+                                            <p className="text-sm mt-2">Create your first challenge to get started!</p>
+                                        )}
                                     </div>
                                 ) : recentChallenges.map((challenge, index) => {
                                     const handleChallengeClick = () => {
@@ -292,15 +303,24 @@ const TeacherDashboard = () => {
                                                     <span className="text-xs text-gray-500 dark:text-gray-400">
                                                         {challenge.submissions}/{challenge.totalStudents} submitted
                                                     </span>
-                                                    <span className="text-xs font-medium text-primary">
-                                                        Avg: {challenge.avgScore}%
-                                                    </span>
+                                                    {challenge.status === 'expired' && challenge.expiryDate && (
+                                                        <span className="text-xs text-red-500 dark:text-red-400">
+                                                            Expired: {challenge.expiryDate.toLocaleDateString()}
+                                                        </span>
+                                                    )}
+                                                    {challenge.status !== 'expired' && (
+                                                        <span className="text-xs font-medium text-primary">
+                                                            Avg: {challenge.avgScore}%
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </div>
 
-                                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${challenge.status === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                                                    'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
-                                                }`}>
+                                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                                challenge.status === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                                                challenge.status === 'expired' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                                                'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                                            }`}>
                                                 {challenge.status}
                                             </span>
                                         </div>

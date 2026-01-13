@@ -137,6 +137,8 @@ const ChallengeDetailPage = () => {
 
                 const result = await response.json();
                 console.log('Submission response:', result);
+                console.log('Response status:', response.status);
+                console.log('Response ok:', response.ok);
                 
                 if (response.ok && result.success) {
                     setSubmitted(true);
